@@ -1,0 +1,15 @@
+13-11-09
+* Added support for saving transformation state of a viewed protein(see section Model UI in README).
+* Fixed Show Pocket atoms radiobutton bug:
+The radio button didn't get enabled even when u defined a poc & tet file
+12-11-09
+* Added Boundary hinting to shader.. No UI control yet
+10-11-09
+* Added support for a lighting UI  : see section on UI 
+* Added support for resizing model : see section on Model commands
+* Added UI to allow for coloring groups of atoms : see section on Model UI
+* Added option to disable gl picking when selection algorithm becomes slow (for large datasets)
+* Changed the light switch on/off command to middle mouse button
+* Modified shaders to use dir/positional lights (max 2 lights)
+
+

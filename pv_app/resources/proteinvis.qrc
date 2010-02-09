@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="shaders" >
+    <file alias="cylinder.frag" >cylinder.frag</file>
+    <file alias="cylinder.geom" >cylinder.geom</file>
+    <file alias="cylinder.vert" >cylinder.vert</file>
+    <file alias="sphere_cube.frag" >sphere_cube.frag</file>
+    <file alias="sphere_cube.geom" >sphere_cube.geom</file>
+    <file alias="sphere_cube.vert" >sphere_cube.vert</file>
+    <file alias="sphere.frag" >sphere.frag</file>
+    <file alias="sphere.geom" >sphere.geom</file>
+    <file alias="sphere.vert" >sphere.vert</file>
+  </qresource>
+  <qresource prefix="images" >
+    <file>db_comit.png</file>
+    <file>db_update.png</file>
+    <file>save_all.png</file>
+    <file>reload2.png</file>
+  </qresource>
+</RCC>

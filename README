@@ -1,0 +1,172 @@
+*******************************************************************************
+Hardware and OS requirements
+
+Discrete graphics card with support for Opengl 2.0 and GLSL 
+GL_EXT_geometry_shader4 extensions.
+
+Linux 2.6 with the drivers for the Gpu installed
+
+*******************************************************************************
+
+Dependant libraries
+
+The following libraries and tools are needed to build the package
+* qt 4.x -- qt gui lib (http://qt.nokia.com/)
+* qt-dev-tools (qmake ,moc,uic)
+* qt-dev-headers 
+* qt-opengl-lib and dev headers
+* opengl libraries and dev-headers (libGL,libGLU)
+* libGLEW library and headers (http://glew.sourceforge.net/)
+* boost regex library and headers (http://www.boost.org/)
+
+Note:QT boost and GLEW are usually available on standard linux distros.
+
+Note: If any of the libraries/headers are not available in the compilers 
+standard search path then edit the faulting project's .pro file. This should 
+contain a variable named INCLUDEPATH and LIBS. Add the include paths directly 
+to INCLUDEPATH and the path prefixed with -L to LIBS. 
+
+Note: Boost usually would install its library suffixed with mt on
+ubuntu 9.04. The naming convention if different in different systems then 
+the variable LIBS in the file proteinvis.pro needs to be adjusted accordingly
+
+*******************************************************************************
+Building 
+
+Bring up a shell qmake in the root of the source tree. 
+
+type make .. if all goes well you should have protvis in the bin dir.
+
+set the LD_LIBRARY_PATH to add the lib dir to its path.
+
+*******************************************************************************
+Running
+
+Again make sure that LD_LIBRARY_PATH knows about the lib directory in ths 
+source tree
+
+The following is a list of the command line options.
+
+* -pf [crd/pdb file]   -------- is always needed.without this app will not launch
+
+* -sf [off file] -------------- surface mesh file in off format
+
+* -acf [alp file] ------------- The output from the alpha complex code (Volume.tar)
+
+* -tetf [tet] -pocf [tepoc]---- The output from the pocket calculation code. The
+file is a dump of the delone tetrahedra .. 
+First line specifies no. of tetrahedra 
+Second comment on the order of info 
+Third - End tets written as (i v1 v2 v3 v4).
+
+Make sure you specify all data for a single protein. There isnt much code yet to 
+check validity of the files and will read anything it is given.
+
+For loading multiple proteins specify all data pertinent to one protein after the
+-pf tag. The -pf switches act as delimiters for multiple protein file sets. 
+
+eg: proteinvis -pf one.crd -acf one.acf -sf one.off -pf two.crd -pocf two.tepoc.all 
+    -tetf tow.tet
+
+*******************************************************************************
+
+Render window commands.
+
+Within the render window keystrokes and mouse behave in 3 broad modes
+
+To switch b/w modes press ctrl-shift-'<'/ctrl-shift-'>' or alternatively click 
+on the respective obj (for the framework click any where other than a viewed obj
+the switch in mode will be communicated in the shell output.
+
+---------Model viewing actions--------
+
+Click and drag the MLB to move the model around. Click and drag the MRB to rotate 
+the model. 
+
+press ctrl and use the mouse wheel to resize the model in world space
+
+---------Framework viewing actions-----
+
+Press 'x' to provide you with a world space axes. (None for the model space yet).
+
+press 'w' 'a' 's' 'd' to move front left back right respectively from the current 
+viewing position. 
+
+press 'r' to reset the view to its initial state. 
+
+press 'b' to toggle back face culling
+
+press 'B' to change the back face convention (clock wise or counter CW)
+
+press 'L' to enable/disable lighting.
+
+---------Light viewing actions---------
+
+use the mouse to move/orient the light (same as controlling the model)
+
+use the mouse wheel to make the graphic grow in size to allow easier control
+
+use the mouse middle mouse button to turn off light.
+
+---------Common actions-----------------
+
+press 'ctrl+shift +<' to change the current reciever. 
+
+press 'ctrl+shift +>' to change the current reciever. 
+
+----------------------------------------
+
+Note:Most changes Made to will be acknowledged in the status bar. 
+
+Note: to make the pick operation, which is used to switch modes,more efficient, the 
+model is rendered as a box (only for selection..:) ). Hence when some areas that are
+visibly not part of the model are clicked will still register as a model click. 
+
+Note: As part of QT's widget handling you will be required to click in the render 
+window so that it may accept input. So if your buttons are not functioning this 
+is probably whats wrong..:). 
+
+*******************************************************************************
+Windowing interface
+===============================================================================
+Model UI.
+===============================================================================
+the model ui is self-explanatory. Only those UI elements which have the necessary 
+files specified in the command line while launching will be enabled. 
+
+The color selection allows you to group the atoms by Atom(No grouping),Atom type,
+Amino Acid,.... After you make your selection and set the colors hit the refresh
+button to actually push the colors. For now the colors need to be specified in 
+#RRGGBB format. Will implement multiple selection and colorpicker later. 
+
+The buttons save transformation and load transformation save the current orientaion
+positioning and sizing of the molecule to a .trans file. You could use one 
+transformation to open another molecule though it makes most sense only when u 
+want to save the state for the same molecule(s). When there are multiple molecueles 
+there is an additional scaling to fit all the molecueles into the same frame. This 
+transformation does not account for that. Also you'll have to save the state for
+each molecuele separately for now.
+
+===============================================================================
+Framework UI
+===============================================================================
+
+Snapshot and record button. The image format is png. They will be stored in the 
+directory from which the bin was launched. The record feature will create a dir 
+and put the seq of images there the snapshot feature will just dump a .png file. 
+The filename is random (it will not clash with any other file in the dir ..) 
+
+===============================================================================
+Light UI
+===============================================================================
+The framework allows for a maximum of 2 lights in the scence. ( More can be added
+but really, not too many lights are needed for a good scene). 
+
+For shiny surfaces raise the specular value near to white(both light and material). 
+Similarly for diffuse surfaces (material diffuse and ambient is not enabled) raise
+the diffuse value and reduce specularity. Raise the global specularity to allow 
+seeing smaller shine area's (very coarsely speaking ..:) ). 
+
+Use the disable light graphic to disable drawing the light graphic. 
+
+*******************************************************************************
