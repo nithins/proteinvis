@@ -1,3 +1,7 @@
+16-02-10
+* Changed the build system to cmake
+* Changed the bufobj_t class implemenation in proteinvis
+* updated readme etc
 13-11-09
 * Added support for saving transformation state of a viewed protein(see section Model UI in README).
 * Fixed Show Pocket atoms radiobutton bug:
