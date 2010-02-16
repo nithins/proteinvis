@@ -18,32 +18,30 @@ The following libraries and tools are needed to build the package
 * opengl libraries and dev-headers (libGL,libGLU)
 * libGLEW library and headers (http://glew.sourceforge.net/)
 * boost regex library and headers (http://www.boost.org/)
+* cmake 2.6 (http://www.cmake.org/)
 
-Note:QT boost and GLEW are usually available on standard linux distros.
-
-Note: If any of the libraries/headers are not available in the compilers 
-standard search path then edit the faulting project's .pro file. This should 
-contain a variable named INCLUDEPATH and LIBS. Add the include paths directly 
-to INCLUDEPATH and the path prefixed with -L to LIBS. 
-
-Note: Boost usually would install its library suffixed with mt on
-ubuntu 9.04. The naming convention if different in different systems then 
-the variable LIBS in the file proteinvis.pro needs to be adjusted accordingly
+Note:QT boost GLEW and cmake are usually available on standard linux distros.
 
 *******************************************************************************
 Building 
 
-Bring up a shell qmake in the root of the source tree. 
+make sure that glapp_framework is available in the proteinvis source tree 
+either via symlink or directly. (i.e there should be a directory called
+proteinvis/glapp_framework containing the framework sources).
 
-type make .. if all goes well you should have protvis in the bin dir.
+CMake reccomends that you build in a fresh clean directory and not in the
+source tree itself
 
-set the LD_LIBRARY_PATH to add the lib dir to its path.
+in the build directory type "cmake <path to proteinvis source tree>".
+
+Note:: Sometimes you may need to run the above command again to update the 
+cmake cache. 
+
+type make .. if all goes well you should have protvis in the build dir.
 
 *******************************************************************************
 Running
 
-Again make sure that LD_LIBRARY_PATH knows about the lib directory in ths 
-source tree
 
 The following is a list of the command line options.
 
