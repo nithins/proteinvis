@@ -108,12 +108,12 @@ class pocket_model_t
                m_pockets.alpha_pocket_ranges[alphanum].start );
     }
 
-    inline glutils::buf_obj_t get_pocket_atoms()
+    inline glutils::bufobj_ptr_t get_pocket_atoms()
     {
       return m_atom_indxs;
     }
 
-    inline glutils::buf_obj_t get_pocket_atom_bonds()
+    inline glutils::bufobj_ptr_t get_pocket_atom_bonds()
     {
       return m_atom_bonds;
     }
@@ -131,8 +131,8 @@ class pocket_model_t
     glutils::renderable_t        *m_ren;
     pockets_t                     m_pockets;
 
-    glutils::buf_obj_t            m_atom_indxs;
-    glutils::buf_obj_t            m_atom_bonds;
+    glutils::bufobj_ptr_t         m_atom_indxs;
+    glutils::bufobj_ptr_t         m_atom_bonds;
 
 
 };

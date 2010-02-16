@@ -242,15 +242,15 @@ class protein_rd_t
 {
   protein_t * m_protein;
 
-  glutils::buf_obj_t m_atom_coord_bo;
+  glutils::bufobj_ptr_t m_atom_coord_bo;
 
-  glutils::buf_obj_t m_atom_radii_bo;
+  glutils::bufobj_ptr_t m_atom_radii_bo;
 
-  glutils::buf_obj_t m_atom_bonds_bo;
+  glutils::bufobj_ptr_t m_atom_bonds_bo;
 
-  glutils::buf_obj_t m_bb_atom_indices_bo;
+  glutils::bufobj_ptr_t m_bb_atom_indices_bo;
 
-  glutils::buf_obj_t m_bb_bond_indices_bo;
+  glutils::bufobj_ptr_t m_bb_bond_indices_bo;
 
   void upload_data_items();
 
@@ -270,15 +270,15 @@ public:
     return m_protein;
   }
 
-  glutils::buf_obj_t get_coord_bo();
+  glutils::bufobj_ptr_t get_coord_bo();
 
-  glutils::buf_obj_t get_radii_bo();
+  glutils::bufobj_ptr_t get_radii_bo();
 
-  glutils::buf_obj_t get_bonds_bo();
+  glutils::bufobj_ptr_t get_bonds_bo();
 
-  glutils::buf_obj_t get_bb_coord_bo();
+  glutils::bufobj_ptr_t get_bb_coord_bo();
 
-  glutils::buf_obj_t get_bb_bonds_bo();
+  glutils::bufobj_ptr_t get_bb_bonds_bo();
 };
 
 #include <cpputils.h>
@@ -313,7 +313,7 @@ public:
 
   void               update_atom_color_bo();
 
-  inline glutils::buf_obj_t
+  inline glutils::bufobj_ptr_t
       get_atom_color_bo() const
   {
     return m_atom_color_bo;
@@ -321,13 +321,13 @@ public:
 
 private:
 
-  uint               get_updated_num_groups()const ;
+  uint                  get_updated_num_groups()const ;
 
-  protein_t         *m_protein;
-  eGroupAtomsBy      m_grouping_type;
-  atom_color_t      *m_group_colors;
-  int                m_num_groups;
-  glutils::buf_obj_t m_atom_color_bo;
+  protein_t            *m_protein;
+  eGroupAtomsBy         m_grouping_type;
+  atom_color_t         *m_group_colors;
+  int                   m_num_groups;
+  glutils::bufobj_ptr_t m_atom_color_bo;
 
 public:
   static std::string get_groupby_displaystr(eGroupAtomsBy g);

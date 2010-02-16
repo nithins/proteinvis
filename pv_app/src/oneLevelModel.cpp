@@ -104,9 +104,9 @@ onelevel_model_t::~onelevel_model_t ()
 }
 
 void onelevel_model_t::render_spheres
-( glutils::buf_obj_t center_coord ,
-  glutils::buf_obj_t sphere_color,
-  glutils::buf_obj_t sphere_radii ,
+( glutils::bufobj_ptr_t center_coord ,
+  glutils::bufobj_ptr_t sphere_color,
+  glutils::bufobj_ptr_t sphere_radii ,
   const double & add_radius,
   const double & alpha
 ) const
@@ -122,19 +122,19 @@ void onelevel_model_t::render_spheres
 
   GLuint radius_attrib = s_sphereShader->getAttributeLocation ( "radius" );
 
-  sphere_radii.bind_to_vertex_attrib_pointer ( radius_attrib );
+  sphere_radii->bind_to_vertex_attrib_pointer ( radius_attrib );
 
-  sphere_color.bind_to_color_pointer();
+  sphere_color->bind_to_color_pointer();
 
-  center_coord.bind_to_vertex_pointer();
+  center_coord->bind_to_vertex_pointer();
 
-  glDrawArrays ( GL_POINTS, 0, center_coord.get_num_items() );
+  glDrawArrays ( GL_POINTS, 0, center_coord->get_num_items() );
 
-  center_coord.unbind_from_vertex_pointer();
+  center_coord->unbind_from_vertex_pointer();
 
-  sphere_color.unbind_from_color_pointer();
+  sphere_color->unbind_from_color_pointer();
 
-  sphere_radii.unbind_from_vertex_attrib_pointer ( radius_attrib );
+  sphere_radii->unbind_from_vertex_attrib_pointer ( radius_attrib );
 
   s_sphereShader->disable();
 
@@ -142,10 +142,10 @@ void onelevel_model_t::render_spheres
 }
 
 void onelevel_model_t::render_spheres
-( glutils::buf_obj_t center_coord,
-  glutils::buf_obj_t sphere_color,
-  glutils::buf_obj_t sphere_radii,
-  glutils::buf_obj_t sphere_indxs,
+( glutils::bufobj_ptr_t center_coord,
+  glutils::bufobj_ptr_t sphere_color,
+  glutils::bufobj_ptr_t sphere_radii,
+  glutils::bufobj_ptr_t sphere_indxs,
   const double & add_radius,
   const double & alpha
 ) const
@@ -161,23 +161,23 @@ void onelevel_model_t::render_spheres
 
   GLuint radius_attrib = s_sphereShader->getAttributeLocation ( "radius" );
 
-  sphere_radii.bind_to_vertex_attrib_pointer ( radius_attrib );
+  sphere_radii->bind_to_vertex_attrib_pointer ( radius_attrib );
 
-  sphere_color.bind_to_color_pointer();
+  sphere_color->bind_to_color_pointer();
 
-  center_coord.bind_to_vertex_pointer();
+  center_coord->bind_to_vertex_pointer();
 
-  glBindBuffer ( sphere_indxs.target, sphere_indxs.id );
+  glBindBuffer ( sphere_indxs->target(), sphere_indxs->id() );
 
-  glDrawElements ( GL_POINTS, sphere_indxs.get_num_items(), sphere_indxs.src_type, 0 );
+  glDrawElements ( GL_POINTS, sphere_indxs->get_num_items(), sphere_indxs->src_type(), 0 );
 
-  glBindBuffer ( sphere_indxs.target, 0 );
+  glBindBuffer ( sphere_indxs->target(), 0 );
 
-  center_coord.unbind_from_vertex_pointer();
+  center_coord->unbind_from_vertex_pointer();
 
-  sphere_color.unbind_from_color_pointer();
+  sphere_color->unbind_from_color_pointer();
 
-  sphere_radii.unbind_from_vertex_attrib_pointer ( radius_attrib );
+  sphere_radii->unbind_from_vertex_attrib_pointer ( radius_attrib );
 
   s_sphereShader->disable();
 
@@ -185,8 +185,8 @@ void onelevel_model_t::render_spheres
 }
 
 void onelevel_model_t::render_spheres
-( glutils::buf_obj_t center_coord ,
-  glutils::buf_obj_t sphere_color,
+( glutils::bufobj_ptr_t center_coord ,
+  glutils::bufobj_ptr_t sphere_color,
   double sphere_radius ) const
 
 {
@@ -203,15 +203,15 @@ void onelevel_model_t::render_spheres
 
   glVertexAttrib1f ( radius_attrib, ( float ) sphere_radius );
 
-  sphere_color.bind_to_color_pointer();
+  sphere_color->bind_to_color_pointer();
 
-  center_coord.bind_to_vertex_pointer();
+  center_coord->bind_to_vertex_pointer();
 
-  glDrawArrays ( GL_POINTS, 0, center_coord.get_num_items() );
+  glDrawArrays ( GL_POINTS, 0, center_coord->get_num_items() );
 
-  center_coord.unbind_from_vertex_pointer();
+  center_coord->unbind_from_vertex_pointer();
 
-  sphere_color.unbind_from_color_pointer();
+  sphere_color->unbind_from_color_pointer();
 
   s_sphereShader->disable();
 
@@ -219,10 +219,10 @@ void onelevel_model_t::render_spheres
 }
 
 void onelevel_model_t::render_spheres
-( glutils::buf_obj_t center_coord ,
-  glutils::buf_obj_t sphere_color,
+( glutils::bufobj_ptr_t center_coord ,
+  glutils::bufobj_ptr_t sphere_color,
   double sphere_radius,
-  glutils::buf_obj_t sphere_indxs ) const
+  glutils::bufobj_ptr_t sphere_indxs ) const
 
 {
 
@@ -238,19 +238,19 @@ void onelevel_model_t::render_spheres
 
   glVertexAttrib1f ( radius_attrib, ( float ) sphere_radius );
 
-  sphere_color.bind_to_color_pointer();
+  sphere_color->bind_to_color_pointer();
 
-  center_coord.bind_to_vertex_pointer();
+  center_coord->bind_to_vertex_pointer();
 
-  glBindBuffer ( sphere_indxs.target, sphere_indxs.id );
+  glBindBuffer ( sphere_indxs->target(), sphere_indxs->id() );
 
-  glDrawElements ( GL_POINTS, sphere_indxs.get_num_items(), sphere_indxs.src_type, 0 );
+  glDrawElements ( GL_POINTS, sphere_indxs->get_num_items(), sphere_indxs->src_type(), 0 );
 
-  glBindBuffer ( sphere_indxs.target, 0 );
+  glBindBuffer ( sphere_indxs->target(), 0 );
 
-  center_coord.unbind_from_vertex_pointer();
+  center_coord->unbind_from_vertex_pointer();
 
-  sphere_color.unbind_from_color_pointer();
+  sphere_color->unbind_from_color_pointer();
 
   s_sphereShader->disable();
 
@@ -258,8 +258,8 @@ void onelevel_model_t::render_spheres
 }
 
 void onelevel_model_t::render_cylinders
-( glutils::buf_obj_t endpts_coord,
-  glutils::buf_obj_t endpts_indxs,
+( glutils::bufobj_ptr_t endpts_coord,
+  glutils::bufobj_ptr_t endpts_indxs,
   double cyl_radius ) const
 {
 
@@ -269,15 +269,15 @@ void onelevel_model_t::render_cylinders
 
   s_cylinderShader->sendUniform ( "ug_cylinder_radius", ( float ) cyl_radius );
 
-  endpts_coord.bind_to_vertex_pointer();
+  endpts_coord->bind_to_vertex_pointer();
 
-  glBindBuffer ( endpts_indxs.target, endpts_indxs.id );
+  glBindBuffer ( endpts_indxs->target(), endpts_indxs->id() );
 
-  glDrawElements ( GL_LINES, endpts_indxs.get_num_items() *2, endpts_indxs.src_type, 0 );
+  glDrawElements ( GL_LINES, endpts_indxs->get_num_items() *2, endpts_indxs->src_type(), 0 );
 
-  glBindBuffer ( endpts_indxs.target, 0 );
+  glBindBuffer ( endpts_indxs->target(), 0 );
 
-  endpts_coord.unbind_from_vertex_pointer();
+  endpts_coord->unbind_from_vertex_pointer();
 
   s_cylinderShader->disable();
 

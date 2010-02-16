@@ -254,10 +254,8 @@ void pocket_model_t::clear_render()
     m_ren = NULL;
   }
 
-  m_atom_indxs.clear();
-
-  m_atom_bonds.clear();
-
+  m_atom_indxs.reset();
+  m_atom_bonds.reset();
 }
 
 
@@ -325,17 +323,17 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
 
   uint num_tet       = ( tet_end - tet_begin ) / 4;
 
-  glutils::buf_obj_t ver_bo = m_protein_rd->get_coord_bo();
+  glutils::bufobj_ptr_t ver_bo = m_protein_rd->get_coord_bo();
 
-  glutils::buf_obj_t tet_bo
-  ( m_pockets.tet_idx + tet_begin,
-    GL_UNSIGNED_INT,
-    4,
-    GL_ELEMENT_ARRAY_BUFFER,
-    num_tet*4*sizeof ( uint ),
-    0 );
+  glutils::bufobj_ptr_t tet_bo = glutils::buf_obj_t::create_bo
+                                 (m_pockets.tet_idx + tet_begin,
+                                  GL_UNSIGNED_INT,
+                                  4,
+                                  GL_ELEMENT_ARRAY_BUFFER,
+                                  num_tet*4*sizeof ( uint ),
+                                  0 );
 
-  glutils::buf_obj_t col_bo;
+  glutils::bufobj_ptr_t col_bo = glutils::buf_obj_t::create_bo();
 
   m_ren = glutils::create_buffered_flat_tetrahedrons_ren ( ver_bo, tet_bo, col_bo );
 
@@ -368,21 +366,13 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
 
   m_protein_rd->get_protein()->get_subset_atom_bonds ( atomset, num_atomset, bondset, num_bondset );
 
-  m_atom_indxs.src_ptr    = atomset;
-  m_atom_indxs.src_type   = GL_UNSIGNED_INT ;
-  m_atom_indxs.src_comp   = 1 ;
-  m_atom_indxs.target     = GL_ELEMENT_ARRAY_BUFFER;
-  m_atom_indxs.stride     = 0;
-  m_atom_indxs.size       = num_atomset * sizeof ( uint );
-  m_atom_indxs.upload();
+  m_atom_indxs = glutils::buf_obj_t::create_bo
+                 (atomset,GL_UNSIGNED_INT,1,
+                  GL_ELEMENT_ARRAY_BUFFER,num_atomset * sizeof ( uint ),0);
 
-  m_atom_bonds.src_ptr    = bondset;
-  m_atom_bonds.src_type   = GL_UNSIGNED_INT ;
-  m_atom_bonds.src_comp   = 2 ;
-  m_atom_bonds.target     = GL_ELEMENT_ARRAY_BUFFER;
-  m_atom_bonds.stride     = 0;
-  m_atom_bonds.size       = num_bondset * 2 * sizeof ( uint );
-  m_atom_bonds.upload();
+  m_atom_bonds = glutils::buf_obj_t::create_bo
+                 (bondset,GL_UNSIGNED_INT,2,
+                  GL_ELEMENT_ARRAY_BUFFER,num_bondset * 2 * sizeof ( uint ),0);
 
   delete []bondset;
   delete []atomset;

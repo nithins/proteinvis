@@ -26,14 +26,6 @@ class protein_rd_t;
 
 class GLSLProgram;
 
-namespace glutils
-{
-
-  class buf_obj_t;
-
-  class BufobjArrayRenderer;
-}
-
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
@@ -49,9 +41,9 @@ class onelevel_model_t
 
 
     inline void render_sf
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
-      glutils::buf_obj_t atom_radii,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
+      glutils::bufobj_ptr_t atom_radii,
       const double & add_radius = 0.0,
       const double & alpha = 0.0 ) const
     {
@@ -59,10 +51,10 @@ class onelevel_model_t
     }
 
     inline void render_sf
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
-      glutils::buf_obj_t atom_radii,
-      glutils::buf_obj_t atom_indxs,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
+      glutils::bufobj_ptr_t atom_radii,
+      glutils::bufobj_ptr_t atom_indxs,
       const double & add_radius = 0.0,
       const double & alpha = 0.0 ) const
     {
@@ -70,27 +62,27 @@ class onelevel_model_t
     }
 
     inline void render_sf
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
       double atom_radius ) const
     {
       render_spheres ( atom_coord, atom_color, atom_radius );
     }
 
     inline void render_sf
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
       double atom_radius,
-      glutils::buf_obj_t atom_indxs ) const
+      glutils::bufobj_ptr_t atom_indxs ) const
     {
       render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
     }
 
     inline void render_bs
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
       double atom_radius,
-      glutils::buf_obj_t atom_bonds,
+      glutils::bufobj_ptr_t atom_bonds,
       double bond_radius ) const
     {
       render_spheres ( atom_coord, atom_color, atom_radius );
@@ -101,11 +93,11 @@ class onelevel_model_t
     }
 
     inline void render_bs
-    ( glutils::buf_obj_t atom_coord,
-      glutils::buf_obj_t atom_color,
+    ( glutils::bufobj_ptr_t atom_coord,
+      glutils::bufobj_ptr_t atom_color,
       double atom_radius,
-      glutils::buf_obj_t atom_indxs,
-      glutils::buf_obj_t atom_bonds,
+      glutils::bufobj_ptr_t atom_indxs,
+      glutils::bufobj_ptr_t atom_bonds,
       double bond_radius ) const
     {
       render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
@@ -135,34 +127,34 @@ class onelevel_model_t
   private:
 
     void render_spheres
-    ( glutils::buf_obj_t center_coord,
-      glutils::buf_obj_t sphere_color,
-      glutils::buf_obj_t sphere_radii,
+    ( glutils::bufobj_ptr_t center_coord,
+      glutils::bufobj_ptr_t sphere_color,
+      glutils::bufobj_ptr_t sphere_radii,
       const double &add_radius ,
       const double &alpha ) const;
 
     void render_spheres
-    ( glutils::buf_obj_t center_coord,
-      glutils::buf_obj_t sphere_color,
-      glutils::buf_obj_t sphere_radii,
-      glutils::buf_obj_t sphere_indxs ,
+    ( glutils::bufobj_ptr_t center_coord,
+      glutils::bufobj_ptr_t sphere_color,
+      glutils::bufobj_ptr_t sphere_radii,
+      glutils::bufobj_ptr_t sphere_indxs ,
       const double &add_radius,
       const double &alpha ) const;
 
     void render_spheres
-    ( glutils::buf_obj_t center_coord ,
-      glutils::buf_obj_t sphere_color,
+    ( glutils::bufobj_ptr_t center_coord ,
+      glutils::bufobj_ptr_t sphere_color,
       double sphere_radius ) const;
 
     void render_spheres
-    ( glutils::buf_obj_t center_coord ,
-      glutils::buf_obj_t sphere_color,
+    ( glutils::bufobj_ptr_t center_coord ,
+      glutils::bufobj_ptr_t sphere_color,
       double sphere_radius,
-      glutils::buf_obj_t sphere_indxs ) const;
+      glutils::bufobj_ptr_t sphere_indxs ) const;
 
     void render_cylinders
-    ( glutils::buf_obj_t endpts_coord,
-      glutils::buf_obj_t endpts_indxs,
+    ( glutils::bufobj_ptr_t endpts_coord,
+      glutils::bufobj_ptr_t endpts_indxs,
       double cyl_radius
     ) const;
 

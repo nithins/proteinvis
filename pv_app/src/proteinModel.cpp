@@ -212,11 +212,16 @@ void ProteinModel::setup_surface()
     vrts[i] *= scalarfactor;
   }
 
-  glutils::buf_obj_t vrt_bo ( vrts, GL_DOUBLE, 3, GL_ARRAY_BUFFER, sizeof ( double )  *3*vrt_ct, 0 );
+  glutils::bufobj_ptr_t vrt_bo,tri_bo,col_bo;
 
-  glutils::buf_obj_t tri_bo ( tris , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER, sizeof ( uint ) *3*tri_ct, 0 );
+  vrt_bo  = glutils::buf_obj_t::create_bo
+            (vrts, GL_DOUBLE, 3, GL_ARRAY_BUFFER,sizeof( double )*3*vrt_ct, 0 );
 
-  glutils::buf_obj_t col_bo;
+  tri_bo = glutils::buf_obj_t::create_bo
+           (tris , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER,
+            sizeof ( uint ) *3*tri_ct, 0 );
+
+  col_bo = glutils::buf_obj_t::create_bo();
 
   m_surface_renderer = glutils::create_buffered_tristrip_ren ( vrt_bo, tri_bo, col_bo );
 

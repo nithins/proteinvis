@@ -188,7 +188,8 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
     if ( string ( line.begin(), line.begin() + num_e_pfx.size() ) == num_e_pfx )
     {
-      stringstream linestream ( string ( line.begin() + num_e_pfx.size(), line.end() ) );
+      stringstream linestream
+          ( string ( line.begin() + num_e_pfx.size(), line.end() ) );
 
       linestream >> num_eges;
 
@@ -292,15 +293,23 @@ void alpha_complex_model_t::read_file ( const char * filename )
     tris[3*num_tris_added+2] = it->elements[2];
   }
 
-  glutils::buf_obj_t tet_bo ( tets, GL_UNSIGNED_INT, 4, GL_ELEMENT_ARRAY_BUFFER, sizeof ( uint )  *4*num_tets, 0 );
+  glutils::bufobj_ptr_t tet_bo,tri_bo,ege_bo,vrt_bo,col_bo;
 
-  glutils::buf_obj_t tri_bo ( tris , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER, sizeof ( uint ) *3*num_tris, 0 );
+  tet_bo = glutils::buf_obj_t::create_bo( tets, GL_UNSIGNED_INT, 4,
+                                          GL_ELEMENT_ARRAY_BUFFER,
+                                          sizeof ( uint )  *4*num_tets, 0 );
 
-  glutils::buf_obj_t ege_bo ( eges , GL_UNSIGNED_INT, 2, GL_ELEMENT_ARRAY_BUFFER, sizeof ( uint ) *2*num_eges, 0 );
+  tri_bo = glutils::buf_obj_t::create_bo( tris, GL_UNSIGNED_INT, 3,
+                                          GL_ELEMENT_ARRAY_BUFFER,
+                                          sizeof ( uint )  *3*num_tris, 0 );
 
-  glutils::buf_obj_t vrt_bo = m_protein_rd->get_coord_bo();
+  ege_bo = glutils::buf_obj_t::create_bo( tris, GL_UNSIGNED_INT, 2,
+                                          GL_ELEMENT_ARRAY_BUFFER,
+                                          sizeof ( uint )  *2*num_eges, 0 );
 
-  glutils::buf_obj_t col_bo;
+  vrt_bo = m_protein_rd->get_coord_bo();
+
+  col_bo = glutils::buf_obj_t::create_bo();
 
   m_tet_ren = glutils::create_buffered_flat_tetrahedrons_ren ( vrt_bo, tet_bo, col_bo );
 

@@ -542,15 +542,11 @@ void protein_rd_t::upload_data_items()
     atom_coords[3*i+2] = m_protein->get_atoms() [i].z;
   }
 
-  m_atom_coord_bo.src_ptr  = atom_coords;
+  m_atom_coord_bo = glutils::buf_obj_t::create_bo
+                    (atom_coords,GL_DOUBLE,3,GL_ARRAY_BUFFER,
+                     sizeof ( GLdouble ) * 3 * m_protein->get_num_atoms(),0);
 
-  m_atom_coord_bo.src_type = GL_DOUBLE;
-  m_atom_coord_bo.src_comp = 3;
-  m_atom_coord_bo.target   = GL_ARRAY_BUFFER;
-  m_atom_coord_bo.size     = sizeof ( GLdouble ) * 3 * m_protein->get_num_atoms();
-  m_atom_coord_bo.stride   = 0;
-  m_atom_coord_bo.create();
-  m_atom_coord_bo.upload();
+  delete []atom_coords;
 
   // a bo to hold the radii of each atom
 
@@ -562,51 +558,31 @@ void protein_rd_t::upload_data_items()
   }
 
 
-  m_atom_radii_bo.src_ptr  = atom_radii;
+  m_atom_radii_bo = glutils::buf_obj_t::create_bo
+                    (atom_radii,GL_DOUBLE,1,GL_ARRAY_BUFFER,
+                     sizeof ( GLdouble ) * m_protein->get_num_atoms(),0);
 
-  m_atom_radii_bo.src_type = GL_DOUBLE;
-  m_atom_radii_bo.src_comp = 1;
-  m_atom_radii_bo.target   = GL_ARRAY_BUFFER;
-  m_atom_radii_bo.size     = sizeof ( GLdouble ) * m_protein->get_num_atoms();
-  m_atom_radii_bo.stride   = 0;
-  m_atom_radii_bo.create();
-  m_atom_radii_bo.upload();
+  delete []atom_radii;
 
-  // a vbo to hold the bonds of each atom
-
-  m_atom_bonds_bo.src_ptr  = m_protein->get_bonds();
-
-  m_atom_bonds_bo.src_type = GL_UNSIGNED_INT;
-  m_atom_bonds_bo.src_comp = 2;
-  m_atom_bonds_bo.target   = GL_ELEMENT_ARRAY_BUFFER;
-  m_atom_bonds_bo.size     = sizeof ( GLuint ) * 2 * m_protein->get_num_bonds ();
-  m_atom_bonds_bo.stride   = 0;
-  m_atom_bonds_bo.create();
-  m_atom_bonds_bo.upload();
+  // a bo to hold the bonds of each atom
+  m_atom_bonds_bo = glutils::buf_obj_t::create_bo
+                    (m_protein->get_bonds(),GL_UNSIGNED_INT,2,
+                     GL_ELEMENT_ARRAY_BUFFER,
+                     sizeof ( GLuint ) * 2 * m_protein->get_num_bonds (),0);
 
   // vbo for holding the indices of all atoms that are on the backbone
 
-  m_bb_atom_indices_bo.src_ptr  = m_protein->get_bb_atoms_idx();
-
-  m_bb_atom_indices_bo.src_type = GL_UNSIGNED_INT;
-  m_bb_atom_indices_bo.src_comp = 1;
-  m_bb_atom_indices_bo.target   = GL_ELEMENT_ARRAY_BUFFER;
-  m_bb_atom_indices_bo.size     = sizeof ( GLuint ) * m_protein->get_num_bb_atoms ();
-  m_bb_atom_indices_bo.stride   = 0;
-  m_bb_atom_indices_bo.create();
-  m_bb_atom_indices_bo.upload();
+  m_bb_atom_indices_bo = glutils::buf_obj_t::create_bo
+                         (m_protein->get_bb_atoms_idx(),GL_UNSIGNED_INT,1,
+                          GL_ELEMENT_ARRAY_BUFFER,
+                          sizeof ( GLuint ) * m_protein->get_num_bb_atoms(),0);
 
   // vbo for holding the indices of all atoms that are on the backbone
 
-  m_bb_bond_indices_bo.src_ptr  = m_protein->get_bb_bonds();
-
-  m_bb_bond_indices_bo.src_type = GL_UNSIGNED_INT;
-  m_bb_bond_indices_bo.src_comp = 2;
-  m_bb_bond_indices_bo.target   = GL_ELEMENT_ARRAY_BUFFER;
-  m_bb_bond_indices_bo.size     = sizeof ( GLuint ) * 2 * m_protein->get_num_bb_bonds ();
-  m_bb_bond_indices_bo.stride   = 0;
-  m_bb_bond_indices_bo.create();
-  m_bb_bond_indices_bo.upload();
+  m_bb_bond_indices_bo = glutils::buf_obj_t::create_bo
+                         (m_protein->get_bb_bonds(),GL_UNSIGNED_INT,2,
+                          GL_ELEMENT_ARRAY_BUFFER,
+                          sizeof ( GLuint )*2*m_protein->get_num_bb_bonds(),0);
 }
 
 void protein_rd_t::compute_extent()
@@ -648,41 +624,29 @@ void protein_rd_t::get_extent ( double *extent )
 
 protein_rd_t::~protein_rd_t ( )
 {
-
-  double * atom_coords = ( double * ) m_atom_coord_bo.src_ptr;
-  double * atom_radiis = ( double * ) m_atom_radii_bo.src_ptr;
-
-  delete []atom_coords;
-  delete []atom_radiis;
-
-  m_atom_coord_bo.clear();
-  m_atom_radii_bo.clear();
-  m_atom_bonds_bo.clear();
-  m_bb_atom_indices_bo.clear();
-  m_bb_bond_indices_bo.clear();
 }
 
-glutils::buf_obj_t protein_rd_t::get_coord_bo()
+glutils::bufobj_ptr_t protein_rd_t::get_coord_bo()
 {
   return m_atom_coord_bo;
 }
 
-glutils::buf_obj_t protein_rd_t::get_bonds_bo()
+glutils::bufobj_ptr_t protein_rd_t::get_bonds_bo()
 {
   return m_atom_bonds_bo;
 }
 
-glutils::buf_obj_t protein_rd_t::get_radii_bo()
+glutils::bufobj_ptr_t protein_rd_t::get_radii_bo()
 {
   return m_atom_radii_bo;
 }
 
-glutils::buf_obj_t protein_rd_t::get_bb_bonds_bo()
+glutils::bufobj_ptr_t protein_rd_t::get_bb_bonds_bo()
 {
   return m_bb_bond_indices_bo;
 }
 
-glutils::buf_obj_t protein_rd_t::get_bb_coord_bo()
+glutils::bufobj_ptr_t protein_rd_t::get_bb_coord_bo()
 {
   return m_bb_atom_indices_bo;
 }
@@ -944,12 +908,9 @@ void  protein_grouping_t::update_atom_color_bo()
     atom_colors[3*i+2] = col[2];
   }
 
-  m_atom_color_bo.set
-      (atom_colors,GL_DOUBLE,3,GL_ARRAY_BUFFER,
-       3*sizeof(double)*m_protein->get_num_atoms(),0);
-
-  m_atom_color_bo.create();
-  m_atom_color_bo.upload();
+  m_atom_color_bo = glutils::buf_obj_t::create_bo
+                    (atom_colors,GL_DOUBLE,3,GL_ARRAY_BUFFER,
+                     3*sizeof(double)*m_protein->get_num_atoms(),0);
 
   delete []atom_colors;
 }
