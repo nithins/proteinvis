@@ -70,7 +70,7 @@ void PointLight(in int i,
 
 const vec4  uf_border_color              = vec4(0.0,0.0,0.0,1.0);
 const float uf_border_color_start_cosine = 0.5;
-const float uf_use_border_hinting        = 0.0;
+const float uf_use_border_hinting        = 1.0;
 
 void main()
 {
