@@ -33,8 +33,11 @@
 
 using namespace std;
 
-typedef set < uint_3_tuple_t, bool ( * ) ( const uint_3_tuple_t&, const uint_3_tuple_t& ) > tri_set_t;
-typedef set < uint_2_tuple_t, bool ( * ) ( const uint_2_tuple_t&, const uint_2_tuple_t& ) > ege_set_t;
+typedef three_tuple_t<unsigned int,false> tri_t;
+typedef two_tuple_t<unsigned int,false> ege_t;
+
+typedef std::set < tri_t> tri_set_t;
+typedef std::set < ege_t> ege_set_t;
 
 const char * g_num_tets_line_prefix = "REMARK  Number of tetrahedra :";
 
@@ -141,7 +144,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   uint num_tris_read = 0;
 
-  tri_set_t tri_set ( uint_3_tuple_t::unordered_compare );
+  tri_set_t tri_set;
 
   while ( !alpFile.eof() )
   {
@@ -165,7 +168,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
     uint v3 = atoi ( tokens[4].c_str() ) - 1;
 
-    tri_set.insert ( uint_3_tuple_t ( v1, v2, v3 ) );
+    tri_set.insert ( tri_t ( v1, v2, v3 ) );
 
     tokens.clear();
 
@@ -198,7 +201,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   }
 
-  ege_set_t ege_set ( uint_2_tuple_t::unordered_compare );
+  ege_set_t ege_set;
 
   uint num_eges_read = 0;
 
@@ -222,7 +225,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
     uint v2 = atoi ( tokens[3].c_str() ) - 1;
 
-    ege_set.insert ( uint_2_tuple_t ( v1, v2 ) );
+    ege_set.insert ( ege_t( v1, v2 ) );
 
     tokens.clear();
 
@@ -244,13 +247,13 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   for ( tri_set_t::iterator it = tri_set.begin();it != tri_set.end() ;++it )
   {
-    uint v1 = it->elements[0];
-    uint v2 = it->elements[1];
-    uint v3 = it->elements[2];
+    uint v1 = (*it)[0];
+    uint v2 = (*it)[1];
+    uint v3 = (*it)[2];
 
-    ege_set.erase ( uint_2_tuple_t ( v1, v2 ) );
-    ege_set.erase ( uint_2_tuple_t ( v2, v3 ) );
-    ege_set.erase ( uint_2_tuple_t ( v3, v1 ) );
+    ege_set.erase ( ege_t( v1, v2 ) );
+    ege_set.erase ( ege_t( v2, v3 ) );
+    ege_set.erase ( ege_t( v3, v1 ) );
   }
 
   num_eges = ege_set.size();
@@ -261,8 +264,8 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   for ( ege_set_t::iterator it = ege_set.begin();it != ege_set.end();++it, ++num_eges_added )
   {
-    eges[2*num_eges_added+0] = it->elements[0];
-    eges[2*num_eges_added+1] = it->elements[1];
+    eges[2*num_eges_added+0] = (*it)[0];
+    eges[2*num_eges_added+1] = (*it)[1];
   }
 
   // throw away all triangles present in the tetra set
@@ -274,10 +277,10 @@ void alpha_complex_model_t::read_file ( const char * filename )
     uint v3 = tets[4*i+2];
     uint v4 = tets[4*i+3];
 
-    tri_set.erase ( uint_3_tuple_t ( v2, v3, v4 ) );
-    tri_set.erase ( uint_3_tuple_t ( v1, v3, v4 ) );
-    tri_set.erase ( uint_3_tuple_t ( v1, v2, v4 ) );
-    tri_set.erase ( uint_3_tuple_t ( v1, v3, v3 ) );
+    tri_set.erase ( tri_t( v2, v3, v4 ) );
+    tri_set.erase ( tri_t( v1, v3, v4 ) );
+    tri_set.erase ( tri_t( v1, v2, v4 ) );
+    tri_set.erase ( tri_t( v1, v3, v3 ) );
   }
 
   num_tris = tri_set.size();
@@ -288,9 +291,9 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   for ( tri_set_t::iterator it = tri_set.begin();it != tri_set.end();++it, ++num_tris_added )
   {
-    tris[3*num_tris_added+0] = it->elements[0];
-    tris[3*num_tris_added+1] = it->elements[1];
-    tris[3*num_tris_added+2] = it->elements[2];
+    tris[3*num_tris_added+0] = (*it)[0];
+    tris[3*num_tris_added+1] = (*it)[1];
+    tris[3*num_tris_added+2] = (*it)[2];
   }
 
   glutils::bufobj_ptr_t tet_bo,tri_bo,ege_bo,vrt_bo,col_bo;

@@ -36,6 +36,8 @@
 #include <QFileDialog>
 #include <ui_ProteinModelFrame.h>
 
+#include <boost/array.hpp>
+
 
 
 using namespace std;
@@ -178,7 +180,8 @@ void ProteinModel::setup_surface()
 
   uint    vrt_ct, tri_ct;
 
-  copy(g_default_surface_color,g_default_surface_color+3,m_surface_color.elements);
+  copy(g_default_surface_color,
+       g_default_surface_color+3,m_surface_color.begin());
 
   glutils::read_off_file ( m_surface_filename.c_str(), vrts, vrt_ct, tris, tri_ct );
 
@@ -477,7 +480,7 @@ int ProteinModel::Render() const
 
     glEnable ( GL_RESCALE_NORMAL );
 
-    glColor3ubv ( m_surface_color.elements);
+    glColor3ubv ( m_surface_color.data());
 
     switch ( m_surface_render_mode )
     {
