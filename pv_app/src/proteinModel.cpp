@@ -82,9 +82,9 @@ enum ePocketRenderMode
   PRM_SHOW_ALL,
 };
 
-const double g_ball_stick_atom_radius = 0.4;
+const double g_ball_stick_atom_radius = 0.5;
 
-const double g_ball_stick_bond_radius = 0.2;
+const double g_ball_stick_bond_radius = 0.1;
 
 const double g_small_space_fill_atom_radius = g_ball_stick_atom_radius;
 
