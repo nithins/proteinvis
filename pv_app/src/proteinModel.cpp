@@ -174,16 +174,13 @@ void ProteinModel::setup_surface()
   if ( m_surface_filename.size() == 0 )
     return;
 
-  double *vrts;
-
-  uint   *tris;
-
-  uint    vrt_ct, tri_ct;
+  glutils::vertex_list_t  vlist;
+  glutils::tri_idx_list_t tlist;
 
   copy(g_default_surface_color,
        g_default_surface_color+3,m_surface_color.begin());
 
-  glutils::read_off_file ( m_surface_filename.c_str(), vrts, vrt_ct, tris, tri_ct );
+  glutils::read_off_file ( m_surface_filename.c_str(), vlist,tlist);
 
   double max_val = 0.0;
 
@@ -210,26 +207,24 @@ void ProteinModel::setup_surface()
     scalarfactor = scalarfactor * 10;
   }
 
-  for ( uint i = 0;i < 3*vrt_ct; i++ )
+  for ( uint i = 0;i < vlist.size(); i++ )
   {
-    vrts[i] *= scalarfactor;
+    vlist[i] *= scalarfactor;
   }
 
   glutils::bufobj_ptr_t vrt_bo,tri_bo,col_bo;
 
   vrt_bo  = glutils::buf_obj_t::create_bo
-            (vrts, GL_DOUBLE, 3, GL_ARRAY_BUFFER,sizeof( double )*3*vrt_ct, 0 );
+            (vlist.data(), GL_DOUBLE, 3, GL_ARRAY_BUFFER,sizeof( double )*3*vlist.size(), 0 );
 
   tri_bo = glutils::buf_obj_t::create_bo
-           (tris , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER,
-            sizeof ( uint ) *3*tri_ct, 0 );
+           (tlist.data() , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER,
+            sizeof ( uint ) *3*tlist.size(), 0 );
 
   col_bo = glutils::buf_obj_t::create_bo();
 
   m_surface_renderer = glutils::create_buffered_tristrip_ren ( vrt_bo, tri_bo, col_bo );
 
-  delete []vrts;
-  delete []tris;
 
 }
 

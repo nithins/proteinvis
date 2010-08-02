@@ -37,6 +37,8 @@
 
 #include <protein.h>
 
+#include <limits>
+
 uchar g_standard_colors[][3] =
 {
   {0x00, 0x00, 0x00}, //Black
@@ -589,9 +591,12 @@ void protein_rd_t::compute_extent()
 {
   double extent[] =
   {
-    DBL_MAX, DBL_MIN,
-    DBL_MAX, DBL_MIN,
-    DBL_MAX, DBL_MIN
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::min(),
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::min(),
+    std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::min(),
   };
 
   for ( uint i = 0 ;i < m_protein->get_num_atoms();i++ )
@@ -940,7 +945,7 @@ void protein_t::transform_and_save_crd
 
   {
     if ( infile.eof() )
-      throw genericException ( "unable to read file" );
+      throw std::runtime_error ( "unable to read file" );
 
     getline ( infile, line );
 
@@ -951,7 +956,7 @@ void protein_t::transform_and_save_crd
     linestream >> num_atoms;
 
     if ( num_atoms <= 0 )
-      throw genericException ( "zero atom info in file" );
+      throw std::runtime_error ( "zero atom info in file" );
   }
 
   uint num_atoms_read = 0;
@@ -981,7 +986,7 @@ void protein_t::transform_and_save_crd
       linestream >> atomno;
 
       if ( atomno - 1 != num_atoms_read )
-        throw genericException ( "incorrectly numbered atom no in atom info " );
+        throw std::runtime_error ( "incorrectly numbered atom no in atom info " );
 
       linestream
           >> x
@@ -1028,7 +1033,7 @@ void protein_t::transform_and_save_crd
     }
 
     if ( num_atoms_read != num_atoms )
-      throw genericException ( "incorrect no of atoms read from the atom info" );
+      throw std::runtime_error ( "incorrect no of atoms read from the atom info" );
 
     while ( !infile.eof() )
     {
@@ -1061,7 +1066,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
     {
       if ( crdfile.eof() )
-        throw genericException ( "unable to read file" );
+        throw std::runtime_error ( "unable to read file" );
 
       getline ( crdfile, line );
 
@@ -1070,7 +1075,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
       linestream >> num_atoms;
 
       if ( num_atoms <= 0 )
-        throw genericException ( "zero atom info in file" );
+        throw std::runtime_error ( "zero atom info in file" );
     }
 
 
@@ -1114,7 +1119,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
         linestream >> atomno;
 
         if ( atomno - 1 != num_atoms_read )
-          throw genericException ( "incorrectly numbered atom no in atom info " );
+          throw std::runtime_error ( "incorrectly numbered atom no in atom info " );
 
         linestream
 
@@ -1141,7 +1146,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
       }
 
       if ( num_atoms_read != num_atoms )
-        throw genericException ( "incorrect no of atoms read from the atom info" );
+        throw std::runtime_error ( "incorrect no of atoms read from the atom info" );
 
       num_atoms_read = 0;
 
@@ -1159,7 +1164,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
         linestream >> atomno;
 
         if ( atomno - 1 != num_atoms_read )
-          throw genericException ( "incorrectly numbered atom no in bond info" );
+          throw std::runtime_error ( "incorrectly numbered atom no in bond info" );
 
         linestream >> atom_bond_ct;
 
@@ -1193,7 +1198,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
       copy ( bonds_vec->begin(), bonds_vec->end(), bonds );
 
       if ( num_atoms_read != num_atoms )
-        throw genericException ( "incorrect no of atoms read from in bond info" );
+        throw std::runtime_error ( "incorrect no of atoms read from in bond info" );
 
       delete bonds_vec;
 
@@ -1369,9 +1374,9 @@ bool read_crd_file ( const char * filename, protein_t &protein )
     return true;
 
   }
-  catch ( genericException e )
+  catch ( std::runtime_error e )
   {
-    _ERROR ( e );
+    _ERROR ( e.what() );
     return false;
   }
 }
@@ -1428,7 +1433,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
     fstream pdbfile ( filename, ios::in );
 
     if ( pdbfile.eof() )
-      throw genericException ( "unable to read file" );
+      throw std::runtime_error ( "unable to read file" );
 
     vector<string> atom_name_vec;
 
@@ -1495,7 +1500,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
          ( acid_no_vec.size()   != num_atoms ) ||
          ( chain_id_vec.size()  != num_atoms )
       )
-      throw genericException ( "list contents inconsistent in size" );
+      throw std::runtime_error ( "list contents inconsistent in size" );
 
     atom_t * atoms = new atom_t[num_atoms];
 
@@ -1663,9 +1668,9 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
       throw;
     }
   }
-  catch ( genericException e )
+  catch ( std::runtime_error e )
   {
-    _ERROR ( e.str() );
+    _ERROR ( e.what() );
     return false;
   }
 

@@ -286,7 +286,7 @@ class protein_grouping_t
 {
 public:
 
-  typedef three_tuple_t<double> atom_color_t;
+  typedef n_vector_t<double,3> atom_color_t;
 
   enum eGroupAtomsBy
   {GROUP_ATOMS_ATOM,

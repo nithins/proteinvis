@@ -33,8 +33,8 @@
 
 using namespace std;
 
-typedef three_tuple_t<unsigned int,false> tri_t;
-typedef two_tuple_t<unsigned int,false> ege_t;
+typedef n_vector_t<unsigned int,3,false> tri_t;
+typedef n_vector_t<unsigned int,2,false> ege_t;
 
 typedef std::set < tri_t> tri_set_t;
 typedef std::set < ege_t> ege_set_t;
@@ -235,13 +235,13 @@ void alpha_complex_model_t::read_file ( const char * filename )
   alpFile.close();
 
   if ( num_tets_read != num_tets )
-    throw genericException ( "Not all Tetras were read " );
+    throw std::runtime_error ( "Not all Tetras were read " );
 
   if ( num_tris_read != num_tris )
-    throw genericException ( "Not all trigs were read " );
+    throw std::runtime_error ( "Not all trigs were read " );
 
   if ( num_eges_read != num_eges )
-    throw genericException ( "Not all edges were read" );
+    throw std::runtime_error ( "Not all edges were read" );
 
   // throw away all edges present in the tri set
 

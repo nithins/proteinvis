@@ -30,6 +30,7 @@
 #include <GLSLProgram.h>
 
 #include <oneLevelModel.h>
+#include <logutil.h>
 
 
 using namespace std;

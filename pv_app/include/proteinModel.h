@@ -41,7 +41,7 @@ class ProteinModel:
 
 {
 public:
-  typedef three_tuple_t<unsigned char> uc_color_t;
+  typedef n_vector_t<unsigned char,3> uc_color_t;
 
 protected:
 
