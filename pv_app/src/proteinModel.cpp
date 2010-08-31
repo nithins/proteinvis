@@ -114,6 +114,11 @@ ProteinModel::ProteinModel ( string pf, string sf, string acf , string pocf, str
     m_pocket_filename ( pocf ),
     m_tetra_filename ( tetf )
 {
+
+}
+
+void ProteinModel::gl_init()
+{
   m_controller = IModelController::Create();
 
   m_protein = new protein_t ( m_protein_filename.c_str() );

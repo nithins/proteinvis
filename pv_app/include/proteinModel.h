@@ -37,7 +37,8 @@ typedef glutils::renderable_t array_renderer_t;
 class ProteinModel:
     public QFrame,
     public IModel,
-    public IHandleInput
+    public IHandleInput,
+    public glutils::renderable_t
 
 {
 public:
@@ -88,6 +89,13 @@ protected:
 public:
   ProteinModel ( std::string , std::string , std::string , std::string, std::string );
   virtual ~ProteinModel ();
+
+  int render()
+  {
+    Render();
+  }
+
+  void gl_init();
 
   virtual int  Render() const;
   //   virtual int  RenderForPick() const;

@@ -31,6 +31,8 @@
 
 #include <proteinModel.h>
 
+#include <viewer.h>
+
 
 using namespace std;
 
@@ -52,6 +54,12 @@ static const std::string  tet_file_replace ( "(())" );
 
 int main ( int argc, char *argv[] )
 {
+
+  QApplication application(argc,argv);
+
+  viewer_mainwindow mw;
+
+  mw.setWindowTitle("PROTEINVIS");
 
   try
   {
@@ -79,7 +87,7 @@ int main ( int argc, char *argv[] )
 
     vector<boost::shared_ptr<ProteinModel> > protein_models;
 
-    boost::shared_ptr<IFramework> framework =  IFramework::Create (argc,argv);
+//    boost::shared_ptr<IFramework> framework =  IFramework::Create (argc,argv);
 
     for ( uint i = 0 ; i < protein_def_str_vec.size(); ++i )
     {
@@ -147,12 +155,16 @@ int main ( int argc, char *argv[] )
       protein_models.push_back ( pm );
     }
 
+    mw.show();
+
     for ( uint i = 0 ; i < protein_models.size();++i )
     {
-      framework->AddModel ( protein_models[i] );
+      mw.add_ren(protein_models[i]);
+      mw.add_frame(protein_models[i]->getQFrame(),
+                   protein_models[i]->Name());
     }
 
-    framework->Exec();
+    application.exec();
 
   }
   catch(const char *str)
