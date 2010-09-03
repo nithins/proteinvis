@@ -240,7 +240,7 @@ public:
 
 class protein_rd_t
 {
-  protein_t * m_protein;
+  boost::shared_ptr<protein_t> m_protein;
 
   glutils::bufobj_ptr_t m_atom_coord_bo;
 
@@ -259,13 +259,13 @@ class protein_rd_t
   double m_extent[6];
 
 public:
-  protein_rd_t ( protein_t * );
+  protein_rd_t ( boost::shared_ptr<protein_t>);
 
   ~protein_rd_t();
 
   void get_extent ( double * );
 
-  inline protein_t* get_protein()
+  inline boost::shared_ptr<protein_t> get_protein()
   {
     return m_protein;
   }
@@ -286,8 +286,6 @@ class protein_grouping_t
 {
 public:
 
-  typedef n_vector_t<double,3> atom_color_t;
-
   enum eGroupAtomsBy
   {GROUP_ATOMS_ATOM,
    GROUP_ATOMS_ATOM_TYPE,
@@ -298,7 +296,7 @@ public:
    GROUP_ATOMS_COUNT
  };
 
-  protein_grouping_t(protein_t * p);
+  protein_grouping_t(boost::shared_ptr<protein_t> p);
   ~protein_grouping_t();
 
   std::string        get_group_name(int groupno) const;
@@ -306,8 +304,8 @@ public:
 
   void               set_grouping_type(eGroupAtomsBy );
 
-  atom_color_t       get_group_color(int groupno) const;
-  void               set_group_color(atom_color_t,int);
+  glutils::color_t   get_group_color(int groupno) const;
+  void               set_group_color(glutils::color_t ,int);
   void               set_default_color_values();
   double*            create_atom_color_set();
 
@@ -323,9 +321,9 @@ private:
 
   uint                  get_updated_num_groups()const ;
 
-  protein_t            *m_protein;
+  boost::shared_ptr<protein_t> m_protein;
   eGroupAtomsBy         m_grouping_type;
-  atom_color_t         *m_group_colors;
+  glutils::color_list_t m_group_colors;
   int                   m_num_groups;
   glutils::bufobj_ptr_t m_atom_color_bo;
 

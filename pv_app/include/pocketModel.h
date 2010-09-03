@@ -38,28 +38,17 @@ class pocket_model_t
 
   private:
 
-    struct pocket_tet_range_t
-    {
-      uint start;
-      uint end;
-    };
+    typedef n_vector_t<uint,2> pocket_tet_range_t;
 
-    struct alpha_pocket_range_t
-    {
-      uint start;
-      uint end;
-    };
+    typedef n_vector_t<uint,2> alpha_pocket_range_t;
 
     struct pockets_t
     {
-      alpha_pocket_range_t     *alpha_pocket_ranges;
-      uint                  num_alpha_pocket_ranges;
+      std::vector<alpha_pocket_range_t> alpha_pocket_ranges;
 
-      pocket_tet_range_t       *pocket_tet_ranges;
-      uint                  num_pocket_tet_ranges;
+      std::vector<pocket_tet_range_t>   pocket_tet_ranges;
 
-      uint *                    tet_idx;
-      uint                  num_tet_idx;
+      glutils::quad_idx_list_t          tet_idx;
 
       void init();
 
@@ -67,11 +56,12 @@ class pocket_model_t
     };
 
   private:
-    void read_file ( const char * , const char * );
+    void read_file ( const std::string & , const std::string & );
 
   public:
 
-    pocket_model_t ( const char *, const char *, protein_rd_t * );
+    pocket_model_t
+        ( const std::string & , const std::string &, boost::shared_ptr<protein_rd_t> );
 
     ~pocket_model_t ();
 
@@ -96,7 +86,7 @@ class pocket_model_t
 
     inline uint get_num_alpha()
     {
-      return m_pockets.num_alpha_pocket_ranges;
+      return m_pockets.alpha_pocket_ranges.size();
     }
 
     inline uint get_num_pockets ( const uint & alphanum )
@@ -104,8 +94,8 @@ class pocket_model_t
       if ( !check_alpha_num ( alphanum ) )
         return 0;
 
-      return ( m_pockets.alpha_pocket_ranges[alphanum].end -
-               m_pockets.alpha_pocket_ranges[alphanum].start );
+      return ( m_pockets.alpha_pocket_ranges[alphanum][1] -
+               m_pockets.alpha_pocket_ranges[alphanum][0] );
     }
 
     inline glutils::bufobj_ptr_t get_pocket_atoms()
@@ -127,9 +117,9 @@ class pocket_model_t
 
     bool check_alpha_num ( const uint & );
 
-    protein_rd_t                 *m_protein_rd;
-    glutils::renderable_t        *m_ren;
-    pockets_t                     m_pockets;
+    boost::shared_ptr<protein_rd_t> m_protein_rd;
+    glutils::renderable_ptr_t       m_ren;
+    pockets_t                       m_pockets;
 
     glutils::bufobj_ptr_t         m_atom_indxs;
     glutils::bufobj_ptr_t         m_atom_bonds;

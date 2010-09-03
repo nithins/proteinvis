@@ -60,12 +60,12 @@ ostream& operator<< ( ostream &o, const pair<uint, uint> &p )
 
 
 
-void pocket_model_t::read_file ( const char * tepoc_filename, const char * tet_filename )
+void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std::string & tet_filename )
 {
 
   using boost::bind;
 
-  fstream tepocFile ( tepoc_filename, ios::in );
+  fstream tepocFile ( tepoc_filename.c_str(), ios::in );
 
   vector<uint> alpha_list;
 
@@ -95,13 +95,13 @@ void pocket_model_t::read_file ( const char * tepoc_filename, const char * tet_f
     pocno_list.push_back ( atoi ( tokens[2].c_str() ) );
   }
 
-  fstream tetFile ( tet_filename, ios::in );
+  fstream tetFile ( tet_filename.c_str(), ios::in );
 
   string num_tets_line;
 
   getline ( tetFile, num_tets_line );
 
-  vector<uint> tetra_list;
+  glutils::quad_idx_list_t tetra_list;
 
   while ( !tetFile.eof() )
   {
@@ -118,16 +118,14 @@ void pocket_model_t::read_file ( const char * tepoc_filename, const char * tet_f
 
     tokenize_string ( line, tokens );
 
-    tetra_list.push_back ( atoi ( tokens[1].c_str() ) - 1 );
+    glutils::quad_idx_t tetra
+        (atoi ( tokens[1].c_str() ) - 1 ,atoi ( tokens[2].c_str() ) - 1,
+         atoi ( tokens[3].c_str() ) - 1 ,atoi ( tokens[4].c_str() ) - 1 );
 
-    tetra_list.push_back ( atoi ( tokens[2].c_str() ) - 1 );
-
-    tetra_list.push_back ( atoi ( tokens[3].c_str() ) - 1 );
-
-    tetra_list.push_back ( atoi ( tokens[4].c_str() ) - 1 );
+    tetra_list.push_back (tetra);
   }
 
-  vector < pair<uint, uint> >  alpha_ranges;
+  std::vector<alpha_pocket_range_t>  alpha_ranges;
 
   uint range_start = 0;
 
@@ -135,12 +133,12 @@ void pocket_model_t::read_file ( const char * tepoc_filename, const char * tet_f
   {
     if ( alpha_list[i] != alpha_list[i-1] )
     {
-      alpha_ranges.push_back ( make_pair ( range_start, i ) );
+      alpha_ranges.push_back ( alpha_pocket_range_t ( range_start, i ) );
       range_start = i;
     }
   }
 
-  alpha_ranges.push_back ( make_pair ( range_start, alpha_list.size() ) );
+  alpha_ranges.push_back ( alpha_pocket_range_t ( range_start, alpha_list.size() ) );
 
   vector<uint> pocno_remapping;
 
@@ -153,137 +151,77 @@ void pocket_model_t::read_file ( const char * tepoc_filename, const char * tet_f
 
   for ( uint i = 0 ; i < alpha_ranges.size();i++ )
   {
-    stable_sort ( pocno_remapping.begin() + alpha_ranges[i].first,
-                  pocno_remapping.begin() + alpha_ranges[i].second,
+    stable_sort ( pocno_remapping.begin() + alpha_ranges[i][0],
+                  pocno_remapping.begin() + alpha_ranges[i][1],
                   comp
                 );
   }
 
-  vector < pair<uint, uint> >  pocno_ranges;
+  std::vector<pocket_tet_range_t>  pocno_ranges;
 
   for ( uint i = 0 ; i < alpha_ranges.size();i++ )
   {
-    uint pocno_range_start = alpha_ranges[i].first;
+    uint pocno_range_start = alpha_ranges[i][0];
 
     uint alpha_range_start = pocno_ranges.size();
 
-    for ( uint j = alpha_ranges[i].first + 1 ; j < alpha_ranges[i].second;j++ )
+    for ( uint j = alpha_ranges[i][0] + 1 ; j < alpha_ranges[i][1];j++ )
     {
       if ( pocno_list[pocno_remapping[j]] != pocno_list[pocno_remapping[j-1]] )
       {
-        pocno_ranges.push_back ( make_pair ( pocno_range_start, j ) );
+        pocno_ranges.push_back ( pocket_tet_range_t ( pocno_range_start, j ) );
         pocno_range_start = j;
       }
     }
 
-    pocno_ranges.push_back ( make_pair ( pocno_range_start, alpha_ranges[i].second ) );
+    pocno_ranges.push_back ( pocket_tet_range_t ( pocno_range_start, alpha_ranges[i][1]) );
 
-    alpha_ranges[i] = make_pair ( alpha_range_start, pocno_ranges.size() );
+    alpha_ranges[i] = alpha_pocket_range_t ( alpha_range_start, pocno_ranges.size() );
   }
 
-  m_pockets.alpha_pocket_ranges     = new alpha_pocket_range_t[alpha_ranges.size() ];
+  m_pockets.alpha_pocket_ranges.resize(alpha_ranges.size() );
 
-  m_pockets.num_alpha_pocket_ranges = alpha_ranges.size() ;
+  m_pockets.pocket_tet_ranges.resize(pocno_ranges.size() );
 
-  m_pockets.pocket_tet_ranges       = new pocket_tet_range_t[pocno_ranges.size() ];
+  m_pockets.tet_idx.resize(pocno_list.size());
 
-  m_pockets.num_pocket_tet_ranges   = pocno_ranges.size();
+  std::copy(alpha_ranges.begin(),alpha_ranges.end(),
+            m_pockets.alpha_pocket_ranges.begin());
 
-  m_pockets.tet_idx                 = new uint [pocno_list.size() *4];
-
-  m_pockets.num_tet_idx             = pocno_list.size() * 4 ;
-
-  for ( uint i = 0 ; i < alpha_ranges.size();i++ )
-  {
-    m_pockets.alpha_pocket_ranges[i].start = alpha_ranges[i].first;
-    m_pockets.alpha_pocket_ranges[i].end   = alpha_ranges[i].second;
-  }
-
-  for ( uint i = 0 ; i < pocno_ranges.size();i++ )
-  {
-    m_pockets.pocket_tet_ranges[i].start = pocno_ranges[i].first * 4;
-    m_pockets.pocket_tet_ranges[i].end   = pocno_ranges[i].second * 4;
-  }
-
+  std::copy(pocno_ranges.begin(),pocno_ranges.end(),
+            m_pockets.pocket_tet_ranges.begin());
 
   for ( uint i = 0 ; i < pocno_remapping.size();i++ )
-  {
-    uint v1 = tetra_list[tetno_list[pocno_remapping[i]] * 4 + 0];
-    uint v2 = tetra_list[tetno_list[pocno_remapping[i]] * 4 + 1];
-    uint v3 = tetra_list[tetno_list[pocno_remapping[i]] * 4 + 2];
-    uint v4 = tetra_list[tetno_list[pocno_remapping[i]] * 4 + 3];
-
-    m_pockets.tet_idx[4*i + 0 ] = v1;
-    m_pockets.tet_idx[4*i + 1 ] = v2;
-    m_pockets.tet_idx[4*i + 2 ] = v3;
-    m_pockets.tet_idx[4*i + 3 ] = v4;
-
-  }
+    m_pockets.tet_idx[i] = tetra_list[tetno_list[pocno_remapping[i]]];
 }
 
-void pocket_model_t::pockets_t::init()
-{
-  alpha_pocket_ranges     = NULL;
-  pocket_tet_ranges       = NULL;
-  tet_idx                 = NULL;
-
-  num_alpha_pocket_ranges = 0;
-  num_pocket_tet_ranges   = 0;
-  num_tet_idx             = 0;
-
-}
 
 void pocket_model_t::pockets_t::destroy()
 {
-  if ( num_alpha_pocket_ranges != 0 )
-    delete []alpha_pocket_ranges;
-
-  if ( num_pocket_tet_ranges != 0 )
-    delete []pocket_tet_ranges;
-
-  if ( num_tet_idx != 0 )
-    delete []tet_idx;
-
 }
 
 void pocket_model_t::clear_render()
 {
-  if ( m_ren != NULL )
-  {
-    delete m_ren;
-    m_ren = NULL;
-  }
-
-  m_atom_indxs.reset();
-  m_atom_bonds.reset();
 }
 
 
 pocket_model_t::pocket_model_t
-( const char *tepoc_fn,  const char *tet_fn,  protein_rd_t * protein_rd )
-    : m_protein_rd ( protein_rd ), m_ren ( NULL )
+    ( const std::string & tepoc_fn,
+      const std::string &tet_fn,
+      boost::shared_ptr<protein_rd_t> protein_rd)
+    : m_protein_rd ( protein_rd )
 {
-  m_pockets.init();
-
   read_file ( tepoc_fn, tet_fn );
 }
 
 pocket_model_t::~pocket_model_t ()
 {
-  clear_render();
-
-  m_pockets.destroy();
 }
 
 bool pocket_model_t::check_alpha_num ( const uint &alphanum )
 {
-  if ( alphanum >= m_pockets.num_alpha_pocket_ranges )
-  {
-    _LOG ( "invalid alpha num" );
-    _LOG_VAR ( alphanum );
-    _LOG_VAR ( m_pockets.num_alpha_pocket_ranges );
-    return false;
-  }
+  if ( alphanum >= m_pockets.alpha_pocket_ranges.size())
+    throw std::logic_error("invalid alpha num");
 
   return true;
 }
@@ -292,16 +230,13 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
 {
   clear_render();
 
-  if ( !check_alpha_num ( alphanum ) )
-    return;
+  uint pockets_begin = m_pockets.alpha_pocket_ranges[alphanum][0];
 
-  uint pockets_begin = m_pockets.alpha_pocket_ranges[alphanum].start;
+  uint pockets_end   = m_pockets.alpha_pocket_ranges[alphanum][1];
 
-  uint pockets_end   = m_pockets.alpha_pocket_ranges[alphanum].end;
+  uint tet_begin     = m_pockets.pocket_tet_ranges[pockets_begin][0];
 
-  uint tet_begin     = m_pockets.pocket_tet_ranges[pockets_begin].start;
-
-  uint tet_end       = m_pockets.pocket_tet_ranges[pockets_end-1].end;
+  uint tet_end       = m_pockets.pocket_tet_ranges[pockets_end-1][1];
 
   if ( pocno != ( uint ) - 1 )
   {
@@ -315,67 +250,60 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
       return;
     }
 
-    tet_begin     = m_pockets.pocket_tet_ranges[pockets_begin+pocno].start;
+    tet_begin     = m_pockets.pocket_tet_ranges[pockets_begin+pocno][0];
 
-    tet_end       = m_pockets.pocket_tet_ranges[pockets_begin+pocno].end;
+    tet_end       = m_pockets.pocket_tet_ranges[pockets_begin+pocno][1];
   }
 
 
-  uint num_tet       = ( tet_end - tet_begin ) / 4;
-
   glutils::bufobj_ptr_t ver_bo = m_protein_rd->get_coord_bo();
 
-  glutils::bufobj_ptr_t tet_bo = glutils::buf_obj_t::create_bo
-                                 (m_pockets.tet_idx + tet_begin,
-                                  GL_UNSIGNED_INT,
-                                  4,
-                                  GL_ELEMENT_ARRAY_BUFFER,
-                                  num_tet*4*sizeof ( uint ),
-                                  0 );
+  glutils::quad_idx_list_t tets(tet_end - tet_begin );
 
-  glutils::bufobj_ptr_t col_bo = glutils::buf_obj_t::create_bo();
+  std::copy(m_pockets.tet_idx.begin()+tet_begin,m_pockets.tet_idx.begin()+tet_end,tets.begin());
 
-  m_ren = glutils::create_buffered_flat_tetrahedrons_ren ( ver_bo, tet_bo, col_bo );
+  glutils::bufobj_ptr_t tet_bo = glutils::make_buf_obj(tets);
+
+  m_ren.reset(glutils::create_buffered_flat_tetrahedrons_ren ( ver_bo, tet_bo));
 
   set<uint> atomset_set;
 
-  for ( uint i = tet_begin;i < tet_end;i += 4 )
+  for ( uint i = tet_begin;i < tet_end;i++ )
   {
-    atomset_set.insert ( m_pockets.tet_idx[i+0] );
-    atomset_set.insert ( m_pockets.tet_idx[i+1] );
-    atomset_set.insert ( m_pockets.tet_idx[i+2] );
-    atomset_set.insert ( m_pockets.tet_idx[i+3] );
+    atomset_set.insert ( m_pockets.tet_idx[i][0] );
+    atomset_set.insert ( m_pockets.tet_idx[i][1] );
+    atomset_set.insert ( m_pockets.tet_idx[i][2] );
+    atomset_set.insert ( m_pockets.tet_idx[i][3] );
 
-    if ( ( m_pockets.tet_idx[i+0] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
-         ( m_pockets.tet_idx[i+1] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
-         ( m_pockets.tet_idx[i+2] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
-         ( m_pockets.tet_idx[i+3] >= m_protein_rd->get_protein()->get_num_atoms() ) )
+    if ( ( m_pockets.tet_idx[i][0] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
+         ( m_pockets.tet_idx[i][1] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
+         ( m_pockets.tet_idx[i][2] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
+         ( m_pockets.tet_idx[i][3] >= m_protein_rd->get_protein()->get_num_atoms() ) )
     {
       _LOG ( "Screw up" );
     }
   }
 
-  uint num_atomset = atomset_set.size();
+  glutils::point_idx_list_t atom_idx_list(atomset_set.size());
 
-  uint *atomset = new uint[num_atomset];
+  copy ( atomset_set.begin(), atomset_set.end(), atom_idx_list.begin());
 
-  copy ( atomset_set.begin(), atomset_set.end(), atomset );
+  uint * bondlist_c;
+  uint   num_bonds;
 
-  uint *bondset;
-  uint num_bondset;
+  m_protein_rd->get_protein()->get_subset_atom_bonds
+      ( atom_idx_list.data(),atom_idx_list.size(), bondlist_c,num_bonds );
 
-  m_protein_rd->get_protein()->get_subset_atom_bonds ( atomset, num_atomset, bondset, num_bondset );
+  glutils::line_idx_list_t bondlist(num_bonds);
 
-  m_atom_indxs = glutils::buf_obj_t::create_bo
-                 (atomset,GL_UNSIGNED_INT,1,
-                  GL_ELEMENT_ARRAY_BUFFER,num_atomset * sizeof ( uint ),0);
+  std::copy(bondlist_c,  bondlist_c + 2*num_bonds, (uint*)bondlist.data());
 
-  m_atom_bonds = glutils::buf_obj_t::create_bo
-                 (bondset,GL_UNSIGNED_INT,2,
-                  GL_ELEMENT_ARRAY_BUFFER,num_bondset * 2 * sizeof ( uint ),0);
+  delete []bondlist_c;
 
-  delete []bondset;
-  delete []atomset;
+  m_atom_indxs = glutils::make_buf_obj(atom_idx_list);
+
+  m_atom_bonds = glutils::make_buf_obj(bondlist);
+
 
 }
 
@@ -399,5 +327,3 @@ int pocket_model_t::render() const
 
   return 0;
 }
-
-

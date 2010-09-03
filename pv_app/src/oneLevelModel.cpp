@@ -35,7 +35,10 @@
 
 using namespace std;
 
-onelevel_model_t::onelevel_model_t ( )
+GLSLProgram*  s_sphereShader = NULL;
+GLSLProgram*  s_cylinderShader = NULL;
+
+void onelevel_model_t::init ()
 {
 
   if ( s_sphereShader == NULL )
@@ -100,9 +103,6 @@ onelevel_model_t::onelevel_model_t ( )
   }
 }
 
-onelevel_model_t::~onelevel_model_t ()
-{
-}
 
 void onelevel_model_t::render_spheres
 ( glutils::bufobj_ptr_t center_coord ,
@@ -110,7 +110,7 @@ void onelevel_model_t::render_spheres
   glutils::bufobj_ptr_t sphere_radii ,
   const double & add_radius,
   const double & alpha
-) const
+)
 {
 
   glPushAttrib ( GL_ENABLE_BIT );
@@ -149,7 +149,7 @@ void onelevel_model_t::render_spheres
   glutils::bufobj_ptr_t sphere_indxs,
   const double & add_radius,
   const double & alpha
-) const
+)
 {
 
   glPushAttrib ( GL_ENABLE_BIT );
@@ -188,7 +188,7 @@ void onelevel_model_t::render_spheres
 void onelevel_model_t::render_spheres
 ( glutils::bufobj_ptr_t center_coord ,
   glutils::bufobj_ptr_t sphere_color,
-  double sphere_radius ) const
+  double sphere_radius )
 
 {
 
@@ -223,7 +223,7 @@ void onelevel_model_t::render_spheres
 ( glutils::bufobj_ptr_t center_coord ,
   glutils::bufobj_ptr_t sphere_color,
   double sphere_radius,
-  glutils::bufobj_ptr_t sphere_indxs ) const
+  glutils::bufobj_ptr_t sphere_indxs )
 
 {
 
@@ -261,7 +261,7 @@ void onelevel_model_t::render_spheres
 void onelevel_model_t::render_cylinders
 ( glutils::bufobj_ptr_t endpts_coord,
   glutils::bufobj_ptr_t endpts_indxs,
-  double cyl_radius ) const
+  double cyl_radius )
 {
 
   glPushAttrib ( GL_ENABLE_BIT );
@@ -329,10 +329,6 @@ void onelevel_model_t::render_cylinder
 
   s_cylinderShader->disable();
 }
-
-GLSLProgram*  onelevel_model_t::s_cylinderShader = NULL;
-GLSLProgram*  onelevel_model_t::s_sphereShader   = NULL;
-
 
 
 

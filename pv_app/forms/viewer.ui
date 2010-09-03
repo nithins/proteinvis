@@ -1,44 +1,294 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>viewer_mainwindow_Dialog</class>
- <widget class="QDialog" name="viewer_mainwindow_Dialog">
+ <class>viewer_MainWindow</class>
+ <widget class="QMainWindow" name="viewer_MainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
-    <height>600</height>
+    <width>808</width>
+    <height>862</height>
    </rect>
   </property>
-  <property name="contextMenuPolicy">
-   <enum>Qt::DefaultContextMenu</enum>
-  </property>
   <property name="windowTitle">
-   <string>Frame</string>
+   <string>MainWindow</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QSplitter" name="splitter">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <widget class="glviewer_t" name="glviewer" native="true"/>
-     <widget class="QToolBox" name="configuration_toolBox">
-      <property name="minimumSize">
-       <size>
-        <width>300</width>
-        <height>0</height>
-       </size>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_4">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter_2">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
       </property>
-      <property name="currentIndex">
-       <number>-1</number>
-      </property>
+      <widget class="glviewer_t" name="glviewer" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>800</width>
+         <height>400</height>
+        </size>
+       </property>
+      </widget>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QGridLayout" name="gridLayout_3">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QTabWidget" name="configuration_tabWidget">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>150</height>
+            </size>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <property name="movable">
+            <bool>true</bool>
+           </property>
+           <widget class="QWidget" name="tab">
+            <attribute name="title">
+             <string>Framework</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_5">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="viewer_material_groupBox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>100</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Material</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout">
+                <item row="0" column="0">
+                 <widget class="QtColorPicker" name="ambient_material_button">
+                  <property name="text">
+                   <string>Ambient</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QtColorPicker" name="diffuse_material_button">
+                  <property name="text">
+                   <string>Diffuse</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="shininess_value_label">
+                  <property name="text">
+                   <string>Shininess </string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QtColorPicker" name="specular_material_button">
+                  <property name="text">
+                   <string>Specular</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QtColorPicker" name="emmission_material_button">
+                  <property name="text">
+                   <string>Emission</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QSpinBox" name="shininess_spinBox"/>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QGroupBox" name="viewer_lighting_groupBox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>125</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Lighting</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="light_number_label">
+                  <property name="text">
+                   <string>Light Number</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QSpinBox" name="light_number_spinBox"/>
+                </item>
+                <item row="0" column="2" colspan="2">
+                 <widget class="QComboBox" name="light_type_comboBox">
+                  <item>
+                   <property name="text">
+                    <string>Directional</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Positional</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>None</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QtColorPicker" name="ambient_light_button">
+                  <property name="text">
+                   <string>Ambient</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1" colspan="2">
+                 <widget class="QtColorPicker" name="diffuse_light_button">
+                  <property name="text">
+                   <string>Diffuse</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QtColorPicker" name="specular_light_button">
+                  <property name="text">
+                   <string>Specular</string>
+                  </property>
+                  <property name="useStandardColors" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" colspan="4">
+                 <widget class="QCheckBox" name="render_light_graphic_checkBox">
+                  <property name="text">
+                   <string>Render light graphics</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
      </widget>
-    </widget>
-   </item>
-  </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>808</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpen_Alpha_Shape"/>
+    <addaction name="actionOpen_Pocket_Files"/>
+    <addaction name="actionOpen_Surface"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open Protein</string>
+   </property>
+  </action>
+  <action name="actionOpen_Alpha_Shape">
+   <property name="text">
+    <string>Open Alpha Shape</string>
+   </property>
+  </action>
+  <action name="actionOpen_Pocket_Files">
+   <property name="text">
+    <string>Open Pocket Files</string>
+   </property>
+  </action>
+  <action name="actionOpen_Surface">
+   <property name="text">
+    <string>Open Surface</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QtColorPicker</class>
+   <extends>QPushButton</extends>
+   <header>qtcolorpicker.h</header>
+  </customwidget>
   <customwidget>
    <class>glviewer_t</class>
    <extends>QWidget</extends>

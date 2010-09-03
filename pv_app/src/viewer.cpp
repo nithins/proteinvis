@@ -5,29 +5,24 @@
 
 void glviewer_t::add_ren(glutils::renderable_ptr_t ren)
 {
-  m_rens.push_back(renderable_item_t(ren));
-
-  if(m_init_state == true) ren->gl_init();
+  m_rens.push_back(renderable_rd_t(ren));
 }
 
 void glviewer_t::draw()
 {
-  float pos[4] = {1.0, 0.5, 1.0, 0.0};
+  float pos[4];
 
-  glLightfv(GL_LIGHT0, GL_POSITION, pos);
+  for(int i = 0; i < m_lights.size();++i)
+  {
+    GLenum lightnum = i + GL_LIGHT0;
 
-  pos[3] = 1.0;
+    glGetLightfv(lightnum,GL_POSITION,pos);
 
-  light1->getPosition(pos[0], pos[1], pos[2]);
+    m_lights[i]->getPosition(pos[0], pos[1], pos[2]);
 
-  glLightfv(GL_LIGHT1, GL_POSITION, pos);
+    glLightfv(lightnum, GL_POSITION, pos);
+  }
 
-  glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION,
-            light1->inverseTransformOf(qglviewer::Vec(0,0,1)));
-
-  light2->getPosition(pos[0], pos[1], pos[2]);
-
-  glLightfv(GL_LIGHT2, GL_POSITION, pos);
 
   for(uint i = 0 ; i <m_rens.size();++i)
   {
@@ -42,18 +37,8 @@ void glviewer_t::draw()
     glPopMatrix();
   }
 
-  drawLight(GL_LIGHT0);
-
-  if (light1->grabsMouse())
-    drawLight(GL_LIGHT1, 1.2f);
-  else
-    drawLight(GL_LIGHT1);
-
-  if (light2->grabsMouse())
-    drawLight(GL_LIGHT2, 1.2f);
-  else
-    drawLight(GL_LIGHT2);
-
+  for(int i = 0; i < m_lights.size();++i)
+    drawLight(i+GL_LIGHT0);
 }
 
 void glviewer_t::beginSelection(const QPoint& point)
@@ -102,19 +87,41 @@ void glviewer_t::drawWithNames()
 
     glPopMatrix();
   }
+
+  for(uint i = 0 ; i <m_lights.size();++i)
+  {
+    glPushName(m_rens.size() + i);
+
+    drawLight(GL_LIGHT0+i);
+
+    glPopName();
+  }
 }
 
 void glviewer_t::postSelection(const QPoint& point)
 {
+
   if (selectedName() == -1)
     setManipulatedFrame(NULL);
   else
-    setManipulatedFrame(m_rens[selectedName()].m_frame);
-
+  {
+    if(selectedName() < m_rens.size())
+      setManipulatedFrame(m_rens[selectedName()].m_frame.get());
+    else
+    {
+      setManipulatedFrame(m_lights[selectedName() - m_rens.size()].get());
+      std::cout<<"selected light\n";
+    }
+  }
 }
 
 void glviewer_t::init()
 {
+  if(m_init_state == true)
+    throw std::runtime_error("attempted to re init QGLViewer ..rascal\n");
+
+  m_init_state = true;
+
   glutils::init();
 
   setSnapshotFormat("PNG");
@@ -138,8 +145,6 @@ void glviewer_t::init()
     m_rens[i].m_ren->gl_init();
   }
 
-  m_init_state = true;
-
   setHandlerKeyboardModifiers(QGLViewer::CAMERA, Qt::AltModifier);
 
   setHandlerKeyboardModifiers(QGLViewer::FRAME,  Qt::NoModifier);
@@ -149,17 +154,27 @@ void glviewer_t::init()
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  // Light0 is the default ambient light
-  glEnable(GL_LIGHT0);
+  m_lights.resize(2);
 
-  // Light1 is a spot light
+  // Light0 is a classical directionnal light
+  glEnable(GL_LIGHT0);
+  const GLfloat light_ambient0[4]  = {0.2f, 0.2f, 0.2f, 1.0f};
+  const GLfloat light_diffuse0[4]  = {0.8f, 0.8f, 0.8f, 1.0f};
+  const GLfloat light_specular0[4] = {0.8f, 0.8f, 0.8f, 1.0f};
+
+  glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient0);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular0);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse0);
+
+  m_lights[0].reset(new qglviewer::ManipulatedFrame());
+  m_lights[0]->setPosition(-0.5, 0.5, 0);
+
+  // Light1 is a point light
   glEnable(GL_LIGHT1);
   const GLfloat light_ambient[4]  = {0.8f, 0.2f, 0.2f, 1.0};
   const GLfloat light_diffuse[4]  = {1.0, 0.4f, 0.4f, 1.0};
-  const GLfloat light_specular[4] = {1.0, 0.0, 0.0, 1.0};
+  const GLfloat light_specular[4] = {0.8, 0.8, 0.8, 1.0};
 
-  glLightf( GL_LIGHT1, GL_SPOT_EXPONENT,  3.0);
-  glLightf( GL_LIGHT1, GL_SPOT_CUTOFF,    20.0);
   glLightf( GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.5);
   glLightf( GL_LIGHT1, GL_LINEAR_ATTENUATION, 1.0);
   glLightf( GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.5);
@@ -167,25 +182,15 @@ void glviewer_t::init()
   glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
   glLightfv(GL_LIGHT1, GL_DIFFUSE,  light_diffuse);
 
-  // Light2 is a classical directionnal light
-  glEnable(GL_LIGHT2);
-  const GLfloat light_ambient2[4]  = {0.2f, 0.2f, 2.0, 1.0};
-  const GLfloat light_diffuse2[4]  = {0.8f, 0.8f, 1.0, 1.0};
-  const GLfloat light_specular2[4] = {0.0, 0.0, 1.0, 1.0};
+  m_lights[1].reset(new qglviewer::ManipulatedFrame());
+  m_lights[1]->setPosition(0.5, 0.5, 0);
+  m_lights[1]->setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,0,1), -m_lights[1]->position()));
 
-  glLightfv(GL_LIGHT2, GL_AMBIENT,  light_ambient2);
-  glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular2);
-  glLightfv(GL_LIGHT2, GL_DIFFUSE,  light_diffuse2);
+  glEnable ( GL_COLOR_MATERIAL );
 
-  light1 = new qglviewer::ManipulatedFrame();
-  light2 = new qglviewer::ManipulatedFrame();
-  setMouseTracking(true);
+  glColorMaterial ( GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
 
-  light1->setPosition(0.5, 0.5, 0);
-  // Align z axis with -position direction : look at scene center
-  light1->setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,0,1), -light1->position()));
-
-  light2->setPosition(-0.5, 0.5, 0);
+  QGLViewer::init();
 }
 
 glviewer_t::glviewer_t(QWidget * par):
@@ -250,24 +255,128 @@ QString glviewer_t::helpString() const
   return text;
 }
 
+#include <proteinModel.h>
+
 viewer_mainwindow::viewer_mainwindow()
 {
   setupUi(this);
+
+  connect(glviewer,SIGNAL(viewerInitialized()),this,SLOT(init_ui()));
+}
+
+void viewer_mainwindow::init_ui()
+{
+  light_number_spinBox->setMaximum(8);
+
+  light_number_spinBox->setMinimum(0);
+
+  update_light_ui_items(light_number_spinBox->value());
+
+  for(uint i = 0 ; i < m_models.size();++i)
+  {
+    m_models[i]->init_ui();
+  }
 }
 
 viewer_mainwindow::~viewer_mainwindow()
 {
-  for(int i = configuration_toolBox->count()-1; i >=0 ; --i)
-    configuration_toolBox->removeItem(i);
 }
 
-void viewer_mainwindow::add_ren(glutils::renderable_ptr_t ren )
+void viewer_mainwindow::add_model(protein_model_ptr_t model)
 {
-  glviewer->add_ren(ren);
+  glviewer->add_ren(model);
+
+  protein_model_ui_t * sa = new protein_model_ui_t(model,this);
+
+  configuration_tabWidget->addTab(sa,model->name().c_str());
+
+  m_models.push_back(sa);
 }
 
-void viewer_mainwindow::add_frame(QFrame *f,const std::string &title)
+enum eLightType
 {
-  configuration_toolBox->addItem(f,title.c_str());
+  LIGHTTYPE_DIRECTIONAL,
+  LIGHTTYPE_POSITIONAL,
+  LIGHTTYPE_NONE
+};
+
+void viewer_mainwindow::update_light_ui_items(int lightno)
+{
+  if(glIsEnabled(GL_LIGHT0+lightno) == false)
+  {
+    light_type_comboBox->setCurrentIndex(LIGHTTYPE_NONE);
+    return;
+  }
+
+  GLfloat pos[4];
+
+  glGetLightfv(GL_LIGHT0+lightno,GL_POSITION,pos);
+
+  if(pos[3] == 0)
+    light_type_comboBox->setCurrentIndex(LIGHTTYPE_DIRECTIONAL);
+  else
+    light_type_comboBox->setCurrentIndex(LIGHTTYPE_POSITIONAL);
+
+  GLfloat c[4];
+
+  glGetLightfv(GL_LIGHT0+lightno,GL_AMBIENT,c);
+  ambient_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
+
+  glGetLightfv(GL_LIGHT0+lightno,GL_DIFFUSE,c);
+  diffuse_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
+
+  glGetLightfv(GL_LIGHT0+lightno,GL_SPECULAR,c);
+  specular_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
 }
+
+void viewer_mainwindow::on_light_number_spinBox_valueChanged ( int i)
+{
+  update_light_ui_items(i);
+}
+
+void viewer_mainwindow::on_ambient_light_button_colorChanged(QColor c)
+{
+  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
+
+  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_AMBIENT,col);
+}
+void viewer_mainwindow::on_diffuse_light_button_colorChanged(QColor c)
+{
+  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
+
+  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_DIFFUSE,col);
+
+}
+void viewer_mainwindow::on_specular_light_button_colorChanged(QColor c)
+{
+  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
+
+  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_SPECULAR,col);
+}
+
+void viewer_mainwindow::on_light_type_comboBox_currentIndexChanged(int light_type)
+{
+
+  GLenum light_num = GL_LIGHT0+light_number_spinBox->value();
+  GLfloat pos[4];
+
+  if(light_type == LIGHTTYPE_NONE)
+  {
+    glDisable(light_num);
+    return;
+  }
+
+  glEnable(light_num);
+
+  glGetLightfv(light_num,GL_POSITION,pos);
+
+  if(light_type == LIGHTTYPE_POSITIONAL && pos[3] == 0.0)
+    pos[3] = 1.0;
+
+  if(light_type == LIGHTTYPE_DIRECTIONAL && pos[3] != 0.0)
+    pos[3] = 0.0;
+
+  glLightfv(light_num,GL_POSITION,pos);
+}
+
 

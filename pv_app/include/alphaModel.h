@@ -20,13 +20,7 @@
 #ifndef ALPHAMODEL_H_INCLUDED
 #define ALPHAMODEL_H_INCLUDED
 
-namespace glutils
-{
-
-  class BufobjArrayRenderer;
-
-  class renderable_t;
-}
+#include <glutils.h>
 
 class protein_rd_t;
 
@@ -34,11 +28,12 @@ class alpha_complex_model_t
 {
 
   private:
-    void read_file ( const char * );
+    void read_file ( const std::string &);
 
   public:
 
-    alpha_complex_model_t ( const char *, protein_rd_t * );
+    alpha_complex_model_t
+        ( const std::string &, boost::shared_ptr<protein_rd_t> );
 
     ~alpha_complex_model_t ();
 
@@ -48,10 +43,10 @@ class alpha_complex_model_t
 
   private:
 
-    protein_rd_t                 *m_protein_rd;
-    glutils::renderable_t        *m_tri_ren;
-    glutils::renderable_t        *m_ege_ren;
-    glutils::renderable_t        *m_tet_ren;
+    boost::shared_ptr<protein_rd_t> m_protein_rd;
+    glutils::renderable_ptr_t       m_tri_ren;
+    glutils::renderable_ptr_t       m_ege_ren;
+    glutils::renderable_ptr_t       m_tet_ren;
 
 
 };

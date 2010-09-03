@@ -1,7 +1,7 @@
 #Define the project we are working on
 project(proteinvis)
 
-# Look for various software we need 
+# Look for various software we need
 cmake_minimum_required(VERSION 2.6)
 
 set(QT_MIN_VERSION "4.5.0")
@@ -26,8 +26,8 @@ subdirs(glapp_framework)
 
 file(GLOB proteinvis_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/*.h)
 
-QT4_WRAP_CPP(  proteinvis_MOC_SRCS  
-  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/proteinModel.h 
+QT4_WRAP_CPP(  proteinvis_MOC_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/proteinModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/viewer.h
   )
 
@@ -41,7 +41,7 @@ include_directories(
   ${QT_ADDITIONAL_INCLUDE_PATHS}
   ${GLEW_INCLUDE_PATH}
   ${Boost_INCLUDE_DIRS}
-  ${glapp_framework_SOURCE_DIR}/utls/include 
+  ${glapp_framework_SOURCE_DIR}/utls/include
   ${glapp_framework_SOURCE_DIR}/qtcolorpicker/include
   ${glapp_framework_SOURCE_DIR}/framework/include
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include

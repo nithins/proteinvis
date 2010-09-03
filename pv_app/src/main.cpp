@@ -27,10 +27,7 @@
 #include <logutil.h>
 #include <cpputils.h>
 
-#include <framework.h>
-
 #include <proteinModel.h>
-
 #include <viewer.h>
 
 
@@ -85,9 +82,7 @@ int main ( int argc, char *argv[] )
 
     split_string ( cmdline, protein_def_str_vec, "-pf" );
 
-    vector<boost::shared_ptr<ProteinModel> > protein_models;
-
-//    boost::shared_ptr<IFramework> framework =  IFramework::Create (argc,argv);
+    vector<protein_model_ptr_t> protein_models;
 
     for ( uint i = 0 ; i < protein_def_str_vec.size(); ++i )
     {
@@ -142,27 +137,21 @@ int main ( int argc, char *argv[] )
       }
 
 
-        boost::shared_ptr<ProteinModel> pm(
-              new ProteinModel
-              ( protein_filename,
-                surface_filename ,
-                alpha_complex_filename,
-                pocket_filename,
-                tet_filename )
-              );
+      protein_model_ptr_t pm
+          (new protein_model_t
+           ( protein_filename,surface_filename ,alpha_complex_filename,
+             pocket_filename,tet_filename ));
 
 
       protein_models.push_back ( pm );
     }
 
-    mw.show();
-
     for ( uint i = 0 ; i < protein_models.size();++i )
     {
-      mw.add_ren(protein_models[i]);
-      mw.add_frame(protein_models[i]->getQFrame(),
-                   protein_models[i]->Name());
+      mw.add_model(protein_models[i]);
     }
+
+    mw.show();
 
     application.exec();
 

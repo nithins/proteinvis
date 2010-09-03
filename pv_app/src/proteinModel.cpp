@@ -24,21 +24,11 @@
 
 #include <logutil.h>
 
-#include <modelcontroller.h>
-
 #include <proteinModel.h>
 #include <oneLevelModel.h>
 #include <protein.h>
 #include <alphaModel.h>
 #include <pocketModel.h>
-
-#include <QDir>
-#include <QFileDialog>
-#include <ui_ProteinModelFrame.h>
-
-#include <boost/array.hpp>
-
-
 
 using namespace std;
 
@@ -93,12 +83,7 @@ const unsigned char g_default_surface_color  [] = {176,148,101};
 double s_extent[6];
 double s_extent_valid = false;
 
-ProteinModel::ProteinModel ( string pf, string sf, string acf , string pocf, string tetf ) :
-    m_onelevel_model ( NULL ),
-    m_protein ( NULL ),
-    m_surface_renderer ( NULL ),
-    m_alpha_complex_model ( NULL ),
-    m_pocket_model ( NULL ),
+protein_model_t::protein_model_t ( string pf, string sf, string acf , string pocf, string tetf ) :
     m_render_model ( RMDL_SPACE_FILL ),
     m_render_mode ( RMDE_FULL ),
     m_surface_render_mode ( SRM_SHOW ),
@@ -114,20 +99,23 @@ ProteinModel::ProteinModel ( string pf, string sf, string acf , string pocf, str
     m_pocket_filename ( pocf ),
     m_tetra_filename ( tetf )
 {
+  size_t last_slash_pos = m_protein_filename.find_last_of ( "/\\" );
 
+  if ( last_slash_pos != string::npos )
+    m_protein_name = string ( m_protein_filename.begin() + last_slash_pos + 1, m_protein_filename.end() );
+  else
+    m_protein_name = m_protein_filename;
 }
 
-void ProteinModel::gl_init()
+void protein_model_t::gl_init()
 {
-  m_controller = IModelController::Create();
+  onelevel_model_t::init();
 
-  m_protein = new protein_t ( m_protein_filename.c_str() );
+  m_protein.reset(new protein_t ( m_protein_filename.c_str() ));
 
-  m_protein_rd = new protein_rd_t ( m_protein );
+  m_protein_rd.reset(new protein_rd_t ( m_protein ));
 
-  m_protein_atoms_grouping = new protein_grouping_t(m_protein);
-
-  m_onelevel_model = new onelevel_model_t ();
+  m_protein_atoms_grouping.reset(new protein_grouping_t(m_protein));
 
   if ( s_extent_valid == false )
   {
@@ -148,33 +136,24 @@ void ProteinModel::gl_init()
     s_extent[5] = max ( extent[5], s_extent[5] );
   }
 
-  size_t last_slash_pos = m_protein_filename.find_last_of ( "/\\" );
-
-  if ( last_slash_pos != string::npos )
-    m_protein_name = string ( m_protein_filename.begin() + last_slash_pos + 1, m_protein_filename.end() );
-  else
-    m_protein_name = m_protein_filename;
-
   setup_surface();
 
   if ( m_alpha_complex_filename.size() != 0 )
   {
-    m_alpha_complex_model = new alpha_complex_model_t
-                            ( m_alpha_complex_filename.c_str(), m_protein_rd );
+    m_alpha_complex_model.reset(new alpha_complex_model_t
+                            ( m_alpha_complex_filename, m_protein_rd ));
   }
 
   if ( m_pocket_filename.size() != 0 && m_tetra_filename.size() != 0 )
   {
-    m_pocket_model = new pocket_model_t
-                     ( m_pocket_filename.c_str(), m_tetra_filename.c_str() , m_protein_rd );
+    m_pocket_model.reset(new pocket_model_t
+                     ( m_pocket_filename.c_str(), m_tetra_filename.c_str() , m_protein_rd ));
 
     update_pocket_render_state();
   }
-
-  init_ui();
 }
 
-void ProteinModel::setup_surface()
+void protein_model_t::setup_surface()
 {
   if ( m_surface_filename.size() == 0 )
     return;
@@ -217,23 +196,14 @@ void ProteinModel::setup_surface()
     vlist[i] *= scalarfactor;
   }
 
-  glutils::bufobj_ptr_t vrt_bo,tri_bo,col_bo;
-
-  vrt_bo  = glutils::buf_obj_t::create_bo
-            (vlist.data(), GL_DOUBLE, 3, GL_ARRAY_BUFFER,sizeof( double )*3*vlist.size(), 0 );
-
-  tri_bo = glutils::buf_obj_t::create_bo
-           (tlist.data() , GL_UNSIGNED_INT, 3, GL_ELEMENT_ARRAY_BUFFER,
-            sizeof ( uint ) *3*tlist.size(), 0 );
-
-  col_bo = glutils::buf_obj_t::create_bo();
-
-  m_surface_renderer = glutils::create_buffered_tristrip_ren ( vrt_bo, tri_bo, col_bo );
+  m_surface_renderer.reset
+      (glutils::create_buffered_tristrip_ren
+       (  glutils::make_buf_obj(vlist), glutils::make_buf_obj(tlist)));
 
 
 }
 
-void ProteinModel::render_onelevel() const
+void protein_model_t::render_onelevel() const
 {
   switch ( m_render_mode )
   {
@@ -244,7 +214,7 @@ void ProteinModel::render_onelevel() const
     {
 
         case RMDL_SPACE_FILL:
-      m_onelevel_model->render_sf
+      onelevel_model_t::render_sf
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             m_protein_rd->get_radii_bo(),
@@ -254,7 +224,7 @@ void ProteinModel::render_onelevel() const
 
 
         case RMDL_BALL_STICK:
-      m_onelevel_model->render_bs
+      onelevel_model_t::render_bs
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             g_ball_stick_atom_radius,
@@ -263,7 +233,7 @@ void ProteinModel::render_onelevel() const
       break;
 
         case RMDL_SMALL_SPACE_FILL:
-      m_onelevel_model->render_sf
+      onelevel_model_t::render_sf
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             g_small_space_fill_atom_radius );
@@ -278,7 +248,7 @@ void ProteinModel::render_onelevel() const
     {
 
         case RMDL_SPACE_FILL:
-      m_onelevel_model->render_sf
+      onelevel_model_t::render_sf
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             m_protein_rd->get_radii_bo(),
@@ -290,7 +260,7 @@ void ProteinModel::render_onelevel() const
 
 
         case RMDL_BALL_STICK:
-      m_onelevel_model->render_bs
+      onelevel_model_t::render_bs
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             g_ball_stick_atom_radius,
@@ -300,7 +270,7 @@ void ProteinModel::render_onelevel() const
       break;
 
         case RMDL_SMALL_SPACE_FILL:
-      m_onelevel_model->render_sf
+      onelevel_model_t::render_sf
           ( m_protein_rd->get_coord_bo(),
             m_protein_atoms_grouping->get_atom_color_bo(),
             g_small_space_fill_atom_radius,
@@ -321,7 +291,7 @@ void ProteinModel::render_onelevel() const
       {
 
           case RMDL_SPACE_FILL:
-        m_onelevel_model->render_sf
+        onelevel_model_t::render_sf
             ( m_protein_rd->get_coord_bo(),
               m_protein_atoms_grouping->get_atom_color_bo(),
               m_protein_rd->get_radii_bo(),
@@ -333,7 +303,7 @@ void ProteinModel::render_onelevel() const
         break;
 
           case RMDL_BALL_STICK:
-        m_onelevel_model->render_bs
+        onelevel_model_t::render_bs
             ( m_protein_rd->get_coord_bo(),
               m_protein_atoms_grouping->get_atom_color_bo(),
               g_ball_stick_atom_radius,
@@ -343,7 +313,7 @@ void ProteinModel::render_onelevel() const
         break;
 
           case RMDL_SMALL_SPACE_FILL:
-        m_onelevel_model->render_sf
+        onelevel_model_t::render_sf
             ( m_protein_rd->get_coord_bo(),
               m_protein_atoms_grouping->get_atom_color_bo(),
               g_small_space_fill_atom_radius,
@@ -359,7 +329,7 @@ void ProteinModel::render_onelevel() const
 
 }
 
-void ProteinModel::update_sf_model_for_pocket()
+void protein_model_t::update_sf_model_for_pocket()
 {
   if ( m_pocket_model == NULL )
     return;
@@ -369,7 +339,7 @@ void ProteinModel::update_sf_model_for_pocket()
   m_alpha_value     = m_pocket_model->get_alpha_value ( m_pocket_alpha_num );
 }
 
-void ProteinModel::update_pocket_render_state()
+void protein_model_t::update_pocket_render_state()
 {
 
   if ( m_pocket_model == NULL )
@@ -405,46 +375,12 @@ void ProteinModel::update_pocket_render_state()
   }
 }
 
-// int ProteinModel::RenderForPick() const
-// {
-//   m_controller->Render();
-//
-//   DRAWBB ( -1, 1, -1, 1, -1, 1 );
-//   return 24;
-// }
-
-ProteinModel::~ProteinModel ()
+protein_model_t::~protein_model_t ()
 {
-  _LOG("destroying Proteinmodel");
-
-  destroy_ui();
-
-  IModelController::Delete ( m_controller );
-
-  delete m_onelevel_model;
-
-  delete m_protein;
-
-  delete m_protein_rd;
-
-  delete m_protein_atoms_grouping;
-
-  if ( m_surface_renderer != NULL )
-    delete m_surface_renderer;
-
-  if ( m_alpha_complex_model != NULL )
-    delete m_alpha_complex_model;
 }
 
-void ProteinModel::Reset()
+int protein_model_t::render()
 {
-  m_controller->Reset();
-}
-
-int ProteinModel::Render() const
-{
-  m_controller->Render();
-
   double scalefactor;
 
   glPushMatrix();
@@ -509,414 +445,289 @@ int ProteinModel::Render() const
   return 0;
 }
 
-bool ProteinModel::MousePressedEvent
-    ( const int &x, const int &y, const eMouseButton &mb,
-      const eKeyFlags &,const eMouseFlags &)
+#include <QDir>
+#include <QFileDialog>
+
+protein_model_ui_t::protein_model_ui_t(protein_model_ptr_t pptr,QWidget * par)
 {
-  switch(mb)
-  {
-  case MOUSEBUTTON_RIGHT:
-    {
-      m_controller->StartTB ( x, y );
-      return true;
-    }
-  case MOUSEBUTTON_LEFT:
-    {
-      m_controller->StartTrans ( x, y );
-      return true;
-    }
-  default:
-    return false;
-  }
-}
+  m_protein_model = pptr;
 
-bool ProteinModel::MouseReleasedEvent
-    ( const int &x, const int &y, const eMouseButton &mb,
-      const eKeyFlags &,const eMouseFlags &)
-{
-  switch(mb)
-  {
-  case MOUSEBUTTON_RIGHT:
-    {
-      m_controller->StopTB ( x, y );
-      return true;
-    }
+  setParent(par);
 
-  case MOUSEBUTTON_LEFT:
-    {
-      m_controller->StopTrans( x, y );
-      return true;
-    }
-  default:
-    return false;
-  }
-}
+  setupUi(this);
 
-bool ProteinModel::MouseMovedEvent
-    ( const int &x, const int &y, const int &, const int &,
-      const eKeyFlags &,const eMouseFlags &mf)
-{
-  if(mf &MOUSEBUTTON_LEFT || mf &MOUSEBUTTON_RIGHT)
-  {
-    m_controller->Move ( x, y );
-    return true;
-  }
-  return false;
-}
+  // its critical that no one emits any signals till m_protein_model::gl_init
+  // has been called
 
-bool ProteinModel::WheelEvent
-    ( const int &, const int &, const int &d,
-      const eKeyFlags &kf,const eMouseFlags &)
-{
-
-  if(kf&KEYFLAG_CTRL)
-  {
-
-    double gf = 1.0;
-
-    if(d>0)
-      gf += 0.1;
-    else
-      gf -= 0.1;
-
-    m_controller->set_uniform_scale(m_controller->get_uniform_scale()*gf);
-    return true;
-  }
-
-  return false;
-}
-
-void ProteinModel::save_to_file ( std::string filename )
-{
-  double transmat[16];
-
-  m_controller->getMatrix ( transmat );
-
-  protein_t::transform_and_save_crd ( m_protein_filename.c_str(), filename.c_str(), transmat );
-}
-
-void ProteinModel::save_transformation(std::string filename )
-{
-  fstream outfile(filename.c_str(),ios::out);
-
-  ostream * o = &outfile;
-
-  m_controller->serialize(*o);
-
-  outfile.close();
-
-}
-void ProteinModel::load_transformation(std::string filename )
-{
-  fstream infile(filename.c_str(),ios::in);
-
-  istream * i = &infile;
-
-  m_controller->serialize(*i);
-
-  infile.close();
-}
-
-void ProteinModel::init_ui()
-{
-  setWindowTitle(QString("hello"));
-
-  m_ui = new Ui::ProteinModelFrame();
-
-  m_ui->setupUi ( this );
-
-  m_protein_grouping_model =
-      new protein_grouping_ui_model_t(m_protein_atoms_grouping);
-
-  m_ui->protein_grouping_tableView->setModel(m_protein_grouping_model);
+  protein_grouping_comboBox->blockSignals(true);
 
   for(int i = 0;i< protein_grouping_t::GROUP_ATOMS_COUNT; ++i)
   {
-    m_ui->protein_grouping_comboBox->addItem
-        (protein_grouping_t::get_groupby_displaystr((protein_grouping_t::eGroupAtomsBy)i).c_str() );
+    std::string grp_name = protein_grouping_t::get_groupby_displaystr((protein_grouping_t::eGroupAtomsBy)i);
+
+    QString str(grp_name.c_str());
+
+    protein_grouping_comboBox->addItem(str);
   }
 
-  if ( m_surface_renderer == NULL )
-    m_ui->showhide_surface_groupBox->setEnabled ( false );
-  else
-  {
-    m_ui->surface_color_colorpicker->setCurrentColor
-        (QColor(m_surface_color[0],m_surface_color[1],m_surface_color[2]));
-  }
-
-
-  if ( m_alpha_complex_model == NULL )
-    m_ui->alpha_complex_groupBox->setEnabled ( false );
-
-  if ( m_pocket_model == NULL )
-  {
-    m_ui->pocatoms_rendermode_radioButton->setEnabled ( false );
-    m_ui->pocket_groupBox->setEnabled ( false );
-  }
-  else
-  {
-    m_ui->pocket_alpha_num_spinBox->setMinimum ( 1 );
-    m_ui->pocket_alpha_num_spinBox->setMaximum ( m_pocket_model->get_num_alpha() );
-
-    m_ui->pocket_num_spinBox->setMinimum ( 1 );
-    m_ui->pocket_num_spinBox->setMaximum ( m_pocket_model->get_num_pockets ( m_pocket_alpha_num ) );
-  }
+  protein_grouping_comboBox->blockSignals(false);
 }
 
-void ProteinModel::destroy_ui()
+void protein_model_ui_t::init_ui()
 {
-  delete m_ui;
+  m_protein_grouping_model =
+      new protein_grouping_ui_model_t(m_protein_model->m_protein_atoms_grouping);
 
-  delete m_protein_grouping_model;
+  protein_grouping_tableView->setModel(m_protein_grouping_model);
+
+  if ( m_protein_model->m_surface_renderer == NULL )
+    showhide_surface_groupBox->setEnabled ( false );
+  else
+  {
+    uc_color_t col = m_protein_model->m_surface_color;
+
+    surface_color_colorpicker->setCurrentColor(QColor(col[0],col[1],col[2]));
+  }
+
+  if ( m_protein_model->m_alpha_complex_model == NULL )
+    alpha_complex_groupBox->setEnabled ( false );
+
+  if ( m_protein_model->m_pocket_model == NULL )
+  {
+    pocatoms_rendermode_radioButton->setEnabled ( false );
+    pocket_groupBox->setEnabled ( false );
+  }
+  else
+  {
+    pocket_alpha_num_spinBox->setMinimum ( 1 );
+    pocket_alpha_num_spinBox->setMaximum
+        ( m_protein_model->m_pocket_model->get_num_alpha() );
+
+    pocket_num_spinBox->setMinimum ( 1 );
+    pocket_num_spinBox->setMaximum
+        ( m_protein_model->m_pocket_model->get_num_pockets
+          ( m_protein_model->m_pocket_alpha_num ) );
+  }
 }
 
-void ProteinModel::pocket_ui_state_updated()
+void protein_model_ui_t::pocket_ui_state_updated()
 {
 
   // pull stuff from the ui and update the base class vars
 
-  if ( !m_ui->pocket_groupBox->isChecked() )
+  if ( !pocket_groupBox->isChecked() )
   {
-    m_pocket_render_mode  = PRM_SHOW_NONE;
+    m_protein_model->m_pocket_render_mode  = PRM_SHOW_NONE;
   }
   else
   {
 
-    m_pocket_alpha_num = m_ui->pocket_alpha_num_spinBox->value() - 1;
+    m_protein_model->m_pocket_alpha_num = pocket_alpha_num_spinBox->value() - 1;
 
-    if ( !m_ui->show_all_pockets_radioButton->isChecked() )
+    if ( !show_all_pockets_radioButton->isChecked() )
     {
-      m_pocket_num          = m_ui->pocket_num_spinBox->value() - 1;
+      m_protein_model->m_pocket_num          = pocket_num_spinBox->value() - 1;
 
-      m_pocket_render_mode  = PRM_SHOW_ONE;
+      m_protein_model->m_pocket_render_mode  = PRM_SHOW_ONE;
     }
     else
     {
-      m_pocket_num          = ( uint ) - 1;
+      m_protein_model->m_pocket_num          = ( uint ) - 1;
 
-      m_pocket_render_mode  = PRM_SHOW_ALL;
+      m_protein_model->m_pocket_render_mode  = PRM_SHOW_ALL;
     }
   }
 
   // intimate base class
 
-  update_pocket_render_state();
+  m_protein_model->update_pocket_render_state();
 
   // update ui
 
-  m_ui->pocket_num_spinBox->setMaximum ( m_pocket_model->get_num_pockets ( m_pocket_alpha_num ) );
+  pocket_num_spinBox->setMaximum ( m_protein_model->m_pocket_model->get_num_pockets ( m_protein_model->m_pocket_alpha_num ) );
 
-  m_ui->add_radius_sf_model_doubleSpinBox->setValue ( m_add_atom_radius );
+  add_radius_sf_model_doubleSpinBox->setValue ( m_protein_model->m_add_atom_radius );
 
-  m_ui->alpha_value_sf_model_doubleSpinBox->setValue ( m_alpha_value );
+  alpha_value_sf_model_doubleSpinBox->setValue ( m_protein_model->m_alpha_value );
 
 }
 
-void ProteinModel::alpha_complex_ui_state_updated()
+void protein_model_ui_t::alpha_complex_ui_state_updated()
 {
-  if ( !m_ui->alpha_complex_groupBox->isChecked() )
+  if ( !alpha_complex_groupBox->isChecked() )
   {
-    m_alpha_complex_render_mode = ACRM_HIDE;
+    m_protein_model->m_alpha_complex_render_mode = ACRM_HIDE;
   }
   else
   {
-    if ( m_ui->show_alpha_complex_tets_checkBox->isChecked() )
-      m_alpha_complex_render_mode |= ACRM_TETRAHEDRONS;
+    if ( show_alpha_complex_tets_checkBox->isChecked() )
+      m_protein_model->m_alpha_complex_render_mode |= ACRM_TETRAHEDRONS;
     else
-      m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TETRAHEDRONS;
+      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TETRAHEDRONS;
 
-    if ( m_ui->show_alpha_complex_tris_checkBox->isChecked() )
-      m_alpha_complex_render_mode |= ACRM_TRIANGLES;
+    if ( show_alpha_complex_tris_checkBox->isChecked() )
+      m_protein_model->m_alpha_complex_render_mode |= ACRM_TRIANGLES;
     else
-      m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TRIANGLES;
+      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TRIANGLES;
 
-    if ( m_ui->show_alpha_complex_edges_checkBox->isChecked() )
-      m_alpha_complex_render_mode |= ACRM_EDGES;
+    if ( show_alpha_complex_edges_checkBox->isChecked() )
+      m_protein_model->m_alpha_complex_render_mode |= ACRM_EDGES;
     else
-      m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_EDGES;
+      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_EDGES;
   }
 }
 
-void ProteinModel::on_sf_model_radiobutton_clicked ( bool checked )
+void protein_model_ui_t::on_sf_model_radiobutton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_render_model = RMDL_SPACE_FILL;
+    m_protein_model->m_render_model = RMDL_SPACE_FILL;
   }
 }
 
-void ProteinModel::on_ssf_model_radiobutton_clicked ( bool checked )
+void protein_model_ui_t::on_ssf_model_radiobutton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_render_model = RMDL_SMALL_SPACE_FILL;
+    m_protein_model->m_render_model = RMDL_SMALL_SPACE_FILL;
   }
 }
 
-void ProteinModel::on_bs_model_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_bs_model_radioButton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_render_model = RMDL_BALL_STICK;
+    m_protein_model->m_render_model = RMDL_BALL_STICK;
   }
 }
 
-void ProteinModel::on_full_mol_rendermode_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_full_mol_rendermode_radioButton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_render_mode = RMDE_FULL;
+    m_protein_model->m_render_mode = RMDE_FULL;
   }
 }
 
-void ProteinModel::on_bb_mol_rendermode_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_bb_mol_rendermode_radioButton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_render_mode = RMDE_BACKBONE;
+    m_protein_model->m_render_mode = RMDE_BACKBONE;
   }
 }
 
-void ProteinModel::on_pocatoms_rendermode_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_pocatoms_rendermode_radioButton_clicked ( bool checked )
 {
   if ( checked )
   {
     // change base variables
-    m_render_mode     = RMDE_POCKET_ATOMS;
+    m_protein_model->m_render_mode     = RMDE_POCKET_ATOMS;
 
     // intimate base class
-    update_sf_model_for_pocket();
+    m_protein_model->update_sf_model_for_pocket();
 
     // update ui
-    m_ui->add_radius_sf_model_doubleSpinBox->setValue ( m_add_atom_radius );
+    add_radius_sf_model_doubleSpinBox->setValue ( m_protein_model->m_add_atom_radius );
 
-    m_ui->alpha_value_sf_model_doubleSpinBox->setValue ( m_alpha_value );
+    alpha_value_sf_model_doubleSpinBox->setValue ( m_protein_model->m_alpha_value );
   }
 }
 
-void ProteinModel::on_none_rendermode_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_none_rendermode_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_render_mode = RMDE_NONE;
+    m_protein_model->m_render_mode = RMDE_NONE;
 }
 
-void ProteinModel::on_add_radius_sf_model_doubleSpinBox_valueChanged ( double v )
+void protein_model_ui_t::on_add_radius_sf_model_doubleSpinBox_valueChanged ( double v )
 {
-  m_add_atom_radius = v;
+  m_protein_model->m_add_atom_radius = v;
 }
 
-void ProteinModel::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( double v )
+void protein_model_ui_t::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( double v )
 {
-  m_alpha_value = v;
+  m_protein_model->m_alpha_value = v;
 }
 
-void ProteinModel::on_show_surface_radioButton_clicked ( bool checked )
-{
-  if ( checked )
-    m_surface_render_mode = SRM_SHOW;
-}
-
-void ProteinModel::on_show_surface_wireframe_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_show_surface_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_surface_render_mode = SRM_SHOW_WIREFRAME;
+    m_protein_model->m_surface_render_mode = SRM_SHOW;
 }
 
-void ProteinModel::on_hide_surface_radioButton_clicked ( bool checked )
+void protein_model_ui_t::on_show_surface_wireframe_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_surface_render_mode = SRM_HIDE;
+    m_protein_model->m_surface_render_mode = SRM_SHOW_WIREFRAME;
 }
 
-void ProteinModel::on_pocket_groupBox_clicked ( bool )
+void protein_model_ui_t::on_hide_surface_radioButton_clicked ( bool checked )
+{
+  if ( checked )
+    m_protein_model->m_surface_render_mode = SRM_HIDE;
+}
+
+void protein_model_ui_t::on_pocket_groupBox_clicked ( bool )
 {
   pocket_ui_state_updated();
 }
 
-void ProteinModel::on_show_all_pockets_radioButton_clicked ( bool )
+void protein_model_ui_t::on_show_all_pockets_radioButton_clicked ( bool )
 {
   pocket_ui_state_updated();
 }
 
-void ProteinModel::on_pocket_alpha_num_spinBox_valueChanged ( int )
+void protein_model_ui_t::on_pocket_alpha_num_spinBox_valueChanged ( int )
 {
   pocket_ui_state_updated();
 }
 
-void ProteinModel::on_pocket_num_spinBox_valueChanged ( int )
+void protein_model_ui_t::on_pocket_num_spinBox_valueChanged ( int )
 {
   pocket_ui_state_updated();
 }
 
-void ProteinModel::on_alpha_complex_groupBox_clicked ( bool )
+void protein_model_ui_t::on_alpha_complex_groupBox_clicked ( bool )
 {
   alpha_complex_ui_state_updated();
 }
 
-void ProteinModel::on_show_alpha_complex_tets_checkBox_clicked ( bool )
+void protein_model_ui_t::on_show_alpha_complex_tets_checkBox_clicked ( bool )
 {
   alpha_complex_ui_state_updated();
 }
 
-void ProteinModel::on_show_alpha_complex_tris_checkBox_clicked ( bool )
+void protein_model_ui_t::on_show_alpha_complex_tris_checkBox_clicked ( bool )
 {
   alpha_complex_ui_state_updated();
 }
 
-void ProteinModel::on_show_alpha_complex_edges_checkBox_clicked ( bool )
+void protein_model_ui_t::on_show_alpha_complex_edges_checkBox_clicked ( bool )
 {
   alpha_complex_ui_state_updated();
 }
 
-void ProteinModel::on_save_to_file_pushButton_clicked ( bool )
-{
-  QString filename = QFileDialog::getSaveFileName
-                     ( this, tr ( "Save File" ),
-                       QDir::homePath(),
-                       tr ( "Protein data (*.crd)" ) );
-
-  save_to_file ( filename.toAscii().constData() );
-}
-
-void ProteinModel::on_save_trans_pushButton_clicked(bool)
-{
-  QString filename = QFileDialog::getSaveFileName
-                     ( this, tr ( "Save Transformation" ),
-                       QDir::homePath(),
-                       tr ( "Transformation data (*.trans)" ) );
-
-  save_transformation(filename.toAscii().constData());
-
-}
-void ProteinModel::on_load_trans_pushButton_clicked(bool)
-{
-  QString filename = QFileDialog::getOpenFileName
-                     ( this, tr ( "Load Transformation" ),
-                       QDir::homePath(),
-                       tr ( "Transformation data (*.trans)" ) );
-
-  load_transformation(filename.toAscii().constData());
-}
-
-void ProteinModel::on_protein_grouping_comboBox_currentIndexChanged(int ind)
+void protein_model_ui_t::on_protein_grouping_comboBox_currentIndexChanged(int ind)
 {
   m_protein_grouping_model->set_grouping_type(ind);
 }
 
-void ProteinModel::on_reload_pushButton_clicked(bool)
+void protein_model_ui_t::on_reload_pushButton_clicked(bool)
 {
-  m_protein_atoms_grouping->update_atom_color_bo();
+  m_protein_model->m_protein_atoms_grouping->update_atom_color_bo();
 }
 
-void ProteinModel::on_surface_color_colorpicker_colorChanged
+void protein_model_ui_t::on_surface_color_colorpicker_colorChanged
     (const QColor &c)
 {
-  m_surface_color[0] = c.red();
-  m_surface_color[1] = c.green();
-  m_surface_color[2] = c.blue();
+  m_protein_model->m_surface_color[0] = c.red();
+  m_protein_model->m_surface_color[1] = c.green();
+  m_protein_model->m_surface_color[2] = c.blue();
 }
 
-protein_grouping_ui_model_t::protein_grouping_ui_model_t(protein_grouping_t * p, QObject *parent )
+protein_grouping_ui_model_t::protein_grouping_ui_model_t
+    (boost::shared_ptr<protein_grouping_t> p, QObject *parent )
   :QAbstractItemModel(parent)
 {
   m_protein_grouping = p;
@@ -944,8 +755,7 @@ QVariant protein_grouping_ui_model_t::data(const QModelIndex &index, int role) c
       if(role == Qt::DecorationRole ||
          role == Qt::DisplayRole)
       {
-        protein_grouping_t::atom_color_t col =
-            m_protein_grouping->get_group_color(index.row());
+        glutils::color_t col = m_protein_grouping->get_group_color(index.row());
         QColor qcol;
         qcol.setRgbF(col[0],col[1],col[2]);
         return qcol;
@@ -1036,8 +846,7 @@ bool protein_grouping_ui_model_t::setData
   {
 
     QColor color = value.value<QColor>();
-    protein_grouping_t::atom_color_t col
-        (color.redF(),color.greenF(),color.blueF());
+    glutils::color_t col(color.redF(),color.greenF(),color.blueF());
     m_protein_grouping->set_group_color(col,index.row());
     emit dataChanged(index,index);
     return true;

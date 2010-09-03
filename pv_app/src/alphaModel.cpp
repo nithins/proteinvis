@@ -33,11 +33,11 @@
 
 using namespace std;
 
-typedef n_vector_t<unsigned int,3,false> tri_t;
-typedef n_vector_t<unsigned int,2,false> ege_t;
+typedef n_vector_t<uint,3,false> tri_t;
+typedef n_vector_t<uint,2,false> ege_t;
 
-typedef std::set < tri_t> tri_set_t;
-typedef std::set < ege_t> ege_set_t;
+typedef std::set <tri_t> tri_set_t;
+typedef std::set <ege_t> ege_set_t;
 
 const char * g_num_tets_line_prefix = "REMARK  Number of tetrahedra :";
 
@@ -51,9 +51,9 @@ const char * g_num_eges_line_prefix = "REMARK  Number of edges :";
 
 const char * g_ege_line_prefix = "Edge";
 
-void alpha_complex_model_t::read_file ( const char * filename )
+void alpha_complex_model_t::read_file ( const std::string & filename )
 {
-  fstream alpFile ( filename, ios::in );
+  fstream alpFile ( filename.c_str(), ios::in );
 
   // get the number of tetras
 
@@ -81,7 +81,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
   uint num_tets_read = 0;
 
-  uint * tets = new uint[num_tets*4];
+  glutils::quad_idx_list_t tets(num_tets);
 
   while ( !alpFile.eof() )
   {
@@ -99,18 +99,18 @@ void alpha_complex_model_t::read_file ( const char * filename )
     if ( tokens[0] != tet_pfx )
       continue;
 
-    tets[4*num_tets_read+0] = atoi ( tokens[2].c_str() ) - 1;
+    tets[num_tets_read][0] = atoi ( tokens[2].c_str() ) - 1;
 
-    tets[4*num_tets_read+1] = atoi ( tokens[3].c_str() ) - 1;
+    tets[num_tets_read][1] = atoi ( tokens[3].c_str() ) - 1;
 
-    tets[4*num_tets_read+2] = atoi ( tokens[4].c_str() ) - 1;
+    tets[num_tets_read][2] = atoi ( tokens[4].c_str() ) - 1;
 
-    tets[4*num_tets_read+3] = atoi ( tokens[5].c_str() ) - 1;
+    tets[num_tets_read][3] = atoi ( tokens[5].c_str() ) - 1;
 
     int flip = atoi ( tokens[6].c_str() );
 
     if ( flip == 1 )
-      swap ( tets[4*num_tets_read+0], tets[4*num_tets_read+1] );
+      swap ( tets[num_tets_read][0], tets[num_tets_read][1] );
 
     tokens.clear();
 
@@ -168,7 +168,7 @@ void alpha_complex_model_t::read_file ( const char * filename )
 
     uint v3 = atoi ( tokens[4].c_str() ) - 1;
 
-    tri_set.insert ( tri_t ( v1, v2, v3 ) );
+    tri_set.insert ( glutils::tri_idx_t( v1, v2, v3 ) );
 
     tokens.clear();
 
@@ -256,92 +256,54 @@ void alpha_complex_model_t::read_file ( const char * filename )
     ege_set.erase ( ege_t( v3, v1 ) );
   }
 
-  num_eges = ege_set.size();
+  glutils::line_idx_list_t eges(ege_set.size());
 
-  uint * eges = new uint[num_eges *2];
-
-  uint num_eges_added = 0;
-
-  for ( ege_set_t::iterator it = ege_set.begin();it != ege_set.end();++it, ++num_eges_added )
-  {
-    eges[2*num_eges_added+0] = (*it)[0];
-    eges[2*num_eges_added+1] = (*it)[1];
-  }
+  std::copy(ege_set.begin(),ege_set.end(),eges.begin());
 
   // throw away all triangles present in the tetra set
 
   for ( uint i = 0 ; i < num_tets; ++i )
   {
-    uint v1 = tets[4*i+0];
-    uint v2 = tets[4*i+1];
-    uint v3 = tets[4*i+2];
-    uint v4 = tets[4*i+3];
+    glutils::quad_idx_t tet = tets[i];
 
-    tri_set.erase ( tri_t( v2, v3, v4 ) );
-    tri_set.erase ( tri_t( v1, v3, v4 ) );
-    tri_set.erase ( tri_t( v1, v2, v4 ) );
-    tri_set.erase ( tri_t( v1, v3, v3 ) );
+    tri_set.erase ( tri_t( tet[1], tet[2], tet[3] ) );
+    tri_set.erase ( tri_t( tet[0], tet[2], tet[3] ) );
+    tri_set.erase ( tri_t( tet[0], tet[1], tet[3] ) );
+    tri_set.erase ( tri_t( tet[0], tet[2], tet[2] ) );
   }
 
-  num_tris = tri_set.size();
+  glutils::tri_idx_list_t tris(tri_set.size());
 
-  uint * tris = new uint[num_tris *3];
-
-  uint num_tris_added = 0;
-
-  for ( tri_set_t::iterator it = tri_set.begin();it != tri_set.end();++it, ++num_tris_added )
-  {
-    tris[3*num_tris_added+0] = (*it)[0];
-    tris[3*num_tris_added+1] = (*it)[1];
-    tris[3*num_tris_added+2] = (*it)[2];
-  }
+  std::copy(tri_set.begin(),tri_set.end(),tris.begin());
 
   glutils::bufobj_ptr_t tet_bo,tri_bo,ege_bo,vrt_bo,col_bo;
 
-  tet_bo = glutils::buf_obj_t::create_bo( tets, GL_UNSIGNED_INT, 4,
-                                          GL_ELEMENT_ARRAY_BUFFER,
-                                          sizeof ( uint )  *4*num_tets, 0 );
+  tet_bo = glutils::make_buf_obj(tets);
 
-  tri_bo = glutils::buf_obj_t::create_bo( tris, GL_UNSIGNED_INT, 3,
-                                          GL_ELEMENT_ARRAY_BUFFER,
-                                          sizeof ( uint )  *3*num_tris, 0 );
+  tri_bo = glutils::make_buf_obj(tris);
 
-  ege_bo = glutils::buf_obj_t::create_bo( tris, GL_UNSIGNED_INT, 2,
-                                          GL_ELEMENT_ARRAY_BUFFER,
-                                          sizeof ( uint )  *2*num_eges, 0 );
+  ege_bo = glutils::make_buf_obj(eges);
 
   vrt_bo = m_protein_rd->get_coord_bo();
 
   col_bo = glutils::buf_obj_t::create_bo();
 
-  m_tet_ren = glutils::create_buffered_flat_tetrahedrons_ren ( vrt_bo, tet_bo, col_bo );
+  m_tet_ren.reset(glutils::create_buffered_flat_tetrahedrons_ren ( vrt_bo, tet_bo));
 
-  m_tri_ren = glutils::create_buffered_flat_triangles_ren ( vrt_bo, tri_bo, col_bo );
+  m_tri_ren.reset(glutils::create_buffered_flat_triangles_ren ( vrt_bo, tri_bo));
 
-  m_ege_ren = glutils::create_buffered_lines_ren ( vrt_bo, ege_bo, col_bo );
-
-  delete []tets;
-
-  delete []eges;
-
-  delete []tris;
+  m_ege_ren.reset(glutils::create_buffered_lines_ren ( vrt_bo, ege_bo));
 }
 
 alpha_complex_model_t::alpha_complex_model_t
-(
-  const char *filename,
-  protein_rd_t * protein_rd
-)    :
-    m_protein_rd ( protein_rd )
+( const std::string &f, boost::shared_ptr<protein_rd_t> p):
+    m_protein_rd ( p )
 {
-  read_file ( filename );
+  read_file ( f );
 }
 
 alpha_complex_model_t::~alpha_complex_model_t ()
 {
-  delete m_tet_ren;
-  delete m_tri_ren;
-  delete m_ege_ren;
 }
 
 int alpha_complex_model_t::render_tetrahedrons() const

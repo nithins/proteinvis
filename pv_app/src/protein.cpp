@@ -615,7 +615,7 @@ void protein_rd_t::compute_extent()
   copy ( extent, extent + 6, m_extent );
 }
 
-protein_rd_t::protein_rd_t ( protein_t * p ) : m_protein ( p )
+protein_rd_t::protein_rd_t ( boost::shared_ptr<protein_t> p ) : m_protein ( p )
 {
   upload_data_items();
 
@@ -656,12 +656,12 @@ glutils::bufobj_ptr_t protein_rd_t::get_bb_coord_bo()
   return m_bb_atom_indices_bo;
 }
 
-protein_grouping_t::protein_grouping_t(protein_t * p)
+protein_grouping_t::protein_grouping_t(boost::shared_ptr<protein_t> p)
 {
   m_protein       = p;
   m_grouping_type = GROUP_ATOMS_COUNT;
   m_num_groups    = 0;
-  m_group_colors  = NULL;
+  m_group_colors.clear();
 
   set_grouping_type((eGroupAtomsBy)0);
 
@@ -670,11 +670,9 @@ protein_grouping_t::protein_grouping_t(protein_t * p)
 
 protein_grouping_t::~protein_grouping_t()
 {
-  if (m_group_colors != NULL)
-    delete []m_group_colors;
 }
 
-void protein_grouping_t::set_group_color(atom_color_t col,int i)
+void protein_grouping_t::set_group_color(glutils::color_t col,int i)
 {
   if(i<0 || i>= m_num_groups )
     throw string("unknown group")+__func__;
@@ -732,13 +730,12 @@ std::string protein_grouping_t::get_group_name(int groupno) const
   }
 }
 
-protein_grouping_t::atom_color_t
+glutils::color_t
     protein_grouping_t::get_group_color(int groupno) const
 {
   if(groupno <0 || groupno >= (int)m_num_groups)
   {
     throw string("unknown group")+__func__;
-    return protein_grouping_t::atom_color_t();
   }
 
   return m_group_colors[groupno];
@@ -798,10 +795,7 @@ void protein_grouping_t::set_grouping_type(protein_grouping_t::eGroupAtomsBy g)
 void protein_grouping_t::set_default_color_values()
 {
 
-  if (m_group_colors != NULL)
-    delete []m_group_colors;
-
-  m_group_colors = new atom_color_t[m_num_groups];
+  m_group_colors.resize(m_num_groups);
 
   double dgroup_ct      = m_num_groups;
 
@@ -866,7 +860,7 @@ void  protein_grouping_t::update_atom_color_bo()
 
   for(uint i = 0 ;i < m_protein->get_num_atoms();++i)
   {
-    atom_color_t col;
+    glutils::color_t col;
     switch(m_grouping_type)
     {
     case GROUP_ATOMS_ATOM:
