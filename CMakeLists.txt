@@ -22,14 +22,26 @@ find_package(GLEW REQUIRED)
 
 find_package(Boost COMPONENTS regex REQUIRED)
 
-subdirs(glapp_framework)
+subdirs(utls)
 
-file(GLOB proteinvis_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/*.h)
+file(GLOB proteinvis_SRCS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/*.h)
+
+file(GLOB qtcolorpicker_SRCS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/*.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/*.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include/*.h)
 
 QT4_WRAP_CPP(  proteinvis_MOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/proteinModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/qtglmaterialeditor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/viewer.h
+  )
+
+QT4_WRAP_CPP(qtcolorpicker_MOC_SRCS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include/qtcolorpicker.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/qtcolorpicker_widgets.h  
   )
 
 file(GLOB proteinvis_UIS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/forms/*.ui)
@@ -42,15 +54,23 @@ include_directories(
   ${QT_ADDITIONAL_INCLUDE_PATHS}
   ${GLEW_INCLUDE_PATH}
   ${Boost_INCLUDE_DIRS}
-  ${glapp_framework_SOURCE_DIR}/utls/include
-  ${glapp_framework_SOURCE_DIR}/qtcolorpicker/include
-  ${glapp_framework_SOURCE_DIR}/framework/include
+  ${utls_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include
   ${CMAKE_CURRENT_BINARY_DIR}
   ${QGLVIEWER_INCLUDE_DIR}
   )
 
-add_executable(proteinvis ${proteinvis_SRCS} ${proteinvis_MOC_SRCS} ${proteinvis_UI_SRCS} ${proteinvis_RC_SRCS})
+add_executable(proteinvis 
+  ${proteinvis_SRCS} 
+  ${proteinvis_MOC_SRCS} 
+  ${proteinvis_UI_SRCS} 
+  ${proteinvis_RC_SRCS}
+  ${qtcolorpicker_SRCS}
+  ${qtcolorpicker_MOC_SRCS}
 
-target_link_libraries(proteinvis glapp_framework ${Boost_LIBRARIES} ${QGLVIEWER_LIBRARY})
+)
+
+target_link_libraries(proteinvis utls ${Boost_LIBRARIES} ${QGLVIEWER_LIBRARY})
 

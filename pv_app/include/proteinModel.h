@@ -7,9 +7,6 @@
 #include <glutils.h>
 #include <cpputils.h>
 
-#include <model.h>
-#include <input.h>
-
 class protein_t;
 
 class protein_rd_t;
