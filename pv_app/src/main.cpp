@@ -18,22 +18,9 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <string>
-#include <climits>
-#include <vector>
-
-#include <boost/regex.hpp>
-
-#include <logutil.h>
-#include <cpputils.h>
-
-#include <proteinModel.h>
-#include <viewer.h>
-
+#include <mainwindow.h>
 
 using namespace std;
-
-
 
 int main ( int argc, char *argv[] )
 {
