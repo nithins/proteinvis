@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GlMaterialEditor</class>
+ <widget class="QGroupBox" name="GlMaterialEditor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>188</width>
+    <height>115</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>GroupBox</string>
+  </property>
+  <property name="title">
+   <string>Material</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QtColorPicker" name="ambient_colorpicker">
+     <property name="text">
+      <string>Ambient</string>
+     </property>
+     <property name="useStandardColors" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QtColorPicker" name="diffuse_colorpicker">
+     <property name="text">
+      <string>Diffuse</string>
+     </property>
+     <property name="useStandardColors" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QtColorPicker" name="specular_colorpicker">
+     <property name="text">
+      <string>Specular</string>
+     </property>
+     <property name="useStandardColors" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QtColorPicker" name="emission_colorpicker">
+     <property name="text">
+      <string>Emission</string>
+     </property>
+     <property name="useStandardColors" stdset="0">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="shininess_label">
+     <property name="text">
+      <string>Shininess </string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="shininess_spinBox">
+     <property name="maximum">
+      <number>128</number>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QtColorPicker</class>
+   <extends>QPushButton</extends>
+   <header>qtcolorpicker.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

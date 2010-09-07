@@ -73,6 +73,9 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
 
   vector<uint> pocno_list;
 
+  if(tepocFile.is_open() == false)
+    throw std::runtime_error("pocket file does not exist or is empty");
+
   while ( !tepocFile.eof() )
   {
     string line;
@@ -88,6 +91,8 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
 
     tokenize_string ( line, tokens );
 
+    if(tokens.size() < 3) continue;
+
     alpha_list.push_back ( atoi ( tokens[0].c_str() ) );
 
     tetno_list.push_back ( atoi ( tokens[1].c_str() ) - 1 );
@@ -96,6 +101,9 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
   }
 
   fstream tetFile ( tet_filename.c_str(), ios::in );
+
+  if(tetFile.is_open() == false)
+    throw std::runtime_error("tet file does not exist or is empty");
 
   string num_tets_line;
 

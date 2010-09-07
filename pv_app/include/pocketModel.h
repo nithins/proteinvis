@@ -56,12 +56,12 @@ class pocket_model_t
     };
 
   private:
-    void read_file ( const std::string & , const std::string & );
+    void read_file ( const std::string & pocf, const std::string & tetf);
 
   public:
 
     pocket_model_t
-        ( const std::string & , const std::string &, boost::shared_ptr<protein_rd_t> );
+        ( const std::string & pocf, const std::string &tetf, boost::shared_ptr<protein_rd_t> );
 
     ~pocket_model_t ();
 

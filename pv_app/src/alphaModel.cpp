@@ -310,28 +310,31 @@ int alpha_complex_model_t::render_tetrahedrons() const
 {
   glColor3f ( 0.8, 0.2, 0.8 );
 
-  glPushAttrib ( GL_ENABLE_BIT );
+  glPushAttrib ( GL_ENABLE_BIT|GL_POLYGON_BIT );
 
   glEnable ( GL_RESCALE_NORMAL );
 
   glDisable ( GL_CULL_FACE );
+
+  glPolygonMode ( GL_FRONT_AND_BACK, GL_FILL );
 
   m_tet_ren->render();
 
   glPopAttrib ();
 
-  return 0;
-}
+  return 0;}
 
 int alpha_complex_model_t::render_triangles() const
 {
   glColor3f ( 0.8, 0.2, 0.8 );
 
-  glPushAttrib ( GL_ENABLE_BIT );
+  glPushAttrib ( GL_ENABLE_BIT|GL_POLYGON_BIT );
 
   glEnable ( GL_RESCALE_NORMAL );
 
   glDisable ( GL_CULL_FACE );
+
+  glPolygonMode ( GL_FRONT_AND_BACK, GL_FILL );
 
   m_tri_ren->render();
 

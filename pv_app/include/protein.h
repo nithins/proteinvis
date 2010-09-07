@@ -303,6 +303,10 @@ public:
   inline uint        get_num_groups() const {return m_num_groups;}
 
   void               set_grouping_type(eGroupAtomsBy );
+  inline uint        get_grouping_type()
+  {
+    return m_grouping_type;
+  }
 
   glutils::color_t   get_group_color(int groupno) const;
   void               set_group_color(glutils::color_t ,int);

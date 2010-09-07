@@ -33,144 +33,17 @@
 
 using namespace std;
 
-static const boost::regex protein_file_re ( "(-pf ([[:alnum:]\\./_]+))" );
-static const std::string  protein_file_replace ( "(())" );
-
-static const boost::regex surface_file_re ( "(-sf ([[:alnum:]\\./_]+))" );
-static const std::string  surface_file_replace ( "(())" );
-
-static const boost::regex alpha_complex_file_re ( "(-acf ([[:alnum:]\\./_]+))" );
-static const std::string  alpha_complex_file_replace ( "(())" );
-
-static const boost::regex pocket_file_re ( "(-pocf ([[:alnum:]\\./_]+))" );
-static const std::string  pocket_file_replace ( "(())" );
-
-static const boost::regex tet_file_re ( "(-tetf ([[:alnum:]\\./_]+))" );
-static const std::string  tet_file_replace ( "(())" );
 
 
 int main ( int argc, char *argv[] )
 {
-
   QApplication application(argc,argv);
 
   viewer_mainwindow mw;
 
-  mw.setWindowTitle("PROTEINVIS");
+  mw.show();
 
-  try
-  {
-
-    if ( argc == 1 )
-    {
-      cout
-          << "usage: " << argv[0]
-          << " -pf <crd/pdb file> [-sf <off file>] [-acf <acf file>] [-tetf <tet file> -pocf <poc file>]"
-          << endl ;
-      exit ( 0 );
-    }
-
-    string cmdline ( argv[1] );
-
-    for ( uint i = 2 ; i < ( uint ) argc;i++ )
-    {
-      cmdline += " ";
-      cmdline += argv[i];
-    }
-
-    vector<string> protein_def_str_vec;
-
-    split_string ( cmdline, protein_def_str_vec, "-pf" );
-
-    vector<protein_model_ptr_t> protein_models;
-
-    for ( uint i = 0 ; i < protein_def_str_vec.size(); ++i )
-    {
-      string protein_def_str = string ( "-pf" ) + protein_def_str_vec[i];
-
-      string protein_filename, surface_filename, alpha_complex_filename;
-
-      string pocket_filename, tet_filename;
-
-      boost::smatch matches;
-
-      if ( regex_search ( protein_def_str, matches, protein_file_re ) )
-      {
-        protein_filename.assign ( matches[2].first, matches[2].second );
-      }
-      else
-      {
-        _ERROR ( "no protein file name specified" );
-        exit ( 0 );
-      }
-
-      if ( regex_search ( protein_def_str, matches, surface_file_re ) )
-      {
-        surface_filename.assign ( matches[2].first, matches[2].second );
-      }
-
-      if ( regex_search ( protein_def_str, matches, alpha_complex_file_re ) )
-      {
-        alpha_complex_filename.assign ( matches[2].first, matches[2].second );
-      }
-
-      if ( regex_search ( protein_def_str, matches, pocket_file_re ) )
-      {
-        pocket_filename.assign ( matches[2].first, matches[2].second );
-      }
-
-      if ( regex_search ( protein_def_str, matches, tet_file_re ) )
-      {
-        tet_filename.assign ( matches[2].first, matches[2].second );
-      }
-
-      if ( tet_filename.size() != 0 && pocket_filename.size() == 0 )
-      {
-        _LOG ( "tet file specified without pockets .. tet file will not be used" );
-        tet_filename.clear();
-      }
-
-      if ( tet_filename.size() == 0 && pocket_filename.size() != 0 )
-      {
-        _LOG ( "pocket file specified without tets .. pocket file will not be used" );
-        pocket_filename.clear();
-      }
-
-
-      protein_model_ptr_t pm
-          (new protein_model_t
-           ( protein_filename,surface_filename ,alpha_complex_filename,
-             pocket_filename,tet_filename ));
-
-
-      protein_models.push_back ( pm );
-    }
-
-    for ( uint i = 0 ; i < protein_models.size();++i )
-    {
-      mw.add_model(protein_models[i]);
-    }
-
-    mw.show();
-
-    application.exec();
-
-  }
-  catch(const char *str)
-  {
-    _ERROR(str);
-  }
-
-  catch(string str)
-  {
-    _ERROR(str);
-  }
-
-  catch(std::exception e)
-  {
-    _LOG(e.what());
-  }
+  application.exec();
 
   return 0;
-
 }

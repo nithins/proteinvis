@@ -26,15 +26,57 @@ class protein_grouping_ui_model_t;
 
 class protein_model_ui_t;
 
-typedef glutils::renderable_t array_renderer_t;
+class viewer_mainwindow;
 
-typedef n_vector_t<unsigned char,3> uc_color_t;
+typedef glutils::renderable_t array_renderer_t;
 
 class protein_model_t:public glutils::renderable_t
 {
 public:
-
   friend class protein_model_ui_t;
+  friend class viewer_mainwindow;
+
+  enum eRenderModels
+  {
+    RMDL_SPACE_FILL,
+    RMDL_BALL_STICK,
+    RMDL_SMALL_SPACE_FILL,
+    RMDL_COUNT
+  };
+
+  enum eRenderModes
+  {
+    RMDE_BACKBONE,
+    RMDE_FULL,
+    RMDE_POCKET_ATOMS,
+    RMDE_NONE,
+    RMDE_COUNT
+  };
+
+  enum eSurfaceRenderMode
+  {
+    SRM_HIDE,
+    SRM_SHOW,
+    SRM_SHOW_WIREFRAME,
+    SRM_COUNT
+  };
+
+  enum eAlphaComplexRenderMode
+  {
+    ACRM_HIDE         = 0,
+    ACRM_TETRAHEDRONS = 1,
+    ACRM_TRIANGLES    = 2,
+    ACRM_EDGES        = 4,
+    ACRM_SHOWALL      = 7,
+  };
+
+  enum ePocketRenderMode
+  {
+    PRM_SHOW_NONE,
+    PRM_SHOW_ONE,
+    PRM_SHOW_ALL,
+  };
+
 
 protected:
 
@@ -45,46 +87,46 @@ protected:
   boost::shared_ptr<alpha_complex_model_t> m_alpha_complex_model;
   boost::shared_ptr<pocket_model_t>        m_pocket_model;
 
-
   // other state stuff
-  uint                   m_render_model;
-  uint                   m_render_mode;
-  uint                   m_surface_render_mode;
-  uint                   m_alpha_complex_render_mode;
-  uint                   m_pocket_alpha_num;
-  uint                   m_pocket_num;
-  uint                   m_pocket_render_mode;
+  eRenderModels                   m_render_model;
+  eRenderModes                    m_render_mode;
+  eSurfaceRenderMode              m_surface_render_mode;
+  uint                            m_alpha_complex_render_mode;
+  ePocketRenderMode               m_pocket_render_mode;
+
+  uint                            m_pocket_alpha_num;
+  uint                            m_pocket_num;
+
   double                 m_add_atom_radius;
   double                 m_alpha_value;
-  uc_color_t             m_surface_color;
 
-  std::string            m_protein_filename;
-  std::string            m_surface_filename;
-  std::string            m_alpha_complex_filename;
-  std::string            m_pocket_filename;
-  std::string            m_tetra_filename;
+  glutils::material_properties_t  m_atombond_material;
+  glutils::material_properties_t  m_surface_material;
+
   std::string            m_protein_name;
 
   void render_onelevel() const;
+  void render_surface() const;
 
   void update_pocket_render_state();
   void update_sf_model_for_pocket();
 
 public:
-  protein_model_t ( std::string , std::string , std::string , std::string, std::string );
+  protein_model_t ( const std::string & pf);
   virtual ~protein_model_t ();
 
   int render();
-
-  void gl_init();
 
   std::string name() const
   {
     return m_protein_name.c_str();
   }
 private:
-  //setup stuff
-  void setup_surface();
+  void load_surface(const std::string &filename);
+
+  void load_alpha_shape(const std::string &filename);
+
+  void load_pockets(const std::string &pocf,const std::string &tetf);
 };
 
 typedef boost::shared_ptr<protein_model_t> protein_model_ptr_t;
@@ -126,6 +168,8 @@ public:
 
   void set_grouping_type(int ind);
 
+  uint get_grouping_type();
+
 private:
   boost::shared_ptr<protein_grouping_t> m_protein_grouping;
 };
@@ -149,7 +193,6 @@ public:
 private:
   protein_grouping_ui_model_ptr_t m_protein_grouping_model;
   protein_model_ptr_t             m_protein_model;
-
 
   void pocket_ui_state_updated();
   void alpha_complex_ui_state_updated();

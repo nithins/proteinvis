@@ -6,38 +6,30 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>808</width>
-    <height>862</height>
+    <width>1035</width>
+    <height>813</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_4">
+   <layout class="QGridLayout" name="gridLayout_12">
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="glviewer_t" name="glviewer" native="true">
-       <property name="minimumSize">
-        <size>
-         <width>800</width>
-         <height>400</height>
-        </size>
-       </property>
-      </widget>
       <widget class="QSplitter" name="splitter">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Vertical</enum>
        </property>
        <widget class="QWidget" name="layoutWidget">
-        <layout class="QGridLayout" name="gridLayout_3">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMaximumSize</enum>
-         </property>
-         <item row="0" column="0">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QComboBox" name="current_protein_comboBox"/>
+         </item>
+         <item>
           <widget class="QTabWidget" name="configuration_tabWidget">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -51,93 +43,194 @@
              <height>150</height>
             </size>
            </property>
+           <property name="tabPosition">
+            <enum>QTabWidget::West</enum>
+           </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>2</number>
            </property>
            <property name="movable">
             <bool>true</bool>
            </property>
-           <widget class="QWidget" name="tab">
+           <widget class="QWidget" name="atombond_tab">
             <attribute name="title">
-             <string>Framework</string>
+             <string>Atom/ Bond</string>
             </attribute>
-            <layout class="QGridLayout" name="gridLayout_5">
+            <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">
-              <widget class="QGroupBox" name="viewer_material_groupBox">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>100</height>
-                </size>
-               </property>
+              <widget class="QGroupBox" name="mol_rendermode_groupBox">
                <property name="title">
-                <string>Material</string>
+                <string>Atom Selection</string>
                </property>
-               <layout class="QGridLayout" name="gridLayout">
+               <layout class="QGridLayout" name="gridLayout_5">
                 <item row="0" column="0">
-                 <widget class="QtColorPicker" name="ambient_material_button">
+                 <widget class="QRadioButton" name="full_mol_rendermode_radioButton">
                   <property name="text">
-                   <string>Ambient</string>
+                   <string>All</string>
                   </property>
-                  <property name="useStandardColors" stdset="0">
+                  <property name="checked">
                    <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QtColorPicker" name="diffuse_material_button">
-                  <property name="text">
-                   <string>Diffuse</string>
-                  </property>
-                  <property name="useStandardColors" stdset="0">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QLabel" name="shininess_value_label">
-                  <property name="text">
-                   <string>Shininess </string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QtColorPicker" name="specular_material_button">
+                 <widget class="QRadioButton" name="bb_mol_rendermode_radioButton">
                   <property name="text">
-                   <string>Specular</string>
-                  </property>
-                  <property name="useStandardColors" stdset="0">
-                   <bool>true</bool>
+                   <string>Backbone Only</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QtColorPicker" name="emmission_material_button">
-                  <property name="text">
-                   <string>Emission</string>
-                  </property>
-                  <property name="useStandardColors" stdset="0">
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="pocatoms_rendermode_radioButton">
+                  <property name="enabled">
                    <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Pocket Atoms</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="2">
-                 <widget class="QSpinBox" name="shininess_spinBox"/>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="none_rendermode_radioButton">
+                  <property name="text">
+                   <string>None</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QGroupBox" name="viewer_lighting_groupBox">
+              <widget class="QGroupBox" name="rendermodel_groupBox">
+               <property name="title">
+                <string>Atom/Bond Model</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="bs_model_radioButton">
+                  <property name="text">
+                   <string>Ball Stick</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="ssf_model_radiobutton">
+                  <property name="text">
+                   <string>Small Atoms</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="sf_model_radiobutton">
+                  <property name="text">
+                   <string>Space Fill</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QComboBox" name="protein_grouping_comboBox">
+               <property name="toolTip">
+                <string>atom group by options</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="reload_pushButton">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../resources/proteinvis.qrc">
+                 <normaloff>:/images/reload2.png</normaloff>:/images/reload2.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>32</width>
+                 <height>32</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QTableView" name="protein_grouping_tableView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="selectionBehavior">
+                <enum>QAbstractItemView::SelectItems</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QtGlMaterialEditor" name="atombond_materialEditor">
+               <property name="title">
+                <string>Material</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="surface_tab">
+            <attribute name="title">
+             <string>Surface</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_10">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="showhide_surface_groupBox">
+               <property name="title">
+                <string>Show/Hide</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_7">
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="hide_surface_radioButton">
+                  <property name="text">
+                   <string>Hide Surface</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="show_surface_radioButton">
+                  <property name="text">
+                   <string>Show Surface</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="show_surface_wireframe_radioButton">
+                  <property name="text">
+                   <string>Show Wireframe</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QtGlMaterialEditor" name="surface_materialEditor">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                  <horstretch>0</horstretch>
@@ -147,81 +240,170 @@
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>125</height>
+                 <height>16777215</height>
                 </size>
                </property>
                <property name="title">
-                <string>Lighting</string>
+                <string>Material</string>
                </property>
-               <layout class="QGridLayout" name="gridLayout_2">
+               <layout class="QGridLayout" name="gridLayout_8"/>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="alpha_pocket_tab">
+            <attribute name="title">
+             <string>Alpha Shape/Pockets</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_11">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="alpha_complex_groupBox">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="title">
+                <string>Alpha Complex</string>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_13">
                 <item row="0" column="0">
-                 <widget class="QLabel" name="light_number_label">
+                 <widget class="QCheckBox" name="show_alpha_complex_tets_checkBox">
                   <property name="text">
-                   <string>Light Number</string>
+                   <string>Show Tetras</string>
                   </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="show_alpha_complex_tris_checkBox">
+                  <property name="text">
+                   <string>Show Tris</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QCheckBox" name="show_alpha_complex_edges_checkBox">
+                  <property name="text">
+                   <string>Show Eges</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QGroupBox" name="pocket_groupBox">
+               <property name="title">
+                <string>Pockets</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <layout class="QFormLayout" name="formLayout">
+                <property name="fieldGrowthPolicy">
+                 <enum>QFormLayout::ExpandingFieldsGrow</enum>
+                </property>
+                <item row="0" column="0">
+                 <widget class="QSpinBox" name="pocket_alpha_num_spinBox"/>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QLabel" name="pocket_alpha_num_label">
+                  <property name="text">
+                   <string>Alpha No.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" colspan="2">
+                 <widget class="QRadioButton" name="show_all_pockets_radioButton">
+                  <property name="text">
+                   <string>Show All Pockets</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QSpinBox" name="pocket_num_spinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLabel" name="pocket_num_label">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="text">
+                   <string>Pocket No.</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string>Grow Radii</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_6">
+                <item row="0" column="0">
+                 <widget class="QDoubleSpinBox" name="add_radius_sf_model_doubleSpinBox">
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
                   </property>
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QSpinBox" name="light_number_spinBox"/>
-                </item>
-                <item row="0" column="2" colspan="2">
-                 <widget class="QComboBox" name="light_type_comboBox">
-                  <item>
-                   <property name="text">
-                    <string>Directional</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>Positional</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>None</string>
-                   </property>
-                  </item>
+                 <widget class="QLabel" name="add_radius_sf_model_label">
+                  <property name="text">
+                   <string>Constant</string>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QtColorPicker" name="ambient_light_button">
-                  <property name="text">
-                   <string>Ambient</string>
+                 <widget class="QDoubleSpinBox" name="alpha_value_sf_model_doubleSpinBox">
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
                   </property>
-                  <property name="useStandardColors" stdset="0">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1" colspan="2">
-                 <widget class="QtColorPicker" name="diffuse_light_button">
-                  <property name="text">
-                   <string>Diffuse</string>
-                  </property>
-                  <property name="useStandardColors" stdset="0">
-                   <bool>true</bool>
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="3">
-                 <widget class="QtColorPicker" name="specular_light_button">
+                <item row="1" column="1">
+                 <widget class="QLabel" name="alpha_value_sf_model_label">
                   <property name="text">
-                   <string>Specular</string>
+                   <string>Alpha</string>
                   </property>
-                  <property name="useStandardColors" stdset="0">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0" colspan="4">
-                 <widget class="QCheckBox" name="render_light_graphic_checkBox">
-                  <property name="text">
-                   <string>Render light graphics</string>
-                  </property>
-                  <property name="checked">
+                  <property name="wordWrap">
                    <bool>true</bool>
                   </property>
                  </widget>
@@ -235,6 +417,118 @@
          </item>
         </layout>
        </widget>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="title">
+         <string/>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="viewer_lighting_groupBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>125</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Lighting</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="1" column="1" colspan="2">
+             <widget class="QtColorPicker" name="diffuse_light_button">
+              <property name="text">
+               <string>Diffuse</string>
+              </property>
+              <property name="useStandardColors" stdset="0">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QtColorPicker" name="specular_light_button">
+              <property name="text">
+               <string>Specular</string>
+              </property>
+              <property name="useStandardColors" stdset="0">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QtColorPicker" name="ambient_light_button">
+              <property name="text">
+               <string>Ambient</string>
+              </property>
+              <property name="useStandardColors" stdset="0">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2" colspan="2">
+             <widget class="QComboBox" name="light_type_comboBox">
+              <item>
+               <property name="text">
+                <string>Directional</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Positional</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>None</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="light_number_label">
+              <property name="text">
+               <string>Light Number</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QSpinBox" name="light_number_spinBox">
+              <property name="maximum">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" colspan="4">
+             <widget class="QCheckBox" name="render_light_graphic_checkBox">
+              <property name="text">
+               <string>Render light graphics</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="glviewer_t" name="glviewer" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>400</width>
+         <height>400</height>
+        </size>
+       </property>
       </widget>
      </widget>
     </item>
@@ -245,7 +539,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>808</width>
+     <width>1035</width>
      <height>19</height>
     </rect>
    </property>
@@ -253,16 +547,18 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen"/>
+    <addaction name="actionOpen_Protein"/>
     <addaction name="separator"/>
-    <addaction name="actionOpen_Alpha_Shape"/>
-    <addaction name="actionOpen_Pocket_Files"/>
-    <addaction name="actionOpen_Surface"/>
+    <addaction name="actionLoad_Surface"/>
+    <addaction name="actionLoad_Alpha_Shape"/>
+    <addaction name="actionLoad_Pockets"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose_Protein"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionOpen">
+  <action name="actionOpen_Protein">
    <property name="text">
     <string>Open Protein</string>
    </property>
@@ -282,6 +578,31 @@
     <string>Open Surface</string>
    </property>
   </action>
+  <action name="actionOpen_Model">
+   <property name="text">
+    <string>Open Model</string>
+   </property>
+  </action>
+  <action name="actionLoad_Alpha_Shape">
+   <property name="text">
+    <string>Load Alpha Shape</string>
+   </property>
+  </action>
+  <action name="actionLoad_Pockets">
+   <property name="text">
+    <string>Load Pockets</string>
+   </property>
+  </action>
+  <action name="actionLoad_Surface">
+   <property name="text">
+    <string>Load Surface</string>
+   </property>
+  </action>
+  <action name="actionClose_Protein">
+   <property name="text">
+    <string>Close Protein</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -295,7 +616,15 @@
    <header>viewer.h</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>QtGlMaterialEditor</class>
+   <extends>QGroupBox</extends>
+   <header>qtglmaterialeditor.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/proteinvis.qrc"/>
+ </resources>
  <connections/>
 </ui>

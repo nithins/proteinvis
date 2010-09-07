@@ -28,6 +28,7 @@ file(GLOB proteinvis_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp ${CMAKE_C
 
 QT4_WRAP_CPP(  proteinvis_MOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/proteinModel.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/qtglmaterialeditor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/viewer.h
   )
 

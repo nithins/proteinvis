@@ -32,58 +32,34 @@
 
 using namespace std;
 
-enum eRenderModels
-{
-  RMDL_SPACE_FILL,
-  RMDL_BALL_STICK,
-  RMDL_SMALL_SPACE_FILL,
-  RMDL_COUNT
-};
-
-enum eRenderModes
-{
-  RMDE_BACKBONE,
-  RMDE_FULL,
-  RMDE_POCKET_ATOMS,
-  RMDE_NONE,
-  RMDE_COUNT
-};
-
-enum eSurfaceRenderMode
-{
-  SRM_HIDE,
-  SRM_SHOW,
-  SRM_SHOW_WIREFRAME,
-  SRM_COUNT
-};
-
-enum eAlphaComplexRenderMode
-{
-  ACRM_HIDE         = 0,
-  ACRM_TETRAHEDRONS = 1,
-  ACRM_TRIANGLES    = 2,
-  ACRM_EDGES        = 4,
-};
-
-enum ePocketRenderMode
-{
-  PRM_SHOW_NONE,
-  PRM_SHOW_ONE,
-  PRM_SHOW_ALL,
-};
-
 const double g_ball_stick_atom_radius = 0.4;
 
 const double g_ball_stick_bond_radius = 0.2;
 
 const double g_small_space_fill_atom_radius = g_ball_stick_atom_radius;
 
-const unsigned char g_default_surface_color  [] = {176,148,101};
-
 double s_extent[6];
 double s_extent_valid = false;
 
-protein_model_t::protein_model_t ( string pf, string sf, string acf , string pocf, string tetf ) :
+glutils::material_properties_t g_atombond_material_default =
+{
+  {0,0,0,1},// ambient
+  {0,0,0,1},// diffuse
+  {1,1,1,1},// specular
+  {0,0,0,1},// emission
+  50      // shininess
+};
+
+glutils::material_properties_t g_surface_material_default =
+{
+  {0.2,0.2,0.2,1},// ambient
+  {0.75,0.75,1.0,1},// diffuse
+  {0,0,0,1},      // specular
+  {0,0,0,1},      // emission
+  1             // shininess
+};
+
+protein_model_t::protein_model_t (const string &pf) :
     m_render_model ( RMDL_SPACE_FILL ),
     m_render_mode ( RMDE_FULL ),
     m_surface_render_mode ( SRM_SHOW ),
@@ -93,25 +69,19 @@ protein_model_t::protein_model_t ( string pf, string sf, string acf , string poc
     m_pocket_render_mode ( PRM_SHOW_NONE ),
     m_add_atom_radius ( 0.0 ),
     m_alpha_value ( 0.0 ),
-    m_protein_filename ( pf ),
-    m_surface_filename ( sf ),
-    m_alpha_complex_filename ( acf ),
-    m_pocket_filename ( pocf ),
-    m_tetra_filename ( tetf )
+    m_atombond_material(g_atombond_material_default),
+    m_surface_material(g_surface_material_default)
 {
-  size_t last_slash_pos = m_protein_filename.find_last_of ( "/\\" );
+  size_t last_slash_pos = pf.find_last_of ( "/\\" );
 
   if ( last_slash_pos != string::npos )
-    m_protein_name = string ( m_protein_filename.begin() + last_slash_pos + 1, m_protein_filename.end() );
+    m_protein_name = string ( pf.begin() + last_slash_pos + 1, pf.end() );
   else
-    m_protein_name = m_protein_filename;
-}
+    m_protein_name = pf;
 
-void protein_model_t::gl_init()
-{
   onelevel_model_t::init();
 
-  m_protein.reset(new protein_t ( m_protein_filename.c_str() ));
+  m_protein.reset(new protein_t ( pf.c_str() ));
 
   m_protein_rd.reset(new protein_rd_t ( m_protein ));
 
@@ -135,36 +105,14 @@ void protein_model_t::gl_init()
     s_extent[4] = min ( extent[4], s_extent[4] );
     s_extent[5] = max ( extent[5], s_extent[5] );
   }
-
-  setup_surface();
-
-  if ( m_alpha_complex_filename.size() != 0 )
-  {
-    m_alpha_complex_model.reset(new alpha_complex_model_t
-                            ( m_alpha_complex_filename, m_protein_rd ));
-  }
-
-  if ( m_pocket_filename.size() != 0 && m_tetra_filename.size() != 0 )
-  {
-    m_pocket_model.reset(new pocket_model_t
-                     ( m_pocket_filename.c_str(), m_tetra_filename.c_str() , m_protein_rd ));
-
-    update_pocket_render_state();
-  }
 }
 
-void protein_model_t::setup_surface()
+void protein_model_t::load_surface(const std::string &filename)
 {
-  if ( m_surface_filename.size() == 0 )
-    return;
-
   glutils::vertex_list_t  vlist;
   glutils::tri_idx_list_t tlist;
 
-  copy(g_default_surface_color,
-       g_default_surface_color+3,m_surface_color.begin());
-
-  glutils::read_off_file ( m_surface_filename.c_str(), vlist,tlist);
+  glutils::read_off_file ( filename.c_str(), vlist,tlist);
 
   double max_val = 0.0;
 
@@ -197,14 +145,36 @@ void protein_model_t::setup_surface()
   }
 
   m_surface_renderer.reset
-      (glutils::create_buffered_tristrip_ren
-       (  glutils::make_buf_obj(vlist), glutils::make_buf_obj(tlist)));
+      (glutils::create_buffered_triangles_ren
+       (  glutils::make_buf_obj(vlist), glutils::make_buf_obj(tlist),
+          glutils::make_normals_buf_obj(vlist,tlist)));
+}
 
+void protein_model_t::load_alpha_shape(const std::string &filename)
+{
+  m_alpha_complex_model.reset
+      (new alpha_complex_model_t( filename, m_protein_rd ));
+}
 
+void protein_model_t::load_pockets(const std::string &pocf, const std::string &tetf)
+{
+  m_pocket_model.reset(new pocket_model_t
+                   ( pocf.c_str(), tetf.c_str() , m_protein_rd ));
+
+  update_pocket_render_state();
 }
 
 void protein_model_t::render_onelevel() const
 {
+
+  glPushAttrib(GL_ENABLE_BIT);
+
+  glEnable ( GL_COLOR_MATERIAL );
+
+  glColorMaterial ( GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE ) ;
+
+  m_atombond_material.render_all(GL_FRONT_AND_BACK);
+
   switch ( m_render_mode )
   {
 
@@ -327,6 +297,42 @@ void protein_model_t::render_onelevel() const
 
   }
 
+  glPopAttrib();
+}
+
+void protein_model_t::render_surface() const
+{
+  if ( m_surface_renderer != NULL )
+  {
+    glPushAttrib ( GL_POLYGON_BIT | GL_ENABLE_BIT );
+
+    glDisable( GL_COLOR_MATERIAL );
+
+    m_surface_material.render_all(GL_FRONT_AND_BACK);
+
+    glEnable ( GL_RESCALE_NORMAL );
+
+    switch ( m_surface_render_mode )
+    {
+
+    case SRM_SHOW_WIREFRAME:
+
+      glPolygonMode ( GL_FRONT, GL_LINE );
+      glPolygonMode ( GL_BACK, GL_LINE );
+
+      m_surface_renderer->render();
+      break;
+
+
+    case SRM_SHOW:
+
+      m_surface_renderer->render();
+      break;
+    };
+
+    glPopAttrib();
+
+  }
 }
 
 void protein_model_t::update_sf_model_for_pocket()
@@ -341,10 +347,8 @@ void protein_model_t::update_sf_model_for_pocket()
 
 void protein_model_t::update_pocket_render_state()
 {
-
   if ( m_pocket_model == NULL )
     return;
-
 
   switch ( m_pocket_render_mode )
   {
@@ -410,35 +414,7 @@ int protein_model_t::render()
       m_alpha_complex_model->render_edges();
   }
 
-  if ( m_surface_renderer != NULL )
-  {
-    glPushAttrib ( GL_POLYGON_BIT | GL_ENABLE_BIT );
-
-    glEnable ( GL_RESCALE_NORMAL );
-
-    glColor3ubv ( m_surface_color.data());
-
-    switch ( m_surface_render_mode )
-    {
-
-    case SRM_SHOW_WIREFRAME:
-
-      glPolygonMode ( GL_FRONT, GL_LINE );
-      glPolygonMode ( GL_BACK, GL_LINE );
-
-      m_surface_renderer->render();
-      break;
-
-
-    case SRM_SHOW:
-
-      m_surface_renderer->render();
-      break;
-    };
-
-    glPopAttrib();
-
-  }
+  render_surface();
 
   glPopMatrix();
 
@@ -484,9 +460,6 @@ void protein_model_ui_t::init_ui()
     showhide_surface_groupBox->setEnabled ( false );
   else
   {
-    uc_color_t col = m_protein_model->m_surface_color;
-
-    surface_color_colorpicker->setCurrentColor(QColor(col[0],col[1],col[2]));
   }
 
   if ( m_protein_model->m_alpha_complex_model == NULL )
@@ -517,7 +490,7 @@ void protein_model_ui_t::pocket_ui_state_updated()
 
   if ( !pocket_groupBox->isChecked() )
   {
-    m_protein_model->m_pocket_render_mode  = PRM_SHOW_NONE;
+    m_protein_model->m_pocket_render_mode  = protein_model_t::PRM_SHOW_NONE;
   }
   else
   {
@@ -528,13 +501,13 @@ void protein_model_ui_t::pocket_ui_state_updated()
     {
       m_protein_model->m_pocket_num          = pocket_num_spinBox->value() - 1;
 
-      m_protein_model->m_pocket_render_mode  = PRM_SHOW_ONE;
+      m_protein_model->m_pocket_render_mode  = protein_model_t::PRM_SHOW_ONE;
     }
     else
     {
       m_protein_model->m_pocket_num          = ( uint ) - 1;
 
-      m_protein_model->m_pocket_render_mode  = PRM_SHOW_ALL;
+      m_protein_model->m_pocket_render_mode  = protein_model_t::PRM_SHOW_ALL;
     }
   }
 
@@ -556,24 +529,24 @@ void protein_model_ui_t::alpha_complex_ui_state_updated()
 {
   if ( !alpha_complex_groupBox->isChecked() )
   {
-    m_protein_model->m_alpha_complex_render_mode = ACRM_HIDE;
+    m_protein_model->m_alpha_complex_render_mode = protein_model_t::ACRM_HIDE;
   }
   else
   {
-    if ( show_alpha_complex_tets_checkBox->isChecked() )
-      m_protein_model->m_alpha_complex_render_mode |= ACRM_TETRAHEDRONS;
-    else
-      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TETRAHEDRONS;
+//    if ( show_alpha_complex_tets_checkBox->isChecked() )
+//      m_protein_model->m_alpha_complex_render_mode |= protein_model_t::ACRM_TETRAHEDRONS;
+//    else
+//      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor protein_model_t::ACRM_TETRAHEDRONS;
 
-    if ( show_alpha_complex_tris_checkBox->isChecked() )
-      m_protein_model->m_alpha_complex_render_mode |= ACRM_TRIANGLES;
-    else
-      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_TRIANGLES;
+//    if ( show_alpha_complex_tris_checkBox->isChecked() )
+//      m_protein_model->m_alpha_complex_render_mode |= protein_model_t::ACRM_TRIANGLES;
+//    else
+//      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor protein_model_t::ACRM_TRIANGLES;
 
-    if ( show_alpha_complex_edges_checkBox->isChecked() )
-      m_protein_model->m_alpha_complex_render_mode |= ACRM_EDGES;
-    else
-      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor ACRM_EDGES;
+//    if ( show_alpha_complex_edges_checkBox->isChecked() )
+//      m_protein_model->m_alpha_complex_render_mode |= protein_model_t::ACRM_EDGES;
+//    else
+//      m_protein_model->m_alpha_complex_render_mode &= ( ( uint ) - 1 ) xor protein_model_t::ACRM_EDGES;
   }
 }
 
@@ -581,7 +554,7 @@ void protein_model_ui_t::on_sf_model_radiobutton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_protein_model->m_render_model = RMDL_SPACE_FILL;
+    m_protein_model->m_render_model = protein_model_t::RMDL_SPACE_FILL;
   }
 }
 
@@ -589,7 +562,7 @@ void protein_model_ui_t::on_ssf_model_radiobutton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_protein_model->m_render_model = RMDL_SMALL_SPACE_FILL;
+    m_protein_model->m_render_model = protein_model_t::RMDL_SMALL_SPACE_FILL;
   }
 }
 
@@ -597,7 +570,7 @@ void protein_model_ui_t::on_bs_model_radioButton_clicked ( bool checked )
 {
   if ( checked )
   {
-    m_protein_model->m_render_model = RMDL_BALL_STICK;
+    m_protein_model->m_render_model = protein_model_t::RMDL_BALL_STICK;
   }
 }
 
@@ -605,7 +578,7 @@ void protein_model_ui_t::on_full_mol_rendermode_radioButton_clicked ( bool check
 {
   if ( checked )
   {
-    m_protein_model->m_render_mode = RMDE_FULL;
+    m_protein_model->m_render_mode = protein_model_t::RMDE_FULL;
   }
 }
 
@@ -613,7 +586,7 @@ void protein_model_ui_t::on_bb_mol_rendermode_radioButton_clicked ( bool checked
 {
   if ( checked )
   {
-    m_protein_model->m_render_mode = RMDE_BACKBONE;
+    m_protein_model->m_render_mode = protein_model_t::RMDE_BACKBONE;
   }
 }
 
@@ -622,7 +595,7 @@ void protein_model_ui_t::on_pocatoms_rendermode_radioButton_clicked ( bool check
   if ( checked )
   {
     // change base variables
-    m_protein_model->m_render_mode     = RMDE_POCKET_ATOMS;
+    m_protein_model->m_render_mode     = protein_model_t::RMDE_POCKET_ATOMS;
 
     // intimate base class
     m_protein_model->update_sf_model_for_pocket();
@@ -637,7 +610,7 @@ void protein_model_ui_t::on_pocatoms_rendermode_radioButton_clicked ( bool check
 void protein_model_ui_t::on_none_rendermode_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_protein_model->m_render_mode = RMDE_NONE;
+    m_protein_model->m_render_mode = protein_model_t::RMDE_NONE;
 }
 
 void protein_model_ui_t::on_add_radius_sf_model_doubleSpinBox_valueChanged ( double v )
@@ -653,19 +626,19 @@ void protein_model_ui_t::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( do
 void protein_model_ui_t::on_show_surface_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_protein_model->m_surface_render_mode = SRM_SHOW;
+    m_protein_model->m_surface_render_mode = protein_model_t::SRM_SHOW;
 }
 
 void protein_model_ui_t::on_show_surface_wireframe_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_protein_model->m_surface_render_mode = SRM_SHOW_WIREFRAME;
+    m_protein_model->m_surface_render_mode = protein_model_t::SRM_SHOW_WIREFRAME;
 }
 
 void protein_model_ui_t::on_hide_surface_radioButton_clicked ( bool checked )
 {
   if ( checked )
-    m_protein_model->m_surface_render_mode = SRM_HIDE;
+    m_protein_model->m_surface_render_mode = protein_model_t::SRM_HIDE;
 }
 
 void protein_model_ui_t::on_pocket_groupBox_clicked ( bool )
@@ -721,9 +694,7 @@ void protein_model_ui_t::on_reload_pushButton_clicked(bool)
 void protein_model_ui_t::on_surface_color_colorpicker_colorChanged
     (const QColor &c)
 {
-  m_protein_model->m_surface_color[0] = c.red();
-  m_protein_model->m_surface_color[1] = c.green();
-  m_protein_model->m_surface_color[2] = c.blue();
+
 }
 
 protein_grouping_ui_model_t::protein_grouping_ui_model_t
@@ -860,4 +831,9 @@ void protein_grouping_ui_model_t::set_grouping_type(int ind)
   m_protein_grouping->set_grouping_type((protein_grouping_t::eGroupAtomsBy)ind);
 
   reset();
+}
+
+uint protein_grouping_ui_model_t::get_grouping_type()
+{
+  return m_protein_grouping->get_grouping_type();
 }
