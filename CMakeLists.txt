@@ -24,24 +24,25 @@ find_package(Boost COMPONENTS regex REQUIRED)
 
 subdirs(utls)
 
-file(GLOB proteinvis_SRCS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp 
+file(GLOB proteinvis_SRCS
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/src/*.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/*.h)
 
-file(GLOB qtcolorpicker_SRCS 
+file(GLOB qtcolorpicker_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/*.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/*.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include/*.h)
 
 QT4_WRAP_CPP(  proteinvis_MOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/proteinModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/qtglmaterialeditor.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/qtgllighteditor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include/mainwindow.h
   )
 
-QT4_WRAP_CPP(qtcolorpicker_MOC_SRCS 
+QT4_WRAP_CPP(qtcolorpicker_MOC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include/qtcolorpicker.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/qtcolorpicker_widgets.h  
+  ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src/qtcolorpicker_widgets.h
   )
 
 file(GLOB proteinvis_UIS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/forms/*.ui)
@@ -62,10 +63,10 @@ include_directories(
   ${QGLVIEWER_INCLUDE_DIR}
   )
 
-add_executable(proteinvis 
-  ${proteinvis_SRCS} 
-  ${proteinvis_MOC_SRCS} 
-  ${proteinvis_UI_SRCS} 
+add_executable(proteinvis
+  ${proteinvis_SRCS}
+  ${proteinvis_MOC_SRCS}
+  ${proteinvis_UI_SRCS}
   ${proteinvis_RC_SRCS}
   ${qtcolorpicker_SRCS}
   ${qtcolorpicker_MOC_SRCS}

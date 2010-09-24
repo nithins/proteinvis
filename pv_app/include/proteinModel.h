@@ -17,15 +17,7 @@ class alpha_complex_model_t;
 
 class pocket_model_t;
 
-class IModelController;
-
 class protein_grouping_ui_model_t;
-
-class protein_model_ui_t;
-
-class viewer_mainwindow;
-
-typedef glutils::renderable_t array_renderer_t;
 
 class protein_model_t:public glutils::renderable_t
 {
@@ -80,7 +72,7 @@ protected:
   boost::shared_ptr<protein_t>             m_protein;
   boost::shared_ptr<protein_rd_t>          m_protein_rd;
   boost::shared_ptr<protein_grouping_t>    m_protein_atoms_grouping;
-  boost::shared_ptr<array_renderer_t>      m_surface_renderer;
+  boost::shared_ptr<glutils::renderable_t> m_surface_renderer;
   boost::shared_ptr<alpha_complex_model_t> m_alpha_complex_model;
   boost::shared_ptr<pocket_model_t>        m_pocket_model;
 
@@ -118,6 +110,9 @@ public:
   {
     return m_protein_name.c_str();
   }
+
+  bool get_extent ( double * );
+
 private:
   void load_surface(const std::string &filename);
 

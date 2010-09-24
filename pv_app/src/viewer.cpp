@@ -5,6 +5,72 @@
 
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
+#include <boost/typeof/typeof.hpp>
+#include <boost/foreach.hpp>
+
+glutils::material_properties_t g_light_off_material =
+{
+  {0.2,0.2,0.2,1}, // ambient
+  {0.5,0.5,0.5,1}, // diffuse
+  {0,0,0,1},       // specular
+  {0,0,0,1},       // emission
+  1                // shininess
+};
+
+glutils::material_properties_t g_light_on_material =
+{
+  {0.2,0.2,0.2,1}, // ambient
+  {0.5,0.5,0.5,1}, // diffuse
+  {0,0,0,1},       // specular
+  {0.75,0.75,0,1}, // emission
+  1                // shininess
+};
+
+// two directional lights by default
+// as a convention directional lights are directed along 0,0,1 model coords
+// and positional lights are located at 0,0,0 model coords
+// another frame is associated with the light to move it around
+// and orient it in world coords
+glutils::light_properties_t g_lights_default[] =
+{
+  {
+    {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
+    {0.8f, 0.8f, 0.8f, 1.0f}, // diffuse
+    {0.8f, 0.8f, 0.8f, 1.0f}, // specular
+    {0.0f, 0.0f, 1.0f, 0.0f}, // position
+    1,0,0,                    // attenution c + l + q
+    true                      // enabled
+  },
+
+  {
+    {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
+    {0.8f, 0.8f, 0.8f, 1.0f}, // diffuse
+    {0.8f, 0.8f, 0.8f, 1.0f}, // specular
+    {0.0f, 0.0f, 1.0f, 0.0f}, // position
+    1,0,0,                    // attenution c + l + q
+    true                      // enabled
+  }
+};
+
+glviewer_t::glviewer_t(QWidget * par):
+    m_is_recording(false),
+    m_bf_cull(true),
+    m_wireframe(false),
+    m_init_state(false),
+    m_max_extent(0.0),
+    m_show_light_graphics(false)
+{
+  setParent(par);
+
+  m_lights.push_back(light_data_t(g_lights_default[0]));
+  m_lights.push_back(light_data_t(g_lights_default[1]));
+
+  m_lights[0].frame->setPosition(0.5, 0.5, 0);
+  m_lights[1].frame->setPosition(-0.5, 0.5, 0);
+  m_lights[1].frame->setOrientation
+      (qglviewer::Quaternion(qglviewer::Vec(0,0,1),-m_lights[1].frame->position()));
+
+}
 
 void glviewer_t::add_ren(glutils::renderable_ptr_t ren)
 {
@@ -13,6 +79,10 @@ void glviewer_t::add_ren(glutils::renderable_ptr_t ren)
 
   m_rens.push_back(renderable_rd_t(ren));
 
+  update_extents();
+
+  setManipulatedFrame((*m_rens.rbegin()).frame.get());
+
   updateGL();
 }
 
@@ -20,42 +90,76 @@ void glviewer_t::remove_ren(glutils::renderable_ptr_t ren)
 {
   using namespace boost::lambda;
 
-  typedef typeof(m_rens) m_ren_t;
+  BOOST_AUTO(i,std::find_if(m_rens.begin(),m_rens.end(),bind(&renderable_rd_t::ren,_1) == ren));
 
-  m_ren_t::iterator i =
-      std::find_if(m_rens.begin(),m_rens.end(),bind(&m_ren_t::value_type::m_ren,_1) == ren);
+  if(i!= m_rens.end()) m_rens.erase(i);
 
-  if(i!= m_rens.end())
-    m_rens.erase(i);
+  update_extents();
 
   updateGL();
 }
 
-glutils::material_properties_t g_light_off_material =
+void glviewer_t::update_extents()
 {
-  {0.2,0.2,0.2,1},// ambient
-  {0.5,0.5,0.5,1},// diffuse
-  {0,0,0,1},      // specular
-  {0,0,0,1},      // emission
-  1             // shininess
-};
+  m_max_extent = 0;
 
-glutils::material_properties_t g_light_on_material =
+  BOOST_FOREACH(typeof(*m_rens.begin()) &rd,m_rens)
+  {
+    if(rd.ren->get_extent(rd.extent[0].data()) == false)
+      throw std::runtime_error("get_extent failed");
+
+    rd.center = (rd.extent.upper_corner() + rd.extent.lower_corner())/2;
+
+    BOOST_AUTO(rd_span,rd.extent.span());
+
+    double rd_max_extent = *std::max_element(rd_span.begin(),rd_span.end());
+
+    if(rd_max_extent > m_max_extent)
+    {
+      m_max_extent = rd_max_extent;
+    }
+  }
+}
+
+int glviewer_t::get_num_lights() const
 {
-  {0.2,0.2,0.2,1},// ambient
-  {0.5,0.5,0.5,1},// diffuse
-  {0,0,0,1},      // specular
-  {0.75,0.75,0,1},  // emission
-  1             // shininess
-};
+  return m_lights.size();
+}
 
+const glviewer_t::light_properties_t& glviewer_t::get_light(int n) const
+{
+  assert(n<m_lights.size()&&"n > numlights");
 
+  return m_lights[n].props;
+}
+
+void glviewer_t::set_light(int n,const light_properties_t & nl)
+{
+  assert(n<m_lights.size()&&"n > numlights");
+
+  light_properties_t &l=m_lights[n].props;
+
+  l = nl;
+
+  if(l.position[3] == 0)
+    l.position = glutils::vertex4f_t(0,0,1,0);
+  else
+    l.position = glutils::vertex4f_t(0,0,0,1);
+
+  // lights are just blacked out not switched off
+  if(l.enabled == false)
+  {
+    l.ambient  = glutils::color4f_t(0,0,0,1);
+    l.diffuse  = glutils::color4f_t(0,0,0,1);
+    l.specular = glutils::color4f_t(0,0,0,1);
+  }
+
+  updateGL();
+}
 
 void draw_bulb(double scaleby = 1.0,bool bulbon = false)
 {
   glPushMatrix();
-
-//  glRotatef(90,1,0,0);
 
   glTranslatef(0,0,-scaleby/2);
 
@@ -63,9 +167,9 @@ void draw_bulb(double scaleby = 1.0,bool bulbon = false)
 
   glColor3f(0.5,0.5,0.5);
 
-  gluCylinder(q,0.1*scaleby,0.125*scaleby,scaleby,10,10);
+  gluCylinder(q,0.125*scaleby,0.1*scaleby,scaleby,10,10);
 
-  glTranslatef(0,0,scaleby + 0.2*scaleby);
+  glTranslatef(0,0,-0.2*scaleby );
 
   glPushAttrib ( GL_POLYGON_BIT | GL_ENABLE_BIT );
 
@@ -97,25 +201,18 @@ void draw_bulb(double scaleby = 1.0,bool bulbon = false)
 
 void glviewer_t::draw()
 {
-  float pos[4];
-
-  for(int i = 0; i < m_lights.size();++i)
+  for(int i = 0 ; i < m_lights.size();++i)
   {
+    const light_data_t & l = m_lights[i];
+
     glPushMatrix();
 
-    GLenum lightnum = i + GL_LIGHT0;
+    glMultMatrixd(l.frame->matrix());
 
-    glMultMatrixd(m_lights[i]->matrix());
+    l.props.render(i);
 
-    glGetLightfv(lightnum,GL_POSITION,pos);
-
-    pos[0] = 0;
-    pos[1] = 0;
-    pos[2] = (pos[3]!= 0)?(0):(1);
-
-    glLightfv(lightnum, GL_POSITION, pos);
-
-    draw_bulb(0.1,glIsEnabled(lightnum));
+    if(m_show_light_graphics)
+      draw_bulb(0.1,l.props.enabled);
 
     glPopMatrix();
   }
@@ -124,15 +221,20 @@ void glviewer_t::draw()
   {
     glPushMatrix();
 
-    glMultMatrixd(m_rens[i].m_frame->matrix());
-
-    m_rens[i].m_ren->render();
+    glMultMatrixd(m_rens[i].frame->matrix());
 
     if(axisIsDrawn()) drawAxis();
 
+    glScalef(1.0/m_max_extent,1.0/m_max_extent,1.0/m_max_extent);
+
+    BOOST_AUTO(const &c,m_rens[i].center);
+
+    glTranslated(-c[0],-c[1],-c[2]);
+
+    m_rens[i].ren->render();
+
     glPopMatrix();
   }
-
 }
 
 void glviewer_t::beginSelection(const QPoint& point)
@@ -167,53 +269,56 @@ void glviewer_t::beginSelection(const QPoint& point)
 
 void glviewer_t::drawWithNames()
 {
-  GLfloat pos[4];
-
   for(uint i = 0 ; i <m_rens.size();++i)
   {
     glPushMatrix();
 
-    glMultMatrixd(m_rens[i].m_frame->matrix());
+    glMultMatrixd(m_rens[i].frame->matrix());
+
+    glScalef(1.0/m_max_extent,1.0/m_max_extent,1.0/m_max_extent);
+
+    BOOST_AUTO(const &c,m_rens[i].center);
+
+    glTranslated(-c[0],-c[1],-c[2]);
 
     glPushName(i);
 
-    m_rens[i].m_ren->render();
+    m_rens[i].ren->render();
 
     glPopName();
 
     glPopMatrix();
   }
 
-  for(uint i = 0 ; i <m_lights.size();++i)
+  if(m_show_light_graphics == true)
   {
-    glPushName(m_rens.size() + i);
+    for(uint i = 0 ; i <m_lights.size();++i)
+    {
+      glPushName(m_rens.size() + i);
 
-    glPushMatrix();
+      glPushMatrix();
 
-    glMultMatrixd(m_lights[i]->matrix());
+      glMultMatrixd(m_lights[i].frame->matrix());
 
-    draw_bulb(0.1);
+      draw_bulb(0.1);
 
-    glPopMatrix();
+      glPopMatrix();
 
-    glPopName();
+      glPopName();
+    }
   }
 }
 
 void glviewer_t::postSelection(const QPoint& point)
 {
-
   if (selectedName() == -1)
     setManipulatedFrame(NULL);
   else
   {
     if(selectedName() < m_rens.size())
-      setManipulatedFrame(m_rens[selectedName()].m_frame.get());
+      setManipulatedFrame(m_rens[selectedName()].frame.get());
     else
-    {
-      setManipulatedFrame(m_lights[selectedName() - m_rens.size()].get());
-      std::cout<<"selected light"<<std::endl;
-    }
+      setManipulatedFrame(m_lights[selectedName() - m_rens.size()].frame.get());
   }
 }
 
@@ -249,55 +354,8 @@ void glviewer_t::init()
   setHandlerKeyboardModifiers(QGLViewer::CAMERA, Qt::ControlModifier);
 
   glMatrixMode(GL_MODELVIEW);
+
   glLoadIdentity();
-
-  m_lights.resize(2);
-
-  // Light0 is a classical directionnal light
-  glEnable(GL_LIGHT0);
-  const GLfloat light_ambient0[4]  = {0.2f, 0.2f, 0.2f, 1.0f};
-  const GLfloat light_diffuse0[4]  = {0.8f, 0.8f, 0.8f, 1.0f};
-  const GLfloat light_specular0[4] = {0.8f, 0.8f, 0.8f, 1.0f};
-
-  glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient0);
-  glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular0);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse0);
-
-  m_lights[0].reset(new qglviewer::ManipulatedFrame());
-  m_lights[0]->setPosition(-0.5, 0.5, 0);
-
-  // Light1 is a point light
-  glEnable(GL_LIGHT1);
-  const GLfloat light_ambient[4]  = {0.2f, 0.2f, 0.2f, 1.0};
-  const GLfloat light_diffuse[4]  = {0.4f, 0.4f, 0.4f, 1.0};
-  const GLfloat light_specular[4] = {0.8f, 0.8f, 0.8f, 1.0};
-
-  glLightf( GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.5);
-  glLightf( GL_LIGHT1, GL_LINEAR_ATTENUATION, 1.0);
-  glLightf( GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 1.5);
-  glLightfv(GL_LIGHT1, GL_AMBIENT,  light_ambient);
-  glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
-  glLightfv(GL_LIGHT1, GL_DIFFUSE,  light_diffuse);
-
-  m_lights[1].reset(new qglviewer::ManipulatedFrame());
-  m_lights[1]->setPosition(0.5, 0.5, 0);
-  m_lights[1]->setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,0,1), -m_lights[1]->position()));
-
-  QGLViewer::init();
-}
-
-glviewer_t::glviewer_t(QWidget * par):
-    m_is_recording(false),
-    m_bf_cull(true),
-    m_wireframe(false),
-    m_init_state(false)
-{
-  setParent(par);
-}
-
-glviewer_t::~glviewer_t()
-{
-
 }
 
 void glviewer_t::keyPressEvent(QKeyEvent *e)

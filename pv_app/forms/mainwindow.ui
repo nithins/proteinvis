@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_12">
+   <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
@@ -47,7 +47,7 @@
             <enum>QTabWidget::West</enum>
            </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <property name="movable">
             <bool>true</bool>
@@ -417,106 +417,24 @@
          </item>
         </layout>
        </widget>
-       <widget class="QGroupBox" name="groupBox_2">
-        <property name="title">
-         <string/>
-        </property>
-        <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="0">
-          <widget class="QGroupBox" name="viewer_lighting_groupBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>125</height>
-            </size>
-           </property>
+       <widget class="QWidget" name="">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QtGlLightEditor" name="lightseditor">
            <property name="title">
-            <string>Lighting</string>
+            <string>Lights</string>
            </property>
-           <layout class="QGridLayout" name="gridLayout_2">
-            <item row="1" column="1" colspan="2">
-             <widget class="QtColorPicker" name="diffuse_light_button">
-              <property name="text">
-               <string>Diffuse</string>
-              </property>
-              <property name="useStandardColors" stdset="0">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="3">
-             <widget class="QtColorPicker" name="specular_light_button">
-              <property name="text">
-               <string>Specular</string>
-              </property>
-              <property name="useStandardColors" stdset="0">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QtColorPicker" name="ambient_light_button">
-              <property name="text">
-               <string>Ambient</string>
-              </property>
-              <property name="useStandardColors" stdset="0">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2" colspan="2">
-             <widget class="QComboBox" name="light_type_comboBox">
-              <item>
-               <property name="text">
-                <string>Directional</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Positional</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>None</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="light_number_label">
-              <property name="text">
-               <string>Light Number</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QSpinBox" name="light_number_spinBox">
-              <property name="maximum">
-               <number>1</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0" colspan="4">
-             <widget class="QCheckBox" name="render_light_graphic_checkBox">
-              <property name="text">
-               <string>Render light graphics</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <layout class="QGridLayout" name="gridLayout"/>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="render_light_graphic_checkBox">
+           <property name="text">
+            <string>Render light graphics</string>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
         </layout>
@@ -562,25 +480,8 @@
    <property name="text">
     <string>Open Protein</string>
    </property>
-  </action>
-  <action name="actionOpen_Alpha_Shape">
-   <property name="text">
-    <string>Open Alpha Shape</string>
-   </property>
-  </action>
-  <action name="actionOpen_Pocket_Files">
-   <property name="text">
-    <string>Open Pocket Files</string>
-   </property>
-  </action>
-  <action name="actionOpen_Surface">
-   <property name="text">
-    <string>Open Surface</string>
-   </property>
-  </action>
-  <action name="actionOpen_Model">
-   <property name="text">
-    <string>Open Model</string>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionLoad_Alpha_Shape">
@@ -602,14 +503,12 @@
    <property name="text">
     <string>Close Protein</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QtColorPicker</class>
-   <extends>QPushButton</extends>
-   <header>qtcolorpicker.h</header>
-  </customwidget>
   <customwidget>
    <class>glviewer_t</class>
    <extends>QWidget</extends>
@@ -620,6 +519,12 @@
    <class>QtGlMaterialEditor</class>
    <extends>QGroupBox</extends>
    <header>qtglmaterialeditor.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QtGlLightEditor</class>
+   <extends>QGroupBox</extends>
+   <header location="global">qtgllighteditor.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,3 +1,7 @@
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+#include <boost/typeof/typeof.hpp>
+
 #include <QFileDialog>
 #include <QMessageBox>
 
@@ -24,14 +28,16 @@ viewer_mainwindow::viewer_mainwindow()
 
   protein_grouping_comboBox->blockSignals(false);
 
-  connect(glviewer,SIGNAL(viewerInitialized()),this,SLOT(init_ui()));
+  lightseditor->blockSignals(true);
+
+  lightseditor->set_num_lights(glviewer->get_num_lights());
+
+  for(int i = 0; i < glviewer->m_lights.size();++i)
+    lightseditor->set_light(i,glviewer->get_light(i));
+
+  lightseditor->blockSignals(false);
 
   update_model_ui();
-}
-
-void viewer_mainwindow::init_ui()
-{
-  update_light_ui_items(light_number_spinBox->value());
 }
 
 viewer_mainwindow::~viewer_mainwindow()
@@ -39,109 +45,17 @@ viewer_mainwindow::~viewer_mainwindow()
 
 }
 
-enum eLightType
+void viewer_mainwindow::on_render_light_graphic_checkBox_clicked ( bool s)
 {
-  LIGHTTYPE_DIRECTIONAL,
-  LIGHTTYPE_POSITIONAL,
-  LIGHTTYPE_NONE
-};
-
-void viewer_mainwindow::update_light_ui_items(int lightno)
-{
-  if(glIsEnabled(GL_LIGHT0+lightno) == false)
-  {
-    light_type_comboBox->setCurrentIndex(LIGHTTYPE_NONE);
-    return;
-  }
-
-  GLfloat pos[4];
-
-  glGetLightfv(GL_LIGHT0+lightno,GL_POSITION,pos);
-
-  if(pos[3] == 0)
-    light_type_comboBox->setCurrentIndex(LIGHTTYPE_DIRECTIONAL);
-  else
-    light_type_comboBox->setCurrentIndex(LIGHTTYPE_POSITIONAL);
-
-  GLfloat c[4];
-
-  ambient_light_button->blockSignals(true);
-  diffuse_light_button->blockSignals(true);
-  specular_light_button->blockSignals(true);
-
-  glGetLightfv(GL_LIGHT0+lightno,GL_AMBIENT,c);
-  ambient_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
-
-  glGetLightfv(GL_LIGHT0+lightno,GL_DIFFUSE,c);
-  diffuse_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
-
-  glGetLightfv(GL_LIGHT0+lightno,GL_SPECULAR,c);
-  specular_light_button->setCurrentColor(QColor::fromRgbF(c[0],c[1],c[2],c[3]));
-
-  ambient_light_button->blockSignals(false);
-  diffuse_light_button->blockSignals(false);
-  specular_light_button->blockSignals(false);
-
-}
-
-void viewer_mainwindow::on_light_number_spinBox_valueChanged ( int i)
-{
-  update_light_ui_items(i);
-}
-
-void viewer_mainwindow::on_ambient_light_button_colorChanged(QColor c)
-{
-  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
-
-  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_AMBIENT,col);
-
-  glviewer->updateGL();
-}
-void viewer_mainwindow::on_diffuse_light_button_colorChanged(QColor c)
-{
-  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
-
-  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_DIFFUSE,col);
-
-  glviewer->updateGL();
-}
-void viewer_mainwindow::on_specular_light_button_colorChanged(QColor c)
-{
-  GLfloat col[] = {c.redF(),c.greenF(),c.blueF(),c.alphaF()};
-
-  glLightfv(GL_LIGHT0+light_number_spinBox->value(),GL_SPECULAR,col);
+  glviewer->m_show_light_graphics = s;
 
   glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_light_type_comboBox_currentIndexChanged(int light_type)
+void viewer_mainwindow::on_lightseditor_lightChanged
+    (int i,const glutils::light_properties_t & il)
 {
-  GLenum light_num = GL_LIGHT0+light_number_spinBox->value();
-
-  GLfloat pos[4];
-
-  if(light_type == LIGHTTYPE_NONE)
-  {
-    glDisable(light_num);
-
-    glviewer->updateGL();
-
-    return;
-  }
-
-  glEnable(light_num);
-
-  glGetLightfv(light_num,GL_POSITION,pos);
-
-  if(light_type == LIGHTTYPE_POSITIONAL && pos[3] == 0.0)
-    pos[3] = 1.0;
-
-  if(light_type == LIGHTTYPE_DIRECTIONAL && pos[3] != 0.0)
-    pos[3] = 0.0;
-
-  glLightfv(light_num,GL_POSITION,pos);
-
-  glviewer->updateGL();
+  glviewer->set_light(i,il);
 }
 
 void viewer_mainwindow::on_actionOpen_Protein_triggered(bool)

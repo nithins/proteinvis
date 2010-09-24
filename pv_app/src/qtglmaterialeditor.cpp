@@ -31,19 +31,12 @@ void QtGlMaterialEditor::on_shininess_spinBox_valueChanged ( int )
   emit_material_changed();
 }
 
-glutils::color4f_t from_qcolor(const QColor qc)
+inline glutils::color4f_t from_qcolor(const QColor qc)
 {
-  glutils::color4f_t c;
-
-  c[0] = qc.redF();
-  c[1] = qc.greenF();
-  c[2] = qc.blueF();
-  c[3] = qc.alphaF();
-
-  return c;
+  return glutils::color4f_t(qc.redF(),qc.greenF(),qc.blueF(),qc.alphaF());
 }
 
-QColor to_qcolor(const glutils::color4f_t c)
+inline QColor to_qcolor(const glutils::color4f_t c)
 {
   return QColor::fromRgbF(c[0],c[1],c[2],c[3]);
 }

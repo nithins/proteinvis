@@ -34,21 +34,9 @@ public:
   ~viewer_mainwindow();
 
 
-// light ui
-
-private slots:
-  void init_ui();
-  void on_light_number_spinBox_valueChanged ( int );
-  void on_ambient_light_button_colorChanged(QColor);
-  void on_diffuse_light_button_colorChanged(QColor);
-  void on_specular_light_button_colorChanged(QColor);
-  void on_light_type_comboBox_currentIndexChanged(int);
-
 private:
 
 // update_* push changes to ui
-  void update_light_ui_items(int lightno);
-
   void update_model_ui();
   void update_model_atombond_ui(protein_model_ptr_t );
   void update_model_surface_ui(protein_model_ptr_t );
@@ -58,11 +46,14 @@ private:
 // updated_* pull changes from ui
   void updated_pocket_ui();
 
-
   protein_model_ptr_t  get_active_model();
   protein_model_data_t get_active_model_data();
 
 private slots:
+// light ui
+  void on_render_light_graphic_checkBox_clicked ( bool s);
+  void on_lightseditor_lightChanged(int i,const glutils::light_properties_t &);
+
 // protein_model ui
   void on_actionOpen_Protein_triggered(bool);
   void on_actionClose_Protein_triggered(bool);
