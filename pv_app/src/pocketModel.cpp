@@ -322,11 +322,13 @@ int pocket_model_t::render() const
 
     glColor3f ( 0.2, 0.8, 0.5 );
 
-    glPushAttrib ( GL_ENABLE_BIT );
+    glPushAttrib ( GL_ENABLE_BIT|GL_POLYGON_BIT );
 
     glDisable ( GL_CULL_FACE );
 
     glEnable ( GL_RESCALE_NORMAL );
+
+    glPolygonMode ( GL_FRONT_AND_BACK, GL_FILL );
 
     m_ren->render();
 

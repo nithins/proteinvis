@@ -277,7 +277,7 @@
                 <item row="0" column="0">
                  <widget class="QCheckBox" name="show_alpha_complex_tets_checkBox">
                   <property name="text">
-                   <string>Show Tetras</string>
+                   <string>Show Tetrahedra</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -287,7 +287,7 @@
                 <item row="1" column="0">
                  <widget class="QCheckBox" name="show_alpha_complex_tris_checkBox">
                   <property name="text">
-                   <string>Show Tris</string>
+                   <string>Show Triangles</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -297,7 +297,7 @@
                 <item row="2" column="0">
                  <widget class="QCheckBox" name="show_alpha_complex_edges_checkBox">
                   <property name="text">
-                   <string>Show Eges</string>
+                   <string>Show Edges</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -417,7 +417,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QtGlLightEditor" name="lightseditor">

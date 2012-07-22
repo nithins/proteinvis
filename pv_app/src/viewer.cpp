@@ -35,8 +35,8 @@ glutils::light_properties_t g_lights_default[] =
 {
   {
     {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
-    {0.8f, 0.8f, 0.8f, 1.0f}, // diffuse
-    {0.8f, 0.8f, 0.8f, 1.0f}, // specular
+    {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
+    {1.0f, 1.0f, 1.0f, 1.0f}, // specular
     {0.0f, 0.0f, 1.0f, 0.0f}, // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
@@ -44,8 +44,8 @@ glutils::light_properties_t g_lights_default[] =
 
   {
     {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
-    {0.8f, 0.8f, 0.8f, 1.0f}, // diffuse
-    {0.8f, 0.8f, 0.8f, 1.0f}, // specular
+    {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
+    {1.0f, 1.0f, 1.0f, 1.0f}, // specular
     {0.0f, 0.0f, 1.0f, 0.0f}, // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
@@ -89,6 +89,8 @@ void glviewer_t::add_ren(glutils::renderable_ptr_t ren)
 void glviewer_t::remove_ren(glutils::renderable_ptr_t ren)
 {
   using namespace boost::lambda;
+
+  setManipulatedFrame(NULL);
 
   BOOST_AUTO(i,std::find_if(m_rens.begin(),m_rens.end(),bind(&renderable_rd_t::ren,_1) == ren));
 

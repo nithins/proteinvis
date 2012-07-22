@@ -34,7 +34,7 @@ using namespace std;
 
 const double g_ball_stick_atom_radius = 0.4;
 
-const double g_ball_stick_bond_radius = 0.2;
+const double g_ball_stick_bond_radius = 0.15;
 
 const double g_small_space_fill_atom_radius = g_ball_stick_atom_radius;
 
@@ -219,7 +219,7 @@ void protein_model_t::render_onelevel() const
 
   case RMDE_POCKET_ATOMS:
     {
-      if ( m_pocket_model == NULL )
+      if ( m_pocket_model == NULL || m_pocket_render_mode == PRM_SHOW_NONE)
         break;
 
       switch ( m_render_model )
@@ -306,23 +306,13 @@ void protein_model_t::update_pocket_render_state()
   {
 
   case PRM_SHOW_NONE:
-
-    if ( m_render_mode == RMDE_POCKET_ATOMS )
-      m_render_mode = RMDE_NONE;
-
-    m_pocket_model->clear_render();
-
-    break;
+    m_pocket_model->clear_render();break;
 
   case PRM_SHOW_ONE:
-    m_pocket_model->setup_render ( m_pocket_alpha_num, m_pocket_num );
-
-    break;
+    m_pocket_model->setup_render ( m_pocket_alpha_num, m_pocket_num ); break;
 
   case PRM_SHOW_ALL:
-    m_pocket_model->setup_render ( m_pocket_alpha_num );
-
-    break;
+    m_pocket_model->setup_render ( m_pocket_alpha_num );break;
   }
 
   if ( m_render_mode == RMDE_POCKET_ATOMS )
@@ -339,7 +329,7 @@ int protein_model_t::render()
 {
   render_onelevel();
 
-  if ( m_pocket_model != NULL )
+  if ( m_pocket_model != NULL && m_pocket_render_mode != PRM_SHOW_NONE)
     m_pocket_model->render();
 
   if ( m_alpha_complex_model != NULL )

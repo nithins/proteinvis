@@ -3,7 +3,7 @@ varying in vec3  f_wc_p1;
 varying in float f_wc_radius;
 varying in vec3  f_wc_prism_crd;
 
-#define NUM_LIGHTS 1
+#define NUM_LIGHTS 2
 
 void DirectionalLight( in int i,
 		       in vec3 normal,

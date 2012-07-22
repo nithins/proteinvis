@@ -5,6 +5,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+#include <logutil.h>
+
 #include <protein.h>
 #include <proteinModel.h>
 #include <pocketModel.h>
@@ -34,6 +36,12 @@ viewer_mainwindow::viewer_mainwindow()
 
   for(int i = 0; i < glviewer->m_lights.size();++i)
     lightseditor->set_light(i,glviewer->get_light(i));
+
+  atombond_materialEditor->ambient_colorpicker->setEnabled(false);
+
+  atombond_materialEditor->diffuse_colorpicker->setEnabled(false);
+
+  atombond_materialEditor->emission_colorpicker->setEnabled(false);
 
   lightseditor->blockSignals(false);
 
@@ -293,21 +301,35 @@ void viewer_mainwindow::update_model_pocket_ui(protein_model_ptr_t pm)
 
   if(!pm ||!pm->m_pocket_model ) return;
 
-  pocket_alpha_num_spinBox->setValue(pm->m_pocket_alpha_num);
-
   show_all_pockets_radioButton->setChecked
       (pm->m_pocket_render_mode == protein_model_t::PRM_SHOW_ALL);
 
+  pocket_alpha_num_spinBox->blockSignals(true);
   pocket_alpha_num_spinBox->setMinimum ( 1 );
   pocket_alpha_num_spinBox->setMaximum( pm->m_pocket_model->get_num_alpha() );
+  pocket_alpha_num_spinBox->setValue(pm->m_pocket_alpha_num + 1);
+  pocket_alpha_num_spinBox->blockSignals(false);
 
+  pocket_num_spinBox->blockSignals(true);
   pocket_num_spinBox->setMinimum ( 1 );
   pocket_num_spinBox->setMaximum( pm->m_pocket_model->get_num_pockets
                                   ( pm->m_pocket_alpha_num ) );
+  pocket_num_spinBox->setValue(pm->m_pocket_num +1);
 
+  pocket_num_spinBox->setEnabled
+      (pm->m_pocket_render_mode == protein_model_t::PRM_SHOW_ONE);
+  pocket_num_label->setEnabled
+      (pm->m_pocket_render_mode == protein_model_t::PRM_SHOW_ONE);
+  pocket_num_spinBox->blockSignals(false);
+
+
+  add_radius_sf_model_doubleSpinBox->blockSignals(true);
   add_radius_sf_model_doubleSpinBox->setValue ( pm->m_add_atom_radius );
+  add_radius_sf_model_doubleSpinBox->blockSignals(false);
 
+  alpha_value_sf_model_doubleSpinBox->blockSignals(true);
   alpha_value_sf_model_doubleSpinBox->setValue ( pm->m_alpha_value );
+  alpha_value_sf_model_doubleSpinBox->blockSignals(false);
 }
 
 void viewer_mainwindow::on_current_protein_comboBox_currentIndexChanged (int )
@@ -356,6 +378,15 @@ void viewer_mainwindow::on_bb_mol_rendermode_radioButton_clicked ( bool checked 
   if ( checked )
   {
     get_active_model()->m_render_mode = protein_model_t::RMDE_BACKBONE;
+    glviewer->updateGL();
+  }
+}
+
+void viewer_mainwindow::on_pocatoms_rendermode_radioButton_clicked ( bool checked)
+{
+  if ( checked )
+  {
+    get_active_model()->m_render_mode = protein_model_t::RMDE_POCKET_ATOMS;
     glviewer->updateGL();
   }
 }
