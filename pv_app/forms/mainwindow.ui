@@ -14,8 +14,8 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <item>
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -26,9 +26,6 @@
        </property>
        <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <widget class="QComboBox" name="current_protein_comboBox"/>
-         </item>
          <item>
           <widget class="QTabWidget" name="configuration_tabWidget">
            <property name="sizePolicy">
@@ -47,7 +44,7 @@
             <enum>QTabWidget::West</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>3</number>
            </property>
            <property name="movable">
             <bool>true</bool>
@@ -57,6 +54,42 @@
              <string>Atom/ Bond</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_3">
+             <item row="0" column="1">
+              <widget class="QGroupBox" name="rendermodel_groupBox">
+               <property name="title">
+                <string>Atom/Bond Model</string>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_4">
+                <item row="4" column="0">
+                 <widget class="QRadioButton" name="ssf_model_radiobutton">
+                  <property name="text">
+                   <string>Small Atoms</string>
+                  </property>
+                  <property name="checked">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="sf_model_radiobutton">
+                  <property name="text">
+                   <string>Space Fill</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="bs_model_radioButton">
+                  <property name="text">
+                   <string>Ball Stick</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
              <item row="0" column="0">
               <widget class="QGroupBox" name="mol_rendermode_groupBox">
                <property name="title">
@@ -100,49 +133,6 @@
                </layout>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QGroupBox" name="rendermodel_groupBox">
-               <property name="title">
-                <string>Atom/Bond Model</string>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_4">
-                <item row="1" column="0">
-                 <widget class="QRadioButton" name="bs_model_radioButton">
-                  <property name="text">
-                   <string>Ball Stick</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QRadioButton" name="ssf_model_radiobutton">
-                  <property name="text">
-                   <string>Small Atoms</string>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QRadioButton" name="sf_model_radiobutton">
-                  <property name="text">
-                   <string>Space Fill</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QComboBox" name="protein_grouping_comboBox">
-               <property name="toolTip">
-                <string>atom group by options</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="1">
               <widget class="QPushButton" name="reload_pushButton">
                <property name="text">
@@ -183,6 +173,13 @@
               <widget class="QtGlMaterialEditor" name="atombond_materialEditor">
                <property name="title">
                 <string>Material</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QComboBox" name="protein_grouping_comboBox">
+               <property name="toolTip">
+                <string>atom group by options</string>
                </property>
               </widget>
              </item>
@@ -256,57 +253,6 @@
              <string>Alpha Shape/Pockets</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayout_11">
-             <item row="0" column="0">
-              <widget class="QGroupBox" name="alpha_complex_groupBox">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="title">
-                <string>Alpha Complex</string>
-               </property>
-               <property name="flat">
-                <bool>false</bool>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-               <layout class="QGridLayout" name="gridLayout_13">
-                <item row="0" column="0">
-                 <widget class="QCheckBox" name="show_alpha_complex_tets_checkBox">
-                  <property name="text">
-                   <string>Show Tetrahedra</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QCheckBox" name="show_alpha_complex_tris_checkBox">
-                  <property name="text">
-                   <string>Show Triangles</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QCheckBox" name="show_alpha_complex_edges_checkBox">
-                  <property name="text">
-                   <string>Show Edges</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
              <item row="1" column="0">
               <widget class="QGroupBox" name="pocket_groupBox">
                <property name="title">
@@ -411,9 +357,140 @@
                </layout>
               </widget>
              </item>
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="alpha_complex_groupBox">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="title">
+                <string>Alpha Complex</string>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <property name="checked">
+                <bool>false</bool>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_13">
+                <item row="0" column="0">
+                 <widget class="QCheckBox" name="show_alpha_complex_tets_checkBox">
+                  <property name="text">
+                   <string>Show Tetras</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="show_alpha_complex_tris_checkBox">
+                  <property name="text">
+                   <string>Show Tris</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QCheckBox" name="show_alpha_complex_edges_checkBox">
+                  <property name="text">
+                   <string>Show Eges</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="secondaryTab">
+            <attribute name="title">
+             <string>Secondary</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <item>
+              <widget class="QGroupBox" name="sec_renderModel_groupBox">
+               <property name="title">
+                <string>Type Selection</string>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <layout class="QGridLayout" name="gridLayout_2">
+                <item row="0" column="0">
+                 <widget class="QRadioButton" name="complete_sec_radiobutton">
+                  <property name="text">
+                   <string>All</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QRadioButton" name="helix_sec_radiobutton">
+                  <property name="text">
+                   <string>Only Helices</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QRadioButton" name="sheets_sec_radiobutton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Only Sheets</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QRadioButton" name="none_rendermode_radioButton_2">
+                  <property name="text">
+                   <string>None</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout">
+               <item>
+                <widget class="QSpinBox" name="spinBox_2"/>
+               </item>
+               <item>
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>Sheet Number</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinBox"/>
+               </item>
+               <item>
+                <widget class="QLabel" name="helixLabel">
+                 <property name="text">
+                  <string>Helix Number</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
             </layout>
            </widget>
           </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="current_protein_comboBox"/>
          </item>
         </layout>
        </widget>
@@ -458,7 +535,7 @@
      <x>0</x>
      <y>0</y>
      <width>1035</width>
-     <height>19</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

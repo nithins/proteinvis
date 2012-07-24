@@ -431,6 +431,26 @@ bool protein_t::is_backbone_atom ( uint atomno )
   return false;
 }
 
+bool protein_t::is_ca_atom(uint atomno)
+{
+    string& atom_name = atom_types[atoms[atomno].type_idx].name;
+
+    if (atom_name == "CA" ) // in crd and pdb files, this is used
+      return true;
+
+    return false;
+}
+
+bool protein_t::is_o_atom(uint atomno)
+{
+    string& atom_name = atom_types[atoms[atomno].type_idx].name;
+
+    if (atom_name == "O" ) // in crd and pdb files, this is used
+      return true;
+
+    return false;
+}
+
 void protein_t::check_only_four_bb_atoms_per_acid()
 {
   for ( uint i = 0 ; i < num_acids;i++ )
@@ -461,16 +481,38 @@ void protein_t::check_only_four_bb_atoms_per_acid()
 void protein_t::collect_bb_atoms()
 {
   vector<uint> bb_atoms_idx_vec;
+  vector<uint> ca_atoms_idx_vec;
+  vector<uint> o_atoms_idx_vec;
+
+
+  //changed this method to also collect indices of CA and O atoms
 
   for ( uint i = 0 ;i < num_atoms;i++ )
+  {
     if ( is_backbone_atom ( i ) )
       bb_atoms_idx_vec.push_back ( i );
 
+    if(is_ca_atom(i))
+        ca_atoms_idx_vec.push_back(i);
+
+    if(is_o_atom(i))
+        o_atoms_idx_vec.push_back(i);
+
+  }
+
   num_bb_atoms = bb_atoms_idx_vec.size();
+  num_ca_atoms = ca_atoms_idx_vec.size();
+  num_o_atoms=o_atoms_idx_vec.size();
+
 
   bb_atoms_idx = new uint[num_bb_atoms];
+  ca_atoms_idx = new uint[num_ca_atoms];
+  o_atoms_idx=new uint[num_o_atoms];
+
 
   copy ( bb_atoms_idx_vec.begin(), bb_atoms_idx_vec.end(), bb_atoms_idx );
+  copy (ca_atoms_idx_vec.begin(),ca_atoms_idx_vec.end(),ca_atoms_idx);
+  copy (o_atoms_idx_vec.begin(),o_atoms_idx_vec.end(),o_atoms_idx);
 }
 
 void protein_t::collect_bb_bonds()
@@ -654,6 +696,16 @@ glutils::bufobj_ptr_t protein_rd_t::get_bb_bonds_bo()
 glutils::bufobj_ptr_t protein_rd_t::get_bb_coord_bo()
 {
   return m_bb_atom_indices_bo;
+}
+
+glutils::bufobj_ptr_t protein_rd_t::get_ca_atoms_bo()
+{
+    return m_ca_atom_indices_bo;
+}
+
+glutils::bufobj_ptr_t protein_rd_t::get_o_atoms_bo()
+{
+    return m_o_atom_indices_bo;
 }
 
 protein_grouping_t::protein_grouping_t(boost::shared_ptr<protein_t> p)
@@ -1375,6 +1427,13 @@ bool read_crd_file ( const char * filename, protein_t &protein )
   }
 }
 
+bool begins_with(const string &str,const string &beg)
+{
+  string tmp(str.begin(),str.begin() + min(str.size(),beg.size()));
+
+  return tmp == beg;
+}
+
 bool read_pdb_file ( const char *filename, protein_t & protein )
 {
 
@@ -1418,11 +1477,45 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
     ALP_COUNT
   };
 
-  const uint atomline_num_chars = atomline_parts_idx[ALP_COUNT] + 1;
+  static const uint sheet_indexes_in_pdb[]=
+  {
+      0,//SHEET
+      7,//strand no
+      11,//sheet id
+      14,//no of strands
+      17,//init residue name
+      21,//init chain id
+      22,//residue seq no
+      26,//code for insertion of residues
+      28,//terminal residue no
+      32,//term chain id
+      33,//residue seq no
+      37,//code for insertion of residues
+      38 //strand sense wrt previous
+      //rest is related to hydrogen bond...not required
+  };
+
+  static const uint helix_indexes_in_pdb[]=
+  {
+      0,//helix
+      7,//helix serial no
+      11,//helix id
+      15,//initial residue name
+      19,//init chain id
+      21,//residue seq no
+      25,//code for insertion of residues
+      27,//term residue name
+      31,//chain id
+      33,//residue seq no
+      37,//code for insertion of residues
+      38,//type of helix
+      40,//comment
+      71,//lenght of helix
+      76//eof
+  };
 
   try
   {
-    static boost::regex atomline_re ( "^ATOM" );
 
     fstream pdbfile ( filename, ios::in );
 
@@ -1439,14 +1532,52 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
     vector<atom_t> atom_vec;
 
+    list<sheet_indices_t *> sheetList;
+    vector<helix_indices_t *> helixList;
+    protein.sheetsLenght=0;
+    protein.helicesLength=0;
+
     while ( !pdbfile.eof() )
     {
-      char atomline[atomline_num_chars];
+      char atomline[1000];
 
-      pdbfile.getline ( atomline, atomline_num_chars );
+      pdbfile.getline ( atomline, 1000,'\n' );
 
-      if ( !boost::regex_search ( atomline, atomline_re ) )
-        continue;
+      atomline[999] = '\0';
+
+      if (  !begins_with(atomline,"ATOM"))
+      {
+          if(begins_with(atomline,"SHEET"))
+          {
+              string strand_no_string ( atomline + sheet_indexes_in_pdb[1], atomline + sheet_indexes_in_pdb[2] );
+              string sheet_id_string( atomline + sheet_indexes_in_pdb[2],atomline + sheet_indexes_in_pdb[3] );
+              string no_of_strands_string( atomline + sheet_indexes_in_pdb[3],atomline + sheet_indexes_in_pdb[4] );
+              string init_chain_id ( atomline + sheet_indexes_in_pdb[5],atomline + sheet_indexes_in_pdb[6] );
+              string term_chain_id ( atomline + sheet_indexes_in_pdb[9],atomline + sheet_indexes_in_pdb[10] );
+              string init_residual_seq_no ( atomline + sheet_indexes_in_pdb[6],atomline + sheet_indexes_in_pdb[7] );
+              string term_residual_seq_no ( atomline + sheet_indexes_in_pdb[10],atomline + sheet_indexes_in_pdb[11] );
+
+              sheetList.push_back(new sheet_indices_t(atoi(stripWS(strand_no_string).c_str()),stripWS(sheet_id_string),atoi(stripWS(no_of_strands_string).c_str()),stripWS(init_chain_id),stripWS(term_chain_id),atoi(stripWS(init_residual_seq_no).c_str()),atoi(stripWS(term_residual_seq_no).c_str())));
+              protein.sheetsLenght++;
+          }
+
+          if(begins_with(atomline,"HELIX"))
+          {
+              string helix_serial_no_string ( atomline + helix_indexes_in_pdb[1], atomline + helix_indexes_in_pdb[2] );
+              string helix_id_string( atomline + helix_indexes_in_pdb[2],atomline + helix_indexes_in_pdb[3] );
+              string init_chain_id ( atomline + helix_indexes_in_pdb[4],atomline + helix_indexes_in_pdb[5] );
+              string term_chain_id ( atomline + helix_indexes_in_pdb[8],atomline + helix_indexes_in_pdb[9] );
+              string init_residual_seq_no ( atomline + helix_indexes_in_pdb[5],atomline + helix_indexes_in_pdb[6] );
+              string term_residual_seq_no ( atomline + helix_indexes_in_pdb[9],atomline + helix_indexes_in_pdb[10] );
+              string helix_length_string ( atomline + helix_indexes_in_pdb[13], atomline + helix_indexes_in_pdb[14] );
+
+              helixList.push_back(new helix_indices_t(atoi(stripWS(helix_serial_no_string).c_str()),stripWS(helix_id_string),stripWS(init_chain_id),stripWS(term_chain_id),atoi(stripWS(init_residual_seq_no).c_str()),atoi(stripWS(term_residual_seq_no).c_str()),atoi(stripWS(helix_length_string).c_str())));
+              protein.helicesLength++;
+          }
+
+          continue;
+      }
+
 
       string atom_name ( atomline + atomline_parts_idx[ALP_ATOM_NAME],
                          atomline + atomline_parts_idx[ALP_ATOM_NAME+1] );
@@ -1482,6 +1613,13 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
       atom.bond_end   = 0;
 
+      atom.chainId=atomline[atomline_parts_idx[ALP_CHAIN_ID]];
+
+      string resSeqNoStr( atomline + atomline_parts_idx[ALP_ACID_SEQ_NO],
+                          atomline + atomline_parts_idx[ALP_ACID_SEQ_NO+1] );
+
+      atom.residueSeqNo=atoi(stripWS(resSeqNoStr).c_str());
+
       atom_vec.push_back ( atom );
     }
 
@@ -1501,6 +1639,23 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
     try
     {
 
+
+      //convert sheet and helix lists to arrays...
+
+        sheet_indices_t **sheets=(sheet_indices_t **)malloc(sizeof(sheet_indices_t*)*sheetList.size());
+        copy(sheetList.begin(),sheetList.end(),sheets);
+        protein.sheets=sheets;
+        sheetList.clear();
+
+
+        helix_indices_t **helices=(helix_indices_t **)malloc(sizeof(helix_indices_t*)*helixList.size());
+        copy(helixList.begin(),helixList.end(),helices);
+        protein.helices=helices;
+        helixList.clear();
+
+
+
+
       copy ( atom_vec.begin(), atom_vec.end(), atoms );
 
       atom_vec.clear();
@@ -1513,10 +1668,12 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
         num_acids = 1;
 
         for ( uint i = 1 ; i < num_atoms;i++ )
-          if ( acid_name_vec[i] != acid_name_vec[i-1] ||
-               chain_id_vec[i] != chain_id_vec[i-1] ||
-               acid_no_vec[i] != acid_no_vec[i-1]  )
+        {
+          if ( acid_no_vec[i] != acid_no_vec[i-1]  )
+          {
             num_acids ++;
+          }
+        }
 
         acids  = new acid_t [num_acids];
 

@@ -83,6 +83,15 @@ protein_model_t::protein_model_t (const string &pf) :
   m_protein_rd.reset(new protein_rd_t ( m_protein ));
 
   m_protein_atoms_grouping.reset(new protein_grouping_t(m_protein));
+
+  m_secondary_model.reset(new secondary_model_t(m_protein));
+  m_test_model.reset(new test_model_t());
+
+  m_render_structure=STRE_SECONDARY;
+  m_render_mode=RMDE_NONE;
+  m_sec_renderMode=SEC_ALL;
+
+
 }
 
 bool protein_model_t::get_extent ( double * e)
@@ -90,6 +99,18 @@ bool protein_model_t::get_extent ( double * e)
   m_protein_rd->get_extent(e);
 
   return true;
+}
+
+
+void protein_model_t::updateSecondaryHelix(int no)
+{
+    m_secondary_model->InitHelices(no,false);
+}
+
+
+void protein_model_t::updateSecondarySheet(int no)
+{
+    m_secondary_model->InitSheets(no,false);
 }
 
 void protein_model_t::load_surface(const std::string &filename)
@@ -287,6 +308,37 @@ void protein_model_t::render_surface() const
   glPopAttrib();
 }
 
+void protein_model_t::render_secondary() const
+{
+    //call the render method of secondaryModel.cpp
+
+    //m_secondary_model->RenderImposterHelices();
+    /*switch ( m_sec_renderMode )
+    {
+        case SEC_ALL:
+            m_secondary_model->RenderSheets();
+            m_secondary_model->RenderHelices();
+            m_secondary_model->RenderTubes();
+            break;
+        case SEC_SHEETS:
+            m_secondary_model->RenderSheets();
+            break;
+        case SEC_HELICES:
+            m_secondary_model->RenderHelices();
+            break;
+        case SEC_NONE:
+            m_secondary_model->RenderImposterHelices();
+            break;
+            default:
+        break;
+
+    }*/
+
+//   m_test_model->Render();
+  m_secondary_model->RenderTubes();
+  m_secondary_model->RenderHelices();
+}
+
 void protein_model_t::update_sf_model_for_pocket()
 {
   if ( m_pocket_model == NULL )
@@ -327,7 +379,12 @@ protein_model_t::~protein_model_t ()
 
 int protein_model_t::render()
 {
+  if(m_render_structure==STRE_SECONDARY)
+  {
+    render_secondary();
+  }
   render_onelevel();
+
 
   if ( m_pocket_model != NULL && m_pocket_render_mode != PRM_SHOW_NONE)
     m_pocket_model->render();

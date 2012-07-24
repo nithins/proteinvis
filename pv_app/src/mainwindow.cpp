@@ -538,3 +538,50 @@ void viewer_mainwindow::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( dou
   get_active_model()->m_alpha_value = v;
   glviewer->updateGL();
 }
+
+void viewer_mainwindow::on_complete_sec_radiobutton_clicked(bool checked)
+{
+    if(checked)
+    {
+        get_active_model()->m_render_structure = protein_model_t::STRE_SECONDARY;
+        get_active_model()->m_sec_renderMode=protein_model_t::SEC_ALL;
+        glviewer->updateGL();
+    }
+}
+
+void viewer_mainwindow::on_helix_sec_radiobutton_clicked(bool checked)
+{
+    if(checked)
+    {
+        get_active_model()->m_sec_renderMode=protein_model_t::SEC_HELICES;
+        glviewer->updateGL();
+    }
+}
+
+void viewer_mainwindow::on_sheets_sec_radiobutton_clicked(bool checked)
+{
+    if(checked)
+    {
+        get_active_model()->m_sec_renderMode=protein_model_t::SEC_SHEETS;
+        glviewer->updateGL();
+    }
+}
+
+void viewer_mainwindow::on_none_rendermode_radioButton_2_clicked(bool checked)
+{
+    if(checked)
+    {
+        get_active_model()->m_sec_renderMode=protein_model_t::SEC_NONE;
+        glviewer->updateGL();
+    }
+}
+
+void viewer_mainwindow::on_spinBox_valueChanged(int arg1)
+{
+     get_active_model()->updateSecondaryHelix(arg1);
+}
+
+void viewer_mainwindow::on_spinBox_2_valueChanged(int arg1)
+{
+    get_active_model()->updateSecondarySheet(arg1);
+}

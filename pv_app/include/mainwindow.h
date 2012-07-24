@@ -99,6 +99,13 @@ private slots:
 // alpha and pockets ui
   void on_add_radius_sf_model_doubleSpinBox_valueChanged ( double );
   void on_alpha_value_sf_model_doubleSpinBox_valueChanged ( double );
+
+  void on_complete_sec_radiobutton_clicked(bool checked);
+  void on_helix_sec_radiobutton_clicked(bool checked);
+  void on_sheets_sec_radiobutton_clicked(bool checked);
+  void on_none_rendermode_radioButton_2_clicked(bool checked);
+  void on_spinBox_valueChanged(int arg1);
+  void on_spinBox_2_valueChanged(int arg1);
 };
 
 #endif

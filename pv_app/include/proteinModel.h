@@ -6,6 +6,8 @@
 
 #include <glutils.h>
 #include <cpputils.h>
+#include <secondaryModel.h>
+#include <testFile.h>
 
 class protein_t;
 
@@ -66,6 +68,19 @@ public:
     PRM_SHOW_ALL,
   };
 
+  enum eRenderStructures
+  {
+      STRE_ONELEVEL,
+      STRE_SECONDARY
+  };
+
+  enum eSecondaryRenderModes
+  {
+      SEC_ALL,
+      SEC_SHEETS,
+      SEC_HELICES,
+      SEC_NONE
+  };
 
 protected:
 
@@ -75,6 +90,8 @@ protected:
   boost::shared_ptr<glutils::renderable_t> m_surface_renderer;
   boost::shared_ptr<alpha_complex_model_t> m_alpha_complex_model;
   boost::shared_ptr<pocket_model_t>        m_pocket_model;
+  boost::shared_ptr<secondary_model_t>     m_secondary_model;
+  boost::shared_ptr<test_model_t>          m_test_model;
 
   // other state stuff
   eRenderModels                   m_render_model;
@@ -82,6 +99,8 @@ protected:
   eSurfaceRenderMode              m_surface_render_mode;
   uint                            m_alpha_complex_render_mode;
   ePocketRenderMode               m_pocket_render_mode;
+  eRenderStructures               m_render_structure;
+  eSecondaryRenderModes           m_sec_renderMode;
 
   uint                            m_pocket_alpha_num;
   uint                            m_pocket_num;
@@ -96,6 +115,7 @@ protected:
 
   void render_onelevel() const;
   void render_surface() const;
+  void render_secondary() const;
 
   void update_pocket_render_state();
   void update_sf_model_for_pocket();
@@ -111,6 +131,8 @@ public:
     return m_protein_name.c_str();
   }
 
+  void updateSecondaryHelix(int no);
+  void updateSecondarySheet(int no);
   bool get_extent ( double * );
 
 private:
