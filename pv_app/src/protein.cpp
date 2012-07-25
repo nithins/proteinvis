@@ -1536,10 +1536,12 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
       if(begins_with(atomline,"SHEET"))
       {
         sheet_lines.push_back(atomline);
+        continue;
       }
       else if(begins_with(atomline,"HELIX"))
       {
         helix_lines.push_back(atomline);
+        continue;
       }
       else if(!begins_with(atomline,"ATOM"))
       {
@@ -1600,78 +1602,75 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
     try
     {
 
-      map<int,int> pdbresnum_to_resnum;
-
       copy ( atom_vec.begin(), atom_vec.end(), atoms );
 
       atom_vec.clear();
 
-      uint num_acids  = 0;
-
+      int   num_acids  = 0;
+      int   num_chains = 0;
       acid_t  * acids  = NULL;
-
-      {
-        num_acids = 1;
-
-        pdbresnum_to_resnum[acid_no_vec[0]] = 0;
-
-        for ( uint i = 1 ; i < num_atoms;i++ )
-          if ( acid_no_vec[i] != acid_no_vec[i-1]  )
-            pdbresnum_to_resnum[acid_no_vec[i]] = num_acids++;
-
-        acids  = new acid_t [num_acids];
-
-        uint idx = 0;
-
-        acids[idx].start = 0;
-
-        for ( uint i = 1 ; i < num_atoms;i++ )
-          if ( acid_no_vec[i] != acid_no_vec[i-1])
-          {
-          acids[idx].end = i;
-          ++idx;
-          acids[idx].start = i;
-        }
-
-        acids[idx].end = num_atoms;
-      }
-
-      uint        num_chains = 0;
-
       chain_t * chains = NULL;
 
-      map<char,int> pdbchainid_to_chainid;
+      map<char,int>         pdbchain_to_chain;
+      vector<map<int,int> > pdbresno_to_resno;
+      pdbresno_to_resno.resize(100);
 
       {
+        num_acids  = 1;
         num_chains = 1;
 
-        pdbchainid_to_chainid[chain_id_vec[acids[0].start]] =0;
+        pdbchain_to_chain[chain_id_vec[0]]              = num_chains-1;
+        pdbresno_to_resno[num_chains-1][acid_no_vec[0]] = num_acids -1;
 
-        for ( uint i = 1 ; i < num_acids;i++ )
-          if ( chain_id_vec[acids[i].start] != chain_id_vec[acids[i-1].start] )
-            pdbchainid_to_chainid[chain_id_vec[acids[i].start]] = num_chains ++;
+        for ( uint i = 1 ; i < num_atoms;i++ )
+        {
 
-        chains = new chain_t[num_chains];
-
-        uint idx = 0;
-
-        chains[idx].start = 0;
-
-        for ( uint i = 1 ; i < num_acids;i++ )
-          if ( chain_id_vec[acids[i].start] != chain_id_vec[acids[i-1].start]  )
+          if(chain_id_vec[i]  != chain_id_vec[i-1])
           {
-          chains[idx].name = chain_id_vec[acids[i-1].start];
+            num_chains++;
+            pdbchain_to_chain[chain_id_vec[i]] = num_chains-1;
+          }
 
-          chains[idx].end = i;
-          ++idx;
-          chains[idx].start = i;
+          if ( acid_no_vec[i]  != acid_no_vec[i-1]  ||
+               chain_id_vec[i] != chain_id_vec[i-1])
+          {
+            num_acids++;
+            pdbresno_to_resno[num_chains-1][acid_no_vec[i]] = num_acids -1;
+          }
         }
 
-        chains[idx].name = chain_id_vec[acids[num_acids-1].start];
+        chains = new chain_t[num_chains];
+        acids  = new acid_t [num_acids];
 
-        chains[idx].end = num_acids;
+
+        int acid_idx = 0;
+        int chain_idx = 0;
+
+        acids[acid_idx].start   = 0;
+        chains[chain_idx].start = 0;
+
+        for ( int i = 1 ; i < num_atoms;i++ )
+        {
+          if ( acid_no_vec[i]  != acid_no_vec[i-1]  ||
+               chain_id_vec[i] != chain_id_vec[i-1])
+          {
+            acids[acid_idx].end = i;
+            ++acid_idx;
+            acids[acid_idx].start = i;
+          }
+
+          if(chain_id_vec[i]  != chain_id_vec[i-1])
+          {
+            chains[chain_idx].end = acid_idx;
+            chain_idx++;
+            chains[chain_idx].start = acid_idx;
+          }
+
+        }
+
+        chains[chain_idx].end = num_acids;
+        acids[acid_idx].end = num_atoms;
       }
-
 
 
       uint      num_atom_types = 0;
@@ -1766,13 +1765,24 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
           assert(start_chainno.size() == 1);
           assert(end_chainno.size()   == 1);
 
-          protein.sheets[i].strand_no     = atoi(strand_no.c_str());
-          protein.sheets[i].sheet_no      = sheetid_to_sheetno[sheet_id];
-          protein.sheets[i].num_strands   = atoi(num_strands.c_str());
-          protein.sheets[i].start_chainno = pdbchainid_to_chainid[start_chainno[0]];
-          protein.sheets[i].start_resno   = pdbresnum_to_resnum  [atoi(start_resno.c_str())];
-          protein.sheets[i].end_chainno   = pdbchainid_to_chainid[end_chainno[0]];
-          protein.sheets[i].end_resno     = pdbresnum_to_resnum  [atoi(end_resno.c_str())];
+          sheet_t &strand = protein.sheets[i];
+
+          strand.strand_no     = atoi(strand_no.c_str());
+          strand.sheet_no      = sheetid_to_sheetno[sheet_id];
+          strand.num_strands   = atoi(num_strands.c_str());
+
+          assert(pdbchain_to_chain.count(start_chainno[0]) == 1);
+          assert(pdbchain_to_chain.count(end_chainno[0]) == 1);
+
+          strand.start_chainno = pdbchain_to_chain[start_chainno[0]];
+          strand.end_chainno   = pdbchain_to_chain[end_chainno[0]];
+
+          assert(pdbresno_to_resno[strand.start_chainno].count(atoi(start_resno.c_str())) == 1);
+          assert(pdbresno_to_resno[strand.end_chainno].count(atoi(end_resno.c_str())) == 1);
+
+          strand.start_resno   = pdbresno_to_resno[strand.start_chainno][atoi(start_resno.c_str())];
+          strand.end_resno     = pdbresno_to_resno[strand.end_chainno][atoi(end_resno.c_str())];
+
         }
 
       }
@@ -1787,6 +1797,8 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
         {
           string line = helix_lines[i];
 
+          helix_t &helix = protein.helices[i];
+
           string start_chainno= stripWS(string(line.begin() + helix_indexes_in_pdb[4] ,line.begin() + helix_indexes_in_pdb[5] ));
           string start_resno  = stripWS(string(line.begin() + helix_indexes_in_pdb[5] ,line.begin() + helix_indexes_in_pdb[6] ));
           string end_chainno  = stripWS(string(line.begin() + helix_indexes_in_pdb[8] ,line.begin() + helix_indexes_in_pdb[9]));
@@ -1795,10 +1807,10 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
           assert(start_chainno.size() == 1);
           assert(end_chainno.size()   == 1);
 
-          protein.helices[i].start_chainno = pdbchainid_to_chainid[start_chainno[0]];
-          protein.helices[i].start_resno   = pdbresnum_to_resnum  [atoi(start_resno.c_str())];
-          protein.helices[i].end_chainno   = pdbchainid_to_chainid[end_chainno[0]];
-          protein.helices[i].end_resno     = pdbresnum_to_resnum  [atoi(end_resno.c_str())];
+          helix.start_chainno = pdbchain_to_chain[start_chainno[0]];
+          helix.start_resno   = pdbresno_to_resno[helix.start_chainno][atoi(start_resno.c_str())];
+          helix.end_chainno   = pdbchain_to_chain[end_chainno[0]];
+          helix.end_resno     = pdbresno_to_resno[helix.end_chainno][atoi(end_resno.c_str())];
 
         }
 

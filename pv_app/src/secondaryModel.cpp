@@ -308,9 +308,6 @@ void secondary_model_t::InitSplines()
 
     }
 
-    cout<<oatom_pos.size()<<endl;
-    cout<<caatom_pos.size()<<endl;
-
     assert(oatom_pos.size() == caatom_pos.size());
 
     normal_t prev_n(0,0,0);

@@ -22,6 +22,9 @@ find_package(GLEW REQUIRED)
 
 find_package(Boost COMPONENTS regex REQUIRED)
 
+set(SECONDARY_NUM_SPLINESEGS 20 CACHE STRING
+ "number of spline segments for each residue in secondary structure renderings")
+
 subdirs(utls)
 
 file(GLOB proteinvis_SRCS
@@ -62,6 +65,8 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${QGLVIEWER_INCLUDE_DIR}
   )
+
+configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 
 add_executable(proteinvis
   ${proteinvis_SRCS}
