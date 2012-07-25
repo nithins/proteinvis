@@ -6,7 +6,7 @@ in vec3  r;
 in vec3  s;
 in vec3  mc_pos;
 
-const float radius = 0.2;
+const float radius = 0.4;
 
 float side_of_plane(vec3 pt,vec3 n,vec3 ppt)
 {
@@ -121,6 +121,13 @@ vec3 closest_line_pt(vec3 l,vec3 ldir,vec3 p)
   return l+ldir*dot(p-l,ldir)/dot(ldir,ldir);
 }
 
+vec3 line_plane_ixn(vec3 pn, vec3 pp, vec3 ld, vec3 lp)
+{
+  float t = (dot(pn,pp) - dot(pn,lp))/(dot(pn,ld));
+  return lp + t*ld;
+}
+
+
 const float plane_shift_eps = 0.0001;
 
 void main()
@@ -128,14 +135,15 @@ void main()
   vec3    e = (gl_ModelViewMatrixInverse*vec4(0,0,0,1)).xyz;
   vec3 edir = mc_pos-e;
 
-  vec3 pnear,pfar;
+  vec3 pnear=vec3(0,0,0),pfar;
 
   if(ray_cylinder_ixn(q,r-q,radius,e,edir,pnear,pfar) == false)
     discard;
 
   vec3 pt = pnear;
 
-  vec3 qr = normalize(r-q);
+  float qr_len = length(r-q);
+  vec3      qr = (r-q)/qr_len;
 
   vec3 pqr = (normalize(q-p) + qr)/2;
   vec3 qrs = (qr + normalize(s-r))/2;
@@ -144,7 +152,26 @@ void main()
      side_of_plane(pt,qrs,r+qr*plane_shift_eps) > 0 )
     discard;
 
-  vec3 normal  = normalize(gl_NormalMatrix*(pt - closest_line_pt(q,r-q,pt)));
+  vec3 apt = closest_line_pt(q,r-q,pt);
+
+  vec3 cap_dir = pqr;
+  vec3 cap_pt  = q;
+
+  if(dot(apt-q,apt-q) > dot(apt-r,apt-r))
+  {
+    cap_dir = qrs;
+    cap_pt  = r;
+  }   
+
+  vec3 cap_pt_ixn = line_plane_ixn(cap_dir,cap_pt,qr,pt);
+  vec3 cap_normal = normalize(cap_pt_ixn- cap_pt); //*abs(dot(qr,cap_dir));
+  vec3 snormal    = (pt - apt)/radius;
+
+  vec3 spt     = radius*snormal + (q+r)/2;
+  float cap_wt = 1-(length(cap_pt_ixn - pt)/length(cap_pt_ixn - spt));
+
+  vec3 normal   = normalize(gl_NormalMatrix*(cap_wt*cap_normal + (1-cap_wt)*snormal));
+
   vec3 color   = gl_Color.xyz;
 
   pt = (gl_ModelViewMatrix*vec4(pt,1)).xyz;

@@ -34,9 +34,12 @@
 #include<secondaryModel.h>
 #include <malloc.h>
 #include <math.h>
+#include <config.h>
 
 using  namespace glutils;
 
+// auto generated in config.h .. cmake does it
+const int g_segs_btw_ctrlPts = SECONDARY_NUM_SPLINESEGS;
 
 GLSLProgram *s_sheetShader = NULL;
 GLSLProgram *s_sheetTipsShader = NULL;
@@ -398,13 +401,13 @@ void secondary_model_t::InitSheets()
     int tpts = g_segs_btw_ctrlPts*3/4;
 
     for(int j = tpts; j< (spt_e-spt_b)-tpts;++j )
-      width[j] = 0.6;
+      width[j] = 1.2;
 
     for(int j = 0; j< tpts;++j )
-      *(width.begin()+j) = 0.2+float(j)/float(tpts)*0.4;
+      *(width.begin()+j) = 0.4+float(j)/float(tpts)*0.8;
 
     for(int j = 0; j< tpts;++j )
-      *(width.end()-(tpts-j)) = 1.2-float(j)/float(tpts-1)*1;
+      *(width.end()-(tpts-j)) = 2.4-float(j)/float(tpts-1)*2;
 
     strand_rd.width_bo= buf_obj_t::create_bo
         (width.data(),GL_DOUBLE,1,GL_ARRAY_BUFFER,width.size()*sizeof(double),0);
@@ -724,7 +727,7 @@ void secondary_model_t::RenderTubes()
   {
     bufobj_ptr_t bo = m_chains_rd[i].spline_pts_bo;
 
-    glColor3ub ( 120, 60, 18 );
+    glColor3ub ( 120, 60, 120 );
     bo->bind_to_vertex_pointer();
     glDrawArrays(GL_LINE_STRIP_ADJACENCY,0,bo->get_num_items());
     bo->unbind_from_vertex_pointer();

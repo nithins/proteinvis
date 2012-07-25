@@ -44,7 +44,7 @@
             <enum>QTabWidget::West</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>3</number>
            </property>
            <property name="movable">
             <bool>true</bool>
@@ -425,36 +425,29 @@
                </property>
                <layout class="QGridLayout" name="gridLayout_2">
                 <item row="0" column="0">
-                 <widget class="QRadioButton" name="complete_sec_radiobutton">
+                 <widget class="QCheckBox" name="sec_tubes_checkbox">
                   <property name="text">
-                   <string>All</string>
+                   <string>Tubes</string>
                   </property>
                   <property name="checked">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QRadioButton" name="helix_sec_radiobutton">
+                 <widget class="QCheckBox" name="sec_helices_checkbox">
                   <property name="text">
-                   <string>Only Helices</string>
+                   <string>Helices</string>
                   </property>
                  </widget>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QRadioButton" name="sheets_sec_radiobutton">
+                 <widget class="QCheckBox" name="sec_sheets_checkbox">
                   <property name="enabled">
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>Only Sheets</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QRadioButton" name="none_rendermode_radioButton_2">
-                  <property name="text">
-                   <string>None</string>
+                   <string>Sheets</string>
                   </property>
                  </widget>
                 </item>

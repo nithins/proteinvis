@@ -539,42 +539,52 @@ void viewer_mainwindow::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( dou
   glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_complete_sec_radiobutton_clicked(bool checked)
+void viewer_mainwindow::on_sec_tubes_checkbox_clicked(bool checked)
 {
-    if(checked)
-    {
-        get_active_model()->m_render_structure = protein_model_t::STRE_SECONDARY;
-        get_active_model()->m_sec_renderMode=protein_model_t::SEC_ALL;
-        glviewer->updateGL();
-    }
+  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
+  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_TUBES;
+
+  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
+
+  if(checked)
+    mode |=flag;
+  else
+    mode &=(mask^flag);
+
+  glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_helix_sec_radiobutton_clicked(bool checked)
+
+void viewer_mainwindow::on_sec_helices_checkbox_clicked(bool checked)
 {
-    if(checked)
-    {
-        get_active_model()->m_sec_renderMode=protein_model_t::SEC_HELICES;
-        glviewer->updateGL();
-    }
+  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
+  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_HELICES;
+
+  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
+
+  if(checked)
+    mode |=flag;
+  else
+    mode &=(mask^flag);
+
+  glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_sheets_sec_radiobutton_clicked(bool checked)
+void viewer_mainwindow::on_sec_sheets_checkbox_clicked(bool checked)
 {
-    if(checked)
-    {
-        get_active_model()->m_sec_renderMode=protein_model_t::SEC_SHEETS;
-        glviewer->updateGL();
-    }
+  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
+  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_SHEETS;
+
+  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
+
+  if(checked)
+    mode |=flag;
+  else
+    mode &=(mask^flag);
+
+  glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_none_rendermode_radioButton_2_clicked(bool checked)
-{
-    if(checked)
-    {
-        get_active_model()->m_sec_renderMode=protein_model_t::SEC_NONE;
-        glviewer->updateGL();
-    }
-}
 
 void viewer_mainwindow::on_spinBox_valueChanged(int arg1)
 {

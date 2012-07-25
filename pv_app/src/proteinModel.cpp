@@ -90,9 +90,8 @@ protein_model_t::protein_model_t (const string &pf) :
 
   m_secondary_model.reset(new secondary_model_t(m_protein));
 
-  m_render_structure=STRE_SECONDARY;
   m_render_mode=RMDE_NONE;
-  m_sec_renderMode=SEC_ALL;
+  m_sec_renderMode=SEC_NONE;
 }
 
 bool protein_model_t::get_extent ( double * e)
@@ -309,25 +308,14 @@ void protein_model_t::render_surface() const
 
 void protein_model_t::render_secondary() const
 {
-  switch ( m_sec_renderMode )
-  {
-  case SEC_ALL:
+  if(m_sec_renderMode &SEC_SHEETS)
     m_secondary_model->RenderSheets();
-    m_secondary_model->RenderHelices();
-    m_secondary_model->RenderTubes();
-    break;
-  case SEC_SHEETS:
-    m_secondary_model->RenderSheets();
-    break;
-  case SEC_HELICES:
-    m_secondary_model->RenderHelices();
-    break;
-  case SEC_NONE:
-    break;
-  default:
-    break;
 
-  }
+  if(m_sec_renderMode &SEC_HELICES)
+    m_secondary_model->RenderHelices();
+
+  if(m_sec_renderMode &SEC_TUBES)
+    m_secondary_model->RenderTubes();
 }
 
 void protein_model_t::update_sf_model_for_pocket()
@@ -370,10 +358,8 @@ protein_model_t::~protein_model_t ()
 
 int protein_model_t::render()
 {
-  if(m_render_structure==STRE_SECONDARY)
-  {
-    render_secondary();
-  }
+  render_secondary();
+
   render_onelevel();
 
 

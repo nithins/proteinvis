@@ -32,14 +32,11 @@
 #include <QResource>
 #include <logutil.h>
 #include <map>
-#include <config.h>
+
 
 using namespace::std;
 
 class protein_rd_t;
-
-// auto generated in config.h .. cmake does it
-const int g_segs_btw_ctrlPts = SECONDARY_NUM_SPLINESEGS;
 
 class secondary_model_t
 {

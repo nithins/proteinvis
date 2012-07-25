@@ -17,7 +17,7 @@ in float WidthIn[];
 out vec3 normal;
 out vec3 wc_pos;
 
-const float height = 0.21;
+const float height = 0.41;
 
 void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 {

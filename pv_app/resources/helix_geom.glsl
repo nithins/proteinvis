@@ -16,8 +16,8 @@ out vec3 wc_pos;
 
 uniform vec3 g_helixUp;
 
-const float width  = 1f;
-const float height = 0.1;
+const float width  = 2f;
+const float height = 0.2;
 
 void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 {

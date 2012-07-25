@@ -67,18 +67,14 @@ public:
     PRM_SHOW_ALL,
   };
 
-  enum eRenderStructures
-  {
-      STRE_ONELEVEL,
-      STRE_SECONDARY
-  };
 
   enum eSecondaryRenderModes
   {
-      SEC_ALL,
-      SEC_SHEETS,
-      SEC_HELICES,
-      SEC_NONE
+    SEC_NONE=0,
+    SEC_TUBES=1,
+    SEC_SHEETS=2,
+    SEC_HELICES=4,
+    SEC_ALL=7,
   };
 
 protected:
@@ -97,7 +93,6 @@ protected:
   eSurfaceRenderMode              m_surface_render_mode;
   uint                            m_alpha_complex_render_mode;
   ePocketRenderMode               m_pocket_render_mode;
-  eRenderStructures               m_render_structure;
   eSecondaryRenderModes           m_sec_renderMode;
 
   uint                            m_pocket_alpha_num;

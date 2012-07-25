@@ -38,7 +38,7 @@ glutils::light_properties_t g_lights_default[] =
     {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
     {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
     {1.0f, 1.0f, 1.0f, 1.0f}, // specular
-    {0.0f, 0.0f, 1.0f, 0.0f}, // position
+    {0.0f, 0.0f, -1.0f, 0.0f}, // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
   },
@@ -47,7 +47,7 @@ glutils::light_properties_t g_lights_default[] =
     {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
     {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
     {1.0f, 1.0f, 1.0f, 1.0f}, // specular
-    {0.0f, 0.0f, 1.0f, 0.0f}, // position
+    {0.0f, 0.0f, -1.0f, 0.0f}, // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
   }
@@ -359,6 +359,8 @@ void glviewer_t::init()
   setHandlerKeyboardModifiers(QGLViewer::CAMERA, Qt::ControlModifier);
 
   glMatrixMode(GL_MODELVIEW);
+
+  setAnimationPeriod(0);
 
   glLoadIdentity();
 }
