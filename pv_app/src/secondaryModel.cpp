@@ -424,6 +424,14 @@ void secondary_model_t::InitHelices()
 
   m_helices_rd.resize(num_helices);
 
+  color_list_t chain_colors;
+
+  for(int i = 0 ; i < m_protein->get_num_chains(); ++i)
+    chain_colors.push_back(color_t(float(rand()%128)/128.0f,
+                                   float(rand()%128)/128.0f,
+                                   float(rand()%128)/128.0f));
+
+
   for(int i=0;i<m_protein->get_num_helices();i++)
   {
     const helix_t & helix = m_protein->get_helices()[i];
@@ -471,6 +479,7 @@ void secondary_model_t::InitHelices()
     m_helices_rd[i].splinept_begin = spt_b;
     m_helices_rd[i].splinept_end   = spt_e;
     m_helices_rd[i].chainno        = chainno;
+    m_helices_rd[i].color          = chain_colors[chainno];
 
 
 
@@ -663,9 +672,11 @@ void secondary_model_t::RenderHelices()
 
   for(int i = 0; i < m_helices_rd.size(); ++i)
   {
-    glColor3ub (60, 120, 18 );
-
     helix_rd_t &helix_rd = m_helices_rd[i];
+
+    color_t col = helix_rd.color;
+    glColor3d(col[0],col[1],col[2]);
+
 
     bufobj_ptr_t bo = m_chains_rd[helix_rd.chainno].spline_pts_bo;
 
@@ -684,9 +695,11 @@ void secondary_model_t::RenderHelices()
 
   for(int i = 0; i < m_helices_rd.size(); ++i)
   {
-    glColor3ub (60, 120, 18 );
-
     helix_rd_t &helix_rd = m_helices_rd[i];
+
+    color_t col = helix_rd.color;
+    glColor3d(col[0],col[1],col[2]);
+
 
     vertex_list_t &spts= m_chains_rd[helix_rd.chainno].spline_pts;
 

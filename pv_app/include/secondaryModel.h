@@ -53,6 +53,8 @@ class secondary_model_t
   struct helix_rd_t
   {
     glutils::normal_t normal;
+    glutils::color_t  color;
+
     int chainno;
     int splinept_begin;
     int splinept_end;

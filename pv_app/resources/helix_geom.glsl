@@ -16,8 +16,8 @@ out vec3 wc_pos;
 
 uniform vec3 g_helixUp;
 
-const float width  = 2f;
-const float height = 0.2;
+const float width  = 1.2f;
+const float height = 0.4;
 
 void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 {
@@ -78,7 +78,7 @@ void main()
   vec3 pqxup_wc  = normalize(gl_NormalMatrix*pqxup);
   vec3 qrxup_wc  = normalize(gl_NormalMatrix*qrxup);
 
-  gl_FrontColor = vec4(0.25,0,0.25,1);
+  gl_FrontColor = vec4(gl_FrontColorIn[1].xyz*0.5,1);
 
 
   draw_quad(p+up-pqxup,pup_wc,
@@ -91,7 +91,7 @@ void main()
             p-up+pqxup,-pup_wc,
             q-up+qrxup,-qup_wc);
 
-  gl_FrontColor = vec4(0.25,0,0,1);
+  gl_FrontColor = gl_FrontColorIn[1];
 
   draw_quad(p+up+pqxup,pqxup_wc,
             p-up+pqxup,pqxup_wc,
@@ -105,7 +105,7 @@ void main()
 
 #ifdef NEED_CAPS
 
-  gl_FrontColor = vec4(0.25,0,0.25,1);
+  gl_FrontColor = vec4(gl_FrontColorIn[1].xyz*0.5,1);
   
   normal = normalize(gl_NormalMatrix*(-pq));
 
