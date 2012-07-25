@@ -7,7 +7,6 @@
 #include <glutils.h>
 #include <cpputils.h>
 #include <secondaryModel.h>
-#include <testFile.h>
 
 class protein_t;
 
@@ -91,7 +90,6 @@ protected:
   boost::shared_ptr<alpha_complex_model_t> m_alpha_complex_model;
   boost::shared_ptr<pocket_model_t>        m_pocket_model;
   boost::shared_ptr<secondary_model_t>     m_secondary_model;
-  boost::shared_ptr<test_model_t>          m_test_model;
 
   // other state stuff
   eRenderModels                   m_render_model;
@@ -125,6 +123,7 @@ public:
   virtual ~protein_model_t ();
 
   int render();
+  static void initgl();
 
   std::string name() const
   {

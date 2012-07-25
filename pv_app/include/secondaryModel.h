@@ -27,7 +27,6 @@
 #include <DxUtils.h>
 #include <protein.h>
 #include <oneLevelModel.h>
-#include <GLSLProgram.h>
 #include <QFile>
 #include <QDir>
 #include <QResource>
@@ -37,96 +36,70 @@
 using namespace::std;
 
 class protein_rd_t;
-class GLSLProgram;
 
 const int g_segs_btw_ctrlPts = 30;
 
 class secondary_model_t
 {
+  struct chain_rd_t
+  {
+    glutils::vertex_list_t spline_pts;
+    glutils::bufobj_ptr_t  spline_pts_bo; //vb holds all points on the spline
+
+    glutils::vertex_list_t sec_spline_pts;
+    glutils::bufobj_ptr_t  sec_spline_pts_bo; //vb holds all points on the spline
+
+  };
+
+  struct helix_rd_t
+  {
+    glutils::normal_t normal;
+    int chainno;
+    int splinept_begin;
+    int splinept_end;
+  };
+
+  struct strand_rd_t
+  {
+    int chainno;
+    int splinept_begin;
+    int splinept_end;
+    glutils::color_t     color;
+
+    glutils::bufobj_ptr_t width_bo;
+    vector<double>        width;
+  };
+
+
 private:
-    //reference to the protein
-    boost::shared_ptr<protein_t> m_protein;
 
-    //reference to the list of atoms in the protein
-    const atom_t      *atoms;
-    uint     num_atoms;
-
-    //all c-alpha atoms in the protein
-    atom_t *ca_atoms;
-    atom_t *o_atoms;
-    uint num_ca_atoms;
-
-    //spline control points
-    D3DXVECTOR3 *splineOneControlPts;
-    D3DXVECTOR3 *splineTwoControlPts;
+  //reference to the protein
+  boost::shared_ptr<protein_t> m_protein;
 
 
-    //vbos to hold the structures
-    glutils::bufobj_ptr_t m_spline_pts_bo; //vb holds all points on the spline
-    glutils::bufobj_ptr_t m_sheet_Pts_bo;//vb indices of all the sheets
-    glutils::bufobj_ptr_t m_helix_Pts_bo;//vb indices of all the helices
+  std::vector<chain_rd_t>  m_chains_rd;
+  std::vector<helix_rd_t>  m_helices_rd;
+  std::vector<strand_rd_t> m_strands_rd;
 
 
-    glutils::bufobj_ptr_t m_sheet_cols_bo;//colors for sheets
-    glutils::bufobj_ptr_t m_sheet_ids_bo;//to know if it is an arrowhead
-
-
-    int num_spline_bo_pts;
-    int num_sheet_bo_pts;
-    int num_helix_bo_pts;
-
-    //shader parameters
-    GLSLProgram *s_sheetShader;
-    GLSLProgram *s_tubeShader;
-    GLSLProgram *s_helixShader;
-    GLSLProgram *s_helixImposterShader;
-
-    //other data structures
-    map<string,uint> cAlphaMapping;//mapping to get the correct point on spline using the pdb data
-    map<int,int> indexMap;//used to get the tube indices
-    map<int,int> tubeMap;//used to get the tube indices
-    map<int,int> missedMap;
-
-    //variables for spin box
-    uint num_sheets;
-    uint num_helices;
+  //variables for spin box
+  uint num_sheets;
+  uint num_helices;
 
 public:
-    secondary_model_t(boost::shared_ptr<protein_t> protein_reference);
-    ~secondary_model_t();
+  secondary_model_t(boost::shared_ptr<protein_t> protein_reference);
+  ~secondary_model_t();
 
-    //method to render the secondary protein structure
-    void RenderSheets();
-    void RenderTubes();
-    void RenderHelices();
-    void RenderImposterHelices();
-    //methods to fill buffers with only some elements as required by spinboxes
-    void InitHelices(int no,bool isInit);
-    void InitSheets(int no,bool isInit);
+  //method to render the secondary protein structure
+  void RenderSheets();
+  void RenderTubes();
+  void RenderHelices();
+  void RenderImposterHelices();
 
-    void Render();
-
-private:
-    //methods to generate the spline on the cpu
-    int BSplines(atom_t *atomPts,D3DXVECTOR3 **detailedRef,int atomPtsLength);
-    int DetailPtGen(D3DXVECTOR3 *point1,D3DXVECTOR3 *point2,D3DXVECTOR3 *point3,D3DXVECTOR3 *point4,D3DXVECTOR3 **retResult);
-    D3DXVECTOR3 Interpolate(D3DXVECTOR3 *point1,D3DXVECTOR3 *point2,D3DXVECTOR3 *point3,D3DXVECTOR3 *point4,float amount);
-
-    //other helper methods
-    void GetCaAtoms(const uint **ca_atoms_idx_ref);
-    void GetOAtoms(const uint **o_atoms_idx_ref);
-
-    //other initialization methods
-    void InitShaders();
-    void InitTubes();
-    void InitSplines();
-
-
-
-    //temp vars for debugging
-    glutils::bufobj_ptr_t m_spline_dir_pts_bo;
-    glutils::bufobj_ptr_t m_helix_imposter_bo;
-    int num_helix_imposter_bo_pts;
+  static void InitShaders();
+  void InitSplines();
+  void InitHelices();
+  void InitSheets();
 
 };
 #endif

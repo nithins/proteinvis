@@ -56,6 +56,12 @@ glutils::material_properties_t g_surface_material_default =
   1             // shininess
 };
 
+void protein_model_t::initgl()
+{
+  onelevel_model_t::init();
+  secondary_model_t::InitShaders();
+}
+
 protein_model_t::protein_model_t (const string &pf) :
     m_render_model ( RMDL_SPACE_FILL ),
     m_render_mode ( RMDE_FULL ),
@@ -76,8 +82,6 @@ protein_model_t::protein_model_t (const string &pf) :
   else
     m_protein_name = pf;
 
-  onelevel_model_t::init();
-
   m_protein.reset(new protein_t ( pf.c_str() ));
 
   m_protein_rd.reset(new protein_rd_t ( m_protein ));
@@ -85,13 +89,10 @@ protein_model_t::protein_model_t (const string &pf) :
   m_protein_atoms_grouping.reset(new protein_grouping_t(m_protein));
 
   m_secondary_model.reset(new secondary_model_t(m_protein));
-  m_test_model.reset(new test_model_t());
 
   m_render_structure=STRE_SECONDARY;
   m_render_mode=RMDE_NONE;
   m_sec_renderMode=SEC_ALL;
-
-
 }
 
 bool protein_model_t::get_extent ( double * e)
@@ -104,13 +105,11 @@ bool protein_model_t::get_extent ( double * e)
 
 void protein_model_t::updateSecondaryHelix(int no)
 {
-    m_secondary_model->InitHelices(no,false);
 }
 
 
 void protein_model_t::updateSecondarySheet(int no)
 {
-    m_secondary_model->InitSheets(no,false);
 }
 
 void protein_model_t::load_surface(const std::string &filename)
@@ -310,33 +309,25 @@ void protein_model_t::render_surface() const
 
 void protein_model_t::render_secondary() const
 {
-    //call the render method of secondaryModel.cpp
+  switch ( m_sec_renderMode )
+  {
+  case SEC_ALL:
+    m_secondary_model->RenderSheets();
+    m_secondary_model->RenderHelices();
+    m_secondary_model->RenderTubes();
+    break;
+  case SEC_SHEETS:
+    m_secondary_model->RenderSheets();
+    break;
+  case SEC_HELICES:
+    m_secondary_model->RenderHelices();
+    break;
+  case SEC_NONE:
+    break;
+  default:
+    break;
 
-    //m_secondary_model->RenderImposterHelices();
-    /*switch ( m_sec_renderMode )
-    {
-        case SEC_ALL:
-            m_secondary_model->RenderSheets();
-            m_secondary_model->RenderHelices();
-            m_secondary_model->RenderTubes();
-            break;
-        case SEC_SHEETS:
-            m_secondary_model->RenderSheets();
-            break;
-        case SEC_HELICES:
-            m_secondary_model->RenderHelices();
-            break;
-        case SEC_NONE:
-            m_secondary_model->RenderImposterHelices();
-            break;
-            default:
-        break;
-
-    }*/
-
-//   m_test_model->Render();
-  m_secondary_model->RenderTubes();
-  m_secondary_model->RenderHelices();
+  }
 }
 
 void protein_model_t::update_sf_model_for_pocket()

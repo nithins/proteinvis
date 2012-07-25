@@ -195,6 +195,12 @@ void protein_t::destroy()
   if ( num_acid_types != 0 )
     delete []acid_types;
 
+  if ( num_helices != 0 )
+    delete []helices;
+
+  if ( num_sheets!= 0 )
+    delete []sheets;
+
   init();
 }
 
@@ -206,6 +212,8 @@ void protein_t::init()
   chains         = NULL;
   atom_types     = NULL;
   acid_types     = NULL;
+  helices        = NULL;
+  sheets         = NULL;
 
   num_atoms      = 0;
   num_bonds      = 0;
@@ -213,6 +221,8 @@ void protein_t::init()
   num_chains     = 0;
   num_atom_types = 0;
   num_acid_types = 0;
+  num_helices    = 0;
+  num_sheets     = 0;
 }
 
 void protein_t::print_atom_types ( ostream &o )
@@ -431,9 +441,9 @@ bool protein_t::is_backbone_atom ( uint atomno )
   return false;
 }
 
-bool protein_t::is_ca_atom(uint atomno)
+bool protein_t::is_ca_atom(uint atomno) const
 {
-    string& atom_name = atom_types[atoms[atomno].type_idx].name;
+    const string& atom_name = atom_types[atoms[atomno].type_idx].name;
 
     if (atom_name == "CA" ) // in crd and pdb files, this is used
       return true;
@@ -441,11 +451,12 @@ bool protein_t::is_ca_atom(uint atomno)
     return false;
 }
 
-bool protein_t::is_o_atom(uint atomno)
+bool protein_t::is_o_atom(uint atomno) const
 {
-    string& atom_name = atom_types[atoms[atomno].type_idx].name;
+    const string& atom_name = atom_types[atoms[atomno].type_idx].name;
 
-    if (atom_name == "O" ) // in crd and pdb files, this is used
+    if (atom_name == "O" ||
+        atom_name == "OT1") // in crd and pdb files, this is used
       return true;
 
     return false;
@@ -481,38 +492,17 @@ void protein_t::check_only_four_bb_atoms_per_acid()
 void protein_t::collect_bb_atoms()
 {
   vector<uint> bb_atoms_idx_vec;
-  vector<uint> ca_atoms_idx_vec;
-  vector<uint> o_atoms_idx_vec;
-
-
-  //changed this method to also collect indices of CA and O atoms
 
   for ( uint i = 0 ;i < num_atoms;i++ )
   {
     if ( is_backbone_atom ( i ) )
       bb_atoms_idx_vec.push_back ( i );
-
-    if(is_ca_atom(i))
-        ca_atoms_idx_vec.push_back(i);
-
-    if(is_o_atom(i))
-        o_atoms_idx_vec.push_back(i);
-
   }
 
   num_bb_atoms = bb_atoms_idx_vec.size();
-  num_ca_atoms = ca_atoms_idx_vec.size();
-  num_o_atoms=o_atoms_idx_vec.size();
-
-
   bb_atoms_idx = new uint[num_bb_atoms];
-  ca_atoms_idx = new uint[num_ca_atoms];
-  o_atoms_idx=new uint[num_o_atoms];
-
 
   copy ( bb_atoms_idx_vec.begin(), bb_atoms_idx_vec.end(), bb_atoms_idx );
-  copy (ca_atoms_idx_vec.begin(),ca_atoms_idx_vec.end(),ca_atoms_idx);
-  copy (o_atoms_idx_vec.begin(),o_atoms_idx_vec.end(),o_atoms_idx);
 }
 
 void protein_t::collect_bb_bonds()
@@ -1532,50 +1522,28 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
     vector<atom_t> atom_vec;
 
-    list<sheet_indices_t *> sheetList;
-    vector<helix_indices_t *> helixList;
-    protein.sheetsLenght=0;
-    protein.helicesLength=0;
+    vector<string> sheet_lines;
+    vector<string> helix_lines;
 
     while ( !pdbfile.eof() )
     {
-      char atomline[1000];
+      char atomline[100];
 
-      pdbfile.getline ( atomline, 1000,'\n' );
+      pdbfile.getline ( atomline, 100,'\n' );
 
-      atomline[999] = '\0';
+      atomline[99] = '\0';
 
-      if (  !begins_with(atomline,"ATOM"))
+      if(begins_with(atomline,"SHEET"))
       {
-          if(begins_with(atomline,"SHEET"))
-          {
-              string strand_no_string ( atomline + sheet_indexes_in_pdb[1], atomline + sheet_indexes_in_pdb[2] );
-              string sheet_id_string( atomline + sheet_indexes_in_pdb[2],atomline + sheet_indexes_in_pdb[3] );
-              string no_of_strands_string( atomline + sheet_indexes_in_pdb[3],atomline + sheet_indexes_in_pdb[4] );
-              string init_chain_id ( atomline + sheet_indexes_in_pdb[5],atomline + sheet_indexes_in_pdb[6] );
-              string term_chain_id ( atomline + sheet_indexes_in_pdb[9],atomline + sheet_indexes_in_pdb[10] );
-              string init_residual_seq_no ( atomline + sheet_indexes_in_pdb[6],atomline + sheet_indexes_in_pdb[7] );
-              string term_residual_seq_no ( atomline + sheet_indexes_in_pdb[10],atomline + sheet_indexes_in_pdb[11] );
-
-              sheetList.push_back(new sheet_indices_t(atoi(stripWS(strand_no_string).c_str()),stripWS(sheet_id_string),atoi(stripWS(no_of_strands_string).c_str()),stripWS(init_chain_id),stripWS(term_chain_id),atoi(stripWS(init_residual_seq_no).c_str()),atoi(stripWS(term_residual_seq_no).c_str())));
-              protein.sheetsLenght++;
-          }
-
-          if(begins_with(atomline,"HELIX"))
-          {
-              string helix_serial_no_string ( atomline + helix_indexes_in_pdb[1], atomline + helix_indexes_in_pdb[2] );
-              string helix_id_string( atomline + helix_indexes_in_pdb[2],atomline + helix_indexes_in_pdb[3] );
-              string init_chain_id ( atomline + helix_indexes_in_pdb[4],atomline + helix_indexes_in_pdb[5] );
-              string term_chain_id ( atomline + helix_indexes_in_pdb[8],atomline + helix_indexes_in_pdb[9] );
-              string init_residual_seq_no ( atomline + helix_indexes_in_pdb[5],atomline + helix_indexes_in_pdb[6] );
-              string term_residual_seq_no ( atomline + helix_indexes_in_pdb[9],atomline + helix_indexes_in_pdb[10] );
-              string helix_length_string ( atomline + helix_indexes_in_pdb[13], atomline + helix_indexes_in_pdb[14] );
-
-              helixList.push_back(new helix_indices_t(atoi(stripWS(helix_serial_no_string).c_str()),stripWS(helix_id_string),stripWS(init_chain_id),stripWS(term_chain_id),atoi(stripWS(init_residual_seq_no).c_str()),atoi(stripWS(term_residual_seq_no).c_str()),atoi(stripWS(helix_length_string).c_str())));
-              protein.helicesLength++;
-          }
-
-          continue;
+        sheet_lines.push_back(atomline);
+      }
+      else if(begins_with(atomline,"HELIX"))
+      {
+        helix_lines.push_back(atomline);
+      }
+      else if(!begins_with(atomline,"ATOM"))
+      {
+        continue;
       }
 
 
@@ -1613,13 +1581,6 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
       atom.bond_end   = 0;
 
-      atom.chainId=atomline[atomline_parts_idx[ALP_CHAIN_ID]];
-
-      string resSeqNoStr( atomline + atomline_parts_idx[ALP_ACID_SEQ_NO],
-                          atomline + atomline_parts_idx[ALP_ACID_SEQ_NO+1] );
-
-      atom.residueSeqNo=atoi(stripWS(resSeqNoStr).c_str());
-
       atom_vec.push_back ( atom );
     }
 
@@ -1639,22 +1600,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
     try
     {
 
-
-      //convert sheet and helix lists to arrays...
-
-        sheet_indices_t **sheets=(sheet_indices_t **)malloc(sizeof(sheet_indices_t*)*sheetList.size());
-        copy(sheetList.begin(),sheetList.end(),sheets);
-        protein.sheets=sheets;
-        sheetList.clear();
-
-
-        helix_indices_t **helices=(helix_indices_t **)malloc(sizeof(helix_indices_t*)*helixList.size());
-        copy(helixList.begin(),helixList.end(),helices);
-        protein.helices=helices;
-        helixList.clear();
-
-
-
+      map<int,int> pdbresnum_to_resnum;
 
       copy ( atom_vec.begin(), atom_vec.end(), atoms );
 
@@ -1667,13 +1613,11 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
       {
         num_acids = 1;
 
+        pdbresnum_to_resnum[acid_no_vec[0]] = 0;
+
         for ( uint i = 1 ; i < num_atoms;i++ )
-        {
           if ( acid_no_vec[i] != acid_no_vec[i-1]  )
-          {
-            num_acids ++;
-          }
-        }
+            pdbresnum_to_resnum[acid_no_vec[i]] = num_acids++;
 
         acids  = new acid_t [num_acids];
 
@@ -1682,9 +1626,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
         acids[idx].start = 0;
 
         for ( uint i = 1 ; i < num_atoms;i++ )
-          if ( acid_name_vec[i] != acid_name_vec[i-1] ||
-               chain_id_vec[i] != chain_id_vec[i-1] ||
-               acid_no_vec[i] != acid_no_vec[i-1]  )
+          if ( acid_no_vec[i] != acid_no_vec[i-1])
           {
           acids[idx].end = i;
           ++idx;
@@ -1698,12 +1640,16 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
       chain_t * chains = NULL;
 
+      map<char,int> pdbchainid_to_chainid;
+
       {
         num_chains = 1;
 
+        pdbchainid_to_chainid[chain_id_vec[acids[0].start]] =0;
+
         for ( uint i = 1 ; i < num_acids;i++ )
           if ( chain_id_vec[acids[i].start] != chain_id_vec[acids[i-1].start] )
-            num_chains ++;
+            pdbchainid_to_chainid[chain_id_vec[acids[i].start]] = num_chains ++;
 
         chains = new chain_t[num_chains];
 
@@ -1793,6 +1739,71 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
         for ( uint i = 0 ; i < num_acids;i++ )
           acids[i].type_idx = acids[acid_name_idx_map[acid_name_vec[acids[i].start]]].type_idx;
       }
+
+      {
+        protein.num_sheets = sheet_lines.size();
+
+        if (protein.get_num_sheets() != 0)
+          protein.sheets = new sheet_t[protein.get_num_sheets()];
+
+        map<string,int> sheetid_to_sheetno;
+
+        for(int i = 0 ; i < protein.get_num_sheets();++i)
+        {
+          string line = sheet_lines[i];
+
+          string strand_no    = stripWS(string(line.begin() + sheet_indexes_in_pdb[1] ,line.begin() + sheet_indexes_in_pdb[2] ));
+          string sheet_id     = stripWS(string(line.begin() + sheet_indexes_in_pdb[2] ,line.begin() + sheet_indexes_in_pdb[3] ));
+          string num_strands  = stripWS(string(line.begin() + sheet_indexes_in_pdb[3] ,line.begin() + sheet_indexes_in_pdb[4] ));
+          string start_chainno= stripWS(string(line.begin() + sheet_indexes_in_pdb[5] ,line.begin() + sheet_indexes_in_pdb[6] ));
+          string start_resno  = stripWS(string(line.begin() + sheet_indexes_in_pdb[6] ,line.begin() + sheet_indexes_in_pdb[7] ));
+          string end_chainno  = stripWS(string(line.begin() + sheet_indexes_in_pdb[9] ,line.begin() + sheet_indexes_in_pdb[10]));
+          string end_resno    = stripWS(string(line.begin() + sheet_indexes_in_pdb[10],line.begin() + sheet_indexes_in_pdb[11]));
+
+          if(sheetid_to_sheetno.count(sheet_id) == 0)
+            sheetid_to_sheetno.insert(make_pair(sheet_id,(int)sheetid_to_sheetno.size()));
+
+          assert(start_chainno.size() == 1);
+          assert(end_chainno.size()   == 1);
+
+          protein.sheets[i].strand_no     = atoi(strand_no.c_str());
+          protein.sheets[i].sheet_no      = sheetid_to_sheetno[sheet_id];
+          protein.sheets[i].num_strands   = atoi(num_strands.c_str());
+          protein.sheets[i].start_chainno = pdbchainid_to_chainid[start_chainno[0]];
+          protein.sheets[i].start_resno   = pdbresnum_to_resnum  [atoi(start_resno.c_str())];
+          protein.sheets[i].end_chainno   = pdbchainid_to_chainid[end_chainno[0]];
+          protein.sheets[i].end_resno     = pdbresnum_to_resnum  [atoi(end_resno.c_str())];
+        }
+
+      }
+
+      {
+        protein.num_helices = helix_lines.size();
+
+        if (protein.get_num_helices() != 0)
+          protein.helices = new helix_t[protein.get_num_helices()];
+
+        for(int i = 0 ; i < protein.get_num_helices();++i)
+        {
+          string line = helix_lines[i];
+
+          string start_chainno= stripWS(string(line.begin() + helix_indexes_in_pdb[4] ,line.begin() + helix_indexes_in_pdb[5] ));
+          string start_resno  = stripWS(string(line.begin() + helix_indexes_in_pdb[5] ,line.begin() + helix_indexes_in_pdb[6] ));
+          string end_chainno  = stripWS(string(line.begin() + helix_indexes_in_pdb[8] ,line.begin() + helix_indexes_in_pdb[9]));
+          string end_resno    = stripWS(string(line.begin() + helix_indexes_in_pdb[9] ,line.begin() + helix_indexes_in_pdb[10]));
+
+          assert(start_chainno.size() == 1);
+          assert(end_chainno.size()   == 1);
+
+          protein.helices[i].start_chainno = pdbchainid_to_chainid[start_chainno[0]];
+          protein.helices[i].start_resno   = pdbresnum_to_resnum  [atoi(start_resno.c_str())];
+          protein.helices[i].end_chainno   = pdbchainid_to_chainid[end_chainno[0]];
+          protein.helices[i].end_resno     = pdbresnum_to_resnum  [atoi(end_resno.c_str())];
+
+        }
+
+      }
+
 
       protein.atoms           = atoms;
       protein.num_atoms       = num_atoms;

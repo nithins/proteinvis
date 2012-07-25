@@ -36,9 +36,6 @@ struct atom_t
   double radius;
 
   uint   bond_start, bond_end; // index into a list of atom indices to which this atom is bonded tos
-
-  std::string chainId;
-  uint residueSeqNo;//for secondary structure
 };
 
 struct acid_t
@@ -76,48 +73,23 @@ struct std_atom_types_t
   const double vWall_radius;
 };
 
-struct helix_indices_t
+struct helix_t
 {
-    int helixSerialNo;
-    std::string helixId;
-    std::string initChainId;
-    std::string termChainId;
-    int initResidueSeqNo;
-    int termResidueSeqNo;
-    int length;
-
-    helix_indices_t(int helixSerialNo,std::string helixId,std::string initChainId,std::string termChainId,int initResidueSeqNo,int terminalResidueSeqNo,int length)
-    {
-        this->helixSerialNo=helixSerialNo;
-        this->helixId=helixId;
-        this->initChainId=initChainId;
-        this->termChainId=termChainId;
-        this->initResidueSeqNo=initResidueSeqNo;
-        this->termResidueSeqNo=terminalResidueSeqNo;
-        this->length=length;
-    }
+  int start_chainno;
+  int end_chainno;
+  int start_resno;
+  int end_resno;
 };
 
-struct sheet_indices_t
+struct sheet_t
 {
-    int standNo;
-    std::string sheetId;
-    int noOfStrands;
-    std::string initChainId;
-    std::string termChainId;
-    int initResidueSeqNo;
-    int termResidueSeqNo;
-
-    sheet_indices_t(int strandNo,std::string sheetId,int noOfStrands,std::string initChainId,std::string termChainId,int initResidueSeqNo,int termResidueSeqNo)
-    {
-        this->standNo=strandNo;
-        this->noOfStrands=noOfStrands;
-        this->sheetId=sheetId;
-        this->initChainId=initChainId;
-        this->termChainId=termChainId;
-        this->initResidueSeqNo=initResidueSeqNo;
-        this->termResidueSeqNo=termResidueSeqNo;
-    }
+  int strand_no;
+  int num_strands;
+  int sheet_no;
+  int start_chainno;
+  int end_chainno;
+  int start_resno;
+  int end_resno;
 };
 
 const uint NUM_BB_ATOMS = 4;
@@ -152,16 +124,11 @@ private:
 
   uint         acid_rel_bb_atoms_idx[NUM_BB_ATOMS];// indices within an acid seq which contain the NCCO atoms
 
-  uint *ca_atoms_idx;
-  uint num_ca_atoms;
+  sheet_t *sheets;
+  uint num_sheets;
 
-  uint *o_atoms_idx;
-  uint num_o_atoms;
-
-  sheet_indices_t **sheets;
-  helix_indices_t **helices;
-  uint helicesLength;
-  uint sheetsLenght;
+  helix_t *helices;
+  uint num_helices;
 
   void init();
 
@@ -174,10 +141,6 @@ private:
   bool is_backbone_atom ( uint );
 
   void check_only_four_bb_atoms_per_acid();
-
-  bool is_ca_atom (uint);
-
-  bool is_o_atom (uint);
 
 public:
 
@@ -221,26 +184,15 @@ public:
     return num_chains;
   }
 
-  inline uint get_num_ca_atoms() const
-  {
-      return num_ca_atoms;
-  }
-
-  inline uint get_num_o_atoms() const
-  {
-      return num_o_atoms;
-  }
-
   inline uint get_num_helices() const
   {
-      return helicesLength;
+      return num_helices;
   }
 
   inline uint get_num_sheets() const
   {
-      return sheetsLenght;
+      return num_sheets;
   }
-
 
   inline const atom_t * get_atoms() const
   {
@@ -282,27 +234,19 @@ public:
     return chains;
   }
 
-  inline const uint* get_ca_atoms_idx() const
-  {
-    return ca_atoms_idx;
-  }
-
-  inline const uint *get_o_atoms_idx() const
-  {
-      return o_atoms_idx;
-  }
-
-  inline sheet_indices_t **get_sheets() const
+  inline const sheet_t *get_sheets() const
   {
       return sheets;
   }
 
-  inline helix_indices_t **get_helices() const
+  inline const helix_t *get_helices() const
   {
       return helices;
   }
 
+  bool is_ca_atom (uint) const;
 
+  bool is_o_atom (uint) const;
 
   protein_t ( const char * );
 

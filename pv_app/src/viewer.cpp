@@ -1,4 +1,5 @@
 #include <viewer.h>
+#include <proteinModel.h>
 
 #include <QKeyEvent>
 #include <QMessageBox>
@@ -332,6 +333,8 @@ void glviewer_t::init()
   m_init_state = true;
 
   glutils::init();
+
+  protein_model_t::initgl();
 
   setSnapshotFormat("PNG");
 
