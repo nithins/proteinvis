@@ -66,7 +66,7 @@ include_directories(
   ${QGLVIEWER_INCLUDE_DIR}
   )
 
-configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/pv_config.h.in ${PROJECT_BINARY_DIR}/pv_config.h)
 
 add_executable(proteinvis
   ${proteinvis_SRCS}

@@ -34,7 +34,7 @@
 #include<secondaryModel.h>
 #include <malloc.h>
 #include <math.h>
-#include <config.h>
+#include <pv_config.h>
 
 using  namespace glutils;
 
