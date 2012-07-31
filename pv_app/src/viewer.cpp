@@ -9,6 +9,8 @@
 #include <boost/typeof/typeof.hpp>
 #include <boost/foreach.hpp>
 
+#include <GL/glu.h>
+
 glutils::material_properties_t g_light_off_material =
 {
   {0.2,0.2,0.2,1}, // ambient
