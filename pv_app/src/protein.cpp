@@ -1775,13 +1775,13 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
           assert(pdbchain_to_chain.count(end_chainno[0]) == 1);
 
           strand.start_chainno = pdbchain_to_chain[start_chainno[0]];
-          strand.end_chainno   = pdbchain_to_chain[end_chainno[0]];
+          strand.end_chainno   = pdbchain_to_chain[end_chainno[0]]+1;
 
           assert(pdbresno_to_resno[strand.start_chainno].count(atoi(start_resno.c_str())) == 1);
-          assert(pdbresno_to_resno[strand.end_chainno].count(atoi(end_resno.c_str())) == 1);
+          assert(pdbresno_to_resno[strand.end_chainno-1].count(atoi(end_resno.c_str())) == 1);
 
           strand.start_resno   = pdbresno_to_resno[strand.start_chainno][atoi(start_resno.c_str())];
-          strand.end_resno     = pdbresno_to_resno[strand.end_chainno][atoi(end_resno.c_str())];
+          strand.end_resno     = pdbresno_to_resno[strand.end_chainno-1][atoi(end_resno.c_str())]+1;
 
         }
 
@@ -1807,10 +1807,11 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
           assert(start_chainno.size() == 1);
           assert(end_chainno.size()   == 1);
 
-          helix.start_chainno = pdbchain_to_chain[start_chainno[0]];
+          helix.start_chainno = pdbchain_to_chain[start_chainno[0]];          
+          helix.end_chainno   = pdbchain_to_chain[end_chainno[0]]+1;
+
           helix.start_resno   = pdbresno_to_resno[helix.start_chainno][atoi(start_resno.c_str())];
-          helix.end_chainno   = pdbchain_to_chain[end_chainno[0]];
-          helix.end_resno     = pdbresno_to_resno[helix.end_chainno][atoi(end_resno.c_str())];
+          helix.end_resno     = pdbresno_to_resno[helix.end_chainno-1][atoi(end_resno.c_str())]+1;
 
         }
 

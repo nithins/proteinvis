@@ -170,6 +170,43 @@ void protein_model_t::load_pockets(const std::string &pocf, const std::string &t
 
 void protein_model_t::render_onelevel() const
 {
+  glutils::bufobj_ptr_t atom_indxs;
+  glutils::bufobj_ptr_t bond_indxs = m_protein_rd->get_bonds_bo();
+
+  bool need_render = false;
+
+  switch ( m_render_mode )
+  {
+  case RMDE_FULL:
+    {
+      need_render  = true; break;
+    }
+
+  case RMDE_BACKBONE:
+    {
+      atom_indxs   = m_protein_rd->get_bb_coord_bo();
+      bond_indxs   = m_protein_rd->get_bb_bonds_bo();
+      need_render  = true; break;
+    }
+
+  case RMDE_POCKET_ATOMS:
+    {
+      if ( m_pocket_model == NULL || m_pocket_render_mode == PRM_SHOW_NONE)
+        break;
+
+      atom_indxs   = m_pocket_model->get_pocket_atoms();
+      bond_indxs   = m_pocket_model->get_pocket_atom_bonds();
+
+      need_render  = true; break;
+    }
+  case RMDE_CALPHA:
+    {
+      need_render  = false; break;
+    }
+  }
+
+  if(!need_render)
+    return;
 
   glPushAttrib(GL_ENABLE_BIT);
 
@@ -179,96 +216,36 @@ void protein_model_t::render_onelevel() const
 
   m_atombond_material.render_all(GL_FRONT_AND_BACK);
 
-  switch ( m_render_mode )
+  switch ( m_render_model )
   {
-  case RMDE_FULL:
-    {
-      switch ( m_render_model )
-      {
-      case RMDL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              m_protein_rd->get_radii_bo(),
-              m_add_atom_radius,m_alpha_value );break;
+  case RMDL_SPACE_FILL:
+    onelevel_model_t::render_sf
+        ( m_protein_rd->get_coord_bo(),
+          m_protein_atoms_grouping->get_atom_color_bo(),
+          m_protein_rd->get_radii_bo(),
+          m_add_atom_radius,
+          m_alpha_value,
+          atom_indxs);
+    break;
 
-      case RMDL_BALL_STICK:
-        onelevel_model_t::render_bs
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_ball_stick_atom_radius,m_protein_rd->get_bonds_bo(),
-              g_ball_stick_bond_radius );break;
+  case RMDL_BALL_STICK:
+    onelevel_model_t::render_bs
+        ( m_protein_rd->get_coord_bo(),
+          m_protein_atoms_grouping->get_atom_color_bo(),
+          g_ball_stick_atom_radius,
+          bond_indxs,
+          g_ball_stick_bond_radius,
+          atom_indxs);
+    break;
 
-      case RMDL_SMALL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_small_space_fill_atom_radius );break;
-      }
-      break;
-    }
-
-  case RMDE_BACKBONE:
-    {
-      switch ( m_render_model )
-      {
-      case RMDL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              m_protein_rd->get_radii_bo(),m_protein_rd->get_bb_coord_bo() ,
-              m_add_atom_radius,m_alpha_value );break;
-
-      case RMDL_BALL_STICK:
-        onelevel_model_t::render_bs
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_ball_stick_atom_radius,m_protein_rd->get_bb_coord_bo() ,
-              m_protein_rd->get_bb_bonds_bo(),g_ball_stick_bond_radius );break;
-
-      case RMDL_SMALL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_small_space_fill_atom_radius,
-              m_protein_rd->get_bb_coord_bo() );break;
-      }
-      break;
-    }
-
-  case RMDE_POCKET_ATOMS:
-    {
-      if ( m_pocket_model == NULL || m_pocket_render_mode == PRM_SHOW_NONE)
-        break;
-
-      switch ( m_render_model )
-      {
-      case RMDL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              m_protein_rd->get_radii_bo(),m_pocket_model->get_pocket_atoms(),
-              m_add_atom_radius,m_alpha_value);break;
-
-      case RMDL_BALL_STICK:
-        onelevel_model_t::render_bs
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_ball_stick_atom_radius,m_pocket_model->get_pocket_atoms(),
-              m_pocket_model->get_pocket_atom_bonds(),
-              g_ball_stick_bond_radius );break;
-
-      case RMDL_SMALL_SPACE_FILL:
-        onelevel_model_t::render_sf
-            ( m_protein_rd->get_coord_bo(),
-              m_protein_atoms_grouping->get_atom_color_bo(),
-              g_small_space_fill_atom_radius,
-              m_pocket_model->get_pocket_atoms() );break;
-      }
-      break;
-    }
+  case RMDL_SMALL_SPACE_FILL:
+    onelevel_model_t::render_sf
+        ( m_protein_rd->get_coord_bo(),
+          m_protein_atoms_grouping->get_atom_color_bo(),
+          g_small_space_fill_atom_radius,
+          atom_indxs);
+    break;
   }
-
   glPopAttrib();
 }
 
@@ -312,7 +289,7 @@ void protein_model_t::render_secondary() const
     m_secondary_model->RenderSheets();
 
   if(m_sec_renderMode &SEC_HELICES)
-    m_secondary_model->RenderHelices();
+    m_secondary_model->RenderImposterHelices();
 
   if(m_sec_renderMode &SEC_TUBES)
     m_secondary_model->RenderTubes();

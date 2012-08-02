@@ -40,6 +40,7 @@ public:
     RMDE_FULL,
     RMDE_POCKET_ATOMS,
     RMDE_NONE,
+    RMDE_CALPHA,
     RMDE_COUNT
   };
 

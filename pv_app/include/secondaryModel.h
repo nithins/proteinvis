@@ -56,15 +56,22 @@ class secondary_model_t
     glutils::color_t  color;
 
     int chainno;
-    int splinept_begin;
-    int splinept_end;
+    int spt_idx_b;
+    int spt_idx_e;
+
+    glutils::vertex_t  axis_b;
+    glutils::vertex_t  axis_e;
+
+    glutils::vertex_t  splinept_b;
+    glutils::vertex_t  splinept_e;
+
   };
 
   struct strand_rd_t
   {
     int chainno;
-    int splinept_begin;
-    int splinept_end;
+    int spt_idx_b;
+    int spt_idx_e;
     glutils::color_t     color;
 
     glutils::bufobj_ptr_t width_bo;

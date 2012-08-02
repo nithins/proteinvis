@@ -149,7 +149,7 @@ void secondary_model_t::InitShaders()
         sheet_geom_str.toStdString(),
         sheet_frag_str.toStdString(),
         GL_LINE_STRIP_ADJACENCY,
-        GL_QUADS
+        GL_TRIANGLE_STRIP
         );
 
   s_sheetShader->GetProgramLog ( sheet_log );
@@ -167,7 +167,7 @@ void secondary_model_t::InitShaders()
         sheet_tips_geom_str.toStdString(),
         sheet_frag_str.toStdString(),
         GL_LINE_STRIP_ADJACENCY,
-        GL_QUADS
+        GL_TRIANGLE_STRIP
         );
 
   s_sheetTipsShader->GetProgramLog ( sheet_tips_log );
@@ -195,7 +195,7 @@ void secondary_model_t::InitShaders()
         helix_geom_str.toStdString(),
         helix_frag_str.toStdString(),
         GL_LINE_STRIP_ADJACENCY,
-        GL_QUADS
+        GL_TRIANGLE_STRIP
         );
 
   helix_geom_str.replace("//#define NEED_CAPS","#define NEED_CAPS");
@@ -206,7 +206,7 @@ void secondary_model_t::InitShaders()
             helix_geom_str.toStdString(),
             helix_frag_str.toStdString(),
             GL_LINE_STRIP_ADJACENCY,
-            GL_QUADS
+            GL_TRIANGLE_STRIP
             );
 
 
@@ -256,10 +256,10 @@ void secondary_model_t::InitShaders()
   //initialize tubes shader
   string helix_imposter_log;
 
+  QFile helix_imposter_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_vert.glsl");
+  QFile helix_imposter_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_geom.glsl");
+  QFile helix_imposter_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_frag.glsl");
 
-  QFile helix_imposter_vert ( ":/shaders/cylinder.vert" );
-  QFile helix_imposter_geom ( ":/shaders/glslConvertCylinder.geom" );
-  QFile helix_imposter_frag ( ":/shaders/glslHelix3.frag" );
 
   helix_imposter_vert.open ( QIODevice::ReadOnly );
   helix_imposter_geom.open ( QIODevice::ReadOnly );
@@ -270,8 +270,8 @@ void secondary_model_t::InitShaders()
         string ( helix_imposter_vert.readAll().constData() ),
         string ( helix_imposter_geom.readAll().constData() ),
         string ( helix_imposter_frag.readAll().constData() ),
-        GL_LINES,
-        GL_QUADS
+        GL_TRIANGLES,
+        GL_TRIANGLE_STRIP
         );
 
   helix_imposter_vert.close();
@@ -281,8 +281,6 @@ void secondary_model_t::InitShaders()
   s_helixImposterShader->GetProgramLog ( helix_imposter_log );
 
   _LOG_VAR ( helix_imposter_log );
-
-
 }
 
 void secondary_model_t::InitSplines()
@@ -364,7 +362,7 @@ void secondary_model_t::InitSheets()
     const sheet_t & strand = m_protein->get_sheets()[i];
     strand_rd_t &strand_rd = m_strands_rd[i];
 
-    if(strand.start_chainno != strand.end_chainno)
+    if(strand.start_chainno+1 != strand.end_chainno)
     {
       cout<<"init chain is not same as term"<<endl;
       cout<<"code for sheet fragements from multiple chains needed"<<endl;
@@ -391,8 +389,8 @@ void secondary_model_t::InitSheets()
     spt_e = min<int>(spt_e,m_chains_rd[chainno].spline_pts.size());
 
     strand_rd.chainno        = chainno;
-    strand_rd.splinept_begin = spt_b;
-    strand_rd.splinept_end   = spt_e;
+    strand_rd.spt_idx_b = spt_b;
+    strand_rd.spt_idx_e   = spt_e;
     strand_rd.color          = sheet_colors[strand.sheet_no];
 
     vector<double> &width = strand_rd.width;
@@ -413,6 +411,12 @@ void secondary_model_t::InitSheets()
         (width.data(),GL_DOUBLE,1,GL_ARRAY_BUFFER,width.size()*sizeof(double),0);
 
   }
+}
+
+vertex_t line_plane_ixn(vertex_t pn, vertex_t pp, vertex_t ld, vertex_t lp)
+{
+  float t = (dot_product(pn,pp) - dot_product(pn,lp))/(dot_product(pn,ld));
+  return lp + t*ld;
 }
 
 void secondary_model_t::InitHelices()
@@ -436,14 +440,15 @@ void secondary_model_t::InitHelices()
   {
     const helix_t & helix = m_protein->get_helices()[i];
 
-    if(helix.start_chainno != helix.end_chainno)
+    if(helix.start_chainno +1!= helix.end_chainno)
     {
       cout<<"init chain is not same as term"<<endl;
       cout<<"code for helix fragemnts from multiple chains needed"<<endl;
       throw std::logic_error("missing code");
     }
 
-    int chainno = helix.start_chainno;
+    const int &chainno  = helix.start_chainno;
+    vertex_list_t &spts = m_chains_rd[chainno].spline_pts;
 
     int res_b = helix.start_resno;
     int res_e = helix.end_resno;
@@ -460,15 +465,15 @@ void secondary_model_t::InitHelices()
     int spt_b = res_b*g_segs_btw_ctrlPts;
     int spt_e = res_e*g_segs_btw_ctrlPts;
 
-    spt_e = min<int>(spt_e,m_chains_rd[chainno].spline_pts.size());
+    spt_e = min<int>(spt_e,spts.size());
 
     normal_t normal;
 
     for(int j = spt_b; j < spt_e-3; ++j)
     {
-      vertex_t p = m_chains_rd[chainno].spline_pts[j];
-      vertex_t q = m_chains_rd[chainno].spline_pts[j+1];
-      vertex_t r = m_chains_rd[chainno].spline_pts[j+2];
+      vertex_t p = spts[j];
+      vertex_t q = spts[j+1];
+      vertex_t r = spts[j+2];
 
       normal += euclid_normalize(cross_product(p-q,r-q));
     }
@@ -476,115 +481,33 @@ void secondary_model_t::InitHelices()
     normal = euclid_normalize(normal);
 
     m_helices_rd[i].normal         = normal;
-    m_helices_rd[i].splinept_begin = spt_b;
-    m_helices_rd[i].splinept_end   = spt_e;
+    m_helices_rd[i].spt_idx_b      = spt_b;
+    m_helices_rd[i].spt_idx_e      = spt_e;
     m_helices_rd[i].chainno        = chainno;
     m_helices_rd[i].color          = chain_colors[chainno];
 
+    // The helix executes a turn for every 3.6 c-alphas
+    // hence the point after 1.8 residues is opposite.
+    // since this point has already risen becos of the helix
+    // it is projected to the plane containing the first point
+    // and having normal the helical axis
+    // the midpoint gives the helix end points.
+    int offset = int(1.8*float(g_segs_btw_ctrlPts)+0.5);
 
+    vertex_t hp1           = spts[spt_b];
+    vertex_t hp2           = spts[spt_b + offset];
 
-//    std::stringstream out,out2;
-//    out << helices[i]->initResidueSeqNo;
-//    int begin=cAlphaMapping[helices[i]->initChainId+out.str()];
-//    out2 << helices[i]->termResidueSeqNo;
-//    int end=cAlphaMapping[helices[i]->termChainId+out2.str()];
+    vertex_t hq1           = spts[spt_e-1];
+    vertex_t hq2           = spts[spt_e -1 - offset];
 
+    m_helices_rd[i].axis_b = (hp1 + line_plane_ixn(normal,hp1,normal,hp2))/2;
+    m_helices_rd[i].axis_e = (hq1 + line_plane_ixn(normal,hq1,normal,hq2))/2;
 
-
-//    int offset=helices[i]->length*g_segs_btw_ctrlPts/10;
-//    begin=missedMap[begin];
-//    end=missedMap[end];
-//    /* begin*=g_segs_btw_ctrlPts;
-//         end*=g_segs_btw_ctrlPts;
-
-//         begin-=beginOff;
-//         end-=endOff;*/
-
-//    //get the helix axis
-//    D3DXVECTOR3 p1=splineOneControlPts[(end-1-offset)];
-//    D3DXVECTOR3 p0=splineOneControlPts[(end-2-offset)];
-//    D3DXVECTOR3 p2=splineOneControlPts[(end-offset)];
-
-//    D3DXVECTOR3 v1=D3DSubtract(&p0,&p1);
-//    D3DXVECTOR3 v2=D3DSubtract(&p2,&p1);
-
-//    D3DXVECTOR3 n1(0,0,0);
-//    D3DXVECTOR3 temp=D3DAdd(&v1,&v2);
-//    Normalize(&temp,&n1);
-
-//    D3DXVECTOR3 centre=D3DAdd(&p1,&n1);
-
-
-//    p1=splineOneControlPts[(begin+1+offset)];
-//    p0=splineOneControlPts[(begin+2+offset)];
-//    p2=splineOneControlPts[(begin+offset)];
-
-//    v1=D3DSubtract(&p0,&p1);
-//    v2=D3DSubtract(&p2,&p1);
-
-//    D3DXVECTOR3 n2(0,0,0);
-//    temp=D3DAdd(&v1,&v2);
-//    Normalize(&temp,&n2);
-
-//    D3DXVECTOR3 centre2=D3DAdd(&p1,&n2);
-
-
-//    //D3DXVECTOR3 helixUp=D3DXCross(&n1,&n2);
-//    D3DXVECTOR3 helixUp=D3DSubtract(&centre2,&centre);
-
-
-
-//    if(isInit)
-//      indexMap[begin]=end;
-
-
-//    helixImposterVertsList.push_back(splineOneControlPts[begin].x);
-//    helixImposterVertsList.push_back(splineOneControlPts[begin].y);
-//    helixImposterVertsList.push_back(splineOneControlPts[begin].z);
-
-//    helixImposterVertsList.push_back(splineOneControlPts[end].x);
-//    helixImposterVertsList.push_back(splineOneControlPts[end].y);
-//    helixImposterVertsList.push_back(splineOneControlPts[end].z);
-
-//    for(int j=begin;j<=end-2;j++)
-//    {
-
-//      num_helix_bo_pts+=4;
-//      //p0
-//      helixVertsList.push_back(splineOneControlPts[j].x);
-//      helixVertsList.push_back(splineOneControlPts[j].y);
-//      helixVertsList.push_back(splineOneControlPts[j].z);
-
-//      //p1
-//      helixVertsList.push_back(splineOneControlPts[j+1].x);
-//      helixVertsList.push_back(splineOneControlPts[j+1].y);
-//      helixVertsList.push_back(splineOneControlPts[j+1].z);
-
-//      //p2
-//      helixVertsList.push_back(splineOneControlPts[j+2].x);
-//      helixVertsList.push_back(splineOneControlPts[j+2].y);
-//      helixVertsList.push_back(splineOneControlPts[j+2].z);
-
-//      //axis
-//      helixVertsList.push_back(helixUp.x);
-//      helixVertsList.push_back(helixUp.y);
-//      helixVertsList.push_back(helixUp.z);
-
-//    }
+    m_helices_rd[i].splinept_b = hp1;
+    m_helices_rd[i].splinept_e = hq1;
 
   }
 
-
-//  double *helixVerts=new double[num_helix_bo_pts*3];
-//  copy(helixVertsList.begin(),helixVertsList.end(),helixVerts);
-//  m_helix_Pts_bo=glutils::buf_obj_t::create_bo(helixVerts,GL_DOUBLE,3,GL_ARRAY_BUFFER,sizeof( GLdouble )*num_helix_bo_pts*3,0);
-
-//  num_helix_imposter_bo_pts=helixImposterVertsList.size()/3;
-//  double *helixImposterVerts=new double[helixImposterVertsList.size()];
-//  copy(helixImposterVertsList.begin(),helixImposterVertsList.end(),helixImposterVerts);
-//  m_helix_imposter_bo=glutils::buf_obj_t::create_bo(helixImposterVerts,GL_DOUBLE,3,GL_ARRAY_BUFFER,sizeof( GLdouble )*helixImposterVertsList.size(),0);
-
-//  helixVertsList.clear();
 
 }
 
@@ -600,8 +523,8 @@ void secondary_model_t::RenderSheets()
     strand_rd_t &strand = m_strands_rd[i];
     chain_rd_t  &chain  = m_chains_rd[strand.chainno];
 
-    int offset  = strand.splinept_begin;
-    int count   = strand.splinept_end-strand.splinept_begin;
+    int offset  = strand.spt_idx_b;
+    int count   = strand.spt_idx_e-strand.spt_idx_b;
     color_t col = strand.color;
 
     glColor3d(col[0],col[1],col[2]);
@@ -627,8 +550,8 @@ void secondary_model_t::RenderSheets()
     strand_rd_t &strand = m_strands_rd[i];
     chain_rd_t  &chain  = m_chains_rd[strand.chainno];
 
-    int beg   = strand.splinept_begin;
-    int end   = strand.splinept_end;
+    int beg   = strand.spt_idx_b;
+    int end   = strand.spt_idx_e;
 
     vertex_list_t  & spts= chain.spline_pts;
     vertex_list_t  &sspts= chain.sec_spline_pts;
@@ -680,8 +603,8 @@ void secondary_model_t::RenderHelices()
 
     bufobj_ptr_t bo = m_chains_rd[helix_rd.chainno].spline_pts_bo;
 
-    int offset = helix_rd.splinept_begin+1;
-    int count  = helix_rd.splinept_end-helix_rd.splinept_begin-2;
+    int offset = helix_rd.spt_idx_b+1;
+    int count  = helix_rd.spt_idx_e-helix_rd.spt_idx_b-2;
     normal_t n = helix_rd.normal;
 
     s_helixShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
@@ -703,8 +626,8 @@ void secondary_model_t::RenderHelices()
 
     vertex_list_t &spts= m_chains_rd[helix_rd.chainno].spline_pts;
 
-    int beg = helix_rd.splinept_begin;
-    int end  = helix_rd.splinept_end;
+    int beg = helix_rd.spt_idx_b;
+    int end  = helix_rd.spt_idx_e;
     normal_t n = helix_rd.normal;
 
     s_helixCapShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
@@ -752,15 +675,32 @@ void secondary_model_t::RenderTubes()
 
 void secondary_model_t::RenderImposterHelices()
 {
-//  //glDisable(GL_CULL_FACE);
-//  glPushAttrib ( GL_ENABLE_BIT );
-//  s_helixImposterShader->use();
-//  s_helixImposterShader->sendUniform ( "ug_cylinder_radius", ( float ) 1 );
-//  //s_tubeShader->sendUniform ( "offset",offset );
-//  m_helix_imposter_bo->bind_to_vertex_pointer();
-//  glDrawArrays(GL_LINES,0,num_helix_imposter_bo_pts);
-//  m_helix_imposter_bo->unbind_from_vertex_pointer();
-//  s_helixImposterShader->disable();
-//  glPopAttrib();
+  glPushAttrib ( GL_ENABLE_BIT );
+
+  s_helixImposterShader->use();
+
+  for(int i = 0; i < m_helices_rd.size(); ++i)
+  {
+    helix_rd_t &helix_rd = m_helices_rd[i];
+    const int  &spt_b    = helix_rd.spt_idx_b;
+
+    color_t col = helix_rd.color;
+    glColor3d(col[0],col[1],col[2]);
+
+    vertex_t p = helix_rd.splinept_b;
+    vertex_t q = helix_rd.axis_b;
+    vertex_t r = helix_rd.axis_e;
+
+    glBegin(GL_TRIANGLES);
+
+    glVertex3d(p[0],p[1],p[2]);
+    glVertex3d(q[0],q[1],q[2]);
+    glVertex3d(r[0],r[1],r[2]);
+
+    glEnd();
+
+  }
+  s_helixImposterShader->disable();
+  glPopAttrib();
 }
 

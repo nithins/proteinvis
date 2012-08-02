@@ -87,39 +87,29 @@ namespace onelevel_model_t
   inline void render_sf
       ( glutils::bufobj_ptr_t atom_coord,
         glutils::bufobj_ptr_t atom_color,
-        glutils::bufobj_ptr_t atom_radii,
+        glutils::bufobj_ptr_t atom_radii,        
         const double & add_radius = 0.0,
-        const double & alpha = 0.0 )
+        const double & alpha = 0.0,
+        glutils::bufobj_ptr_t atom_indxs = glutils::bufobj_ptr_t())
   {
-    render_spheres ( atom_coord, atom_color, atom_radii , add_radius, alpha );
-  }
-
-  inline void render_sf
-      ( glutils::bufobj_ptr_t atom_coord,
-        glutils::bufobj_ptr_t atom_color,
-        glutils::bufobj_ptr_t atom_radii,
-        glutils::bufobj_ptr_t atom_indxs,
-        const double & add_radius = 0.0,
-        const double & alpha = 0.0 )
-  {
-    render_spheres ( atom_coord, atom_color, atom_radii, atom_indxs, add_radius, alpha );
-  }
-
-  inline void render_sf
-      ( glutils::bufobj_ptr_t atom_coord,
-        glutils::bufobj_ptr_t atom_color,
-        double atom_radius )
-  {
-    render_spheres ( atom_coord, atom_color, atom_radius );
+    if(atom_indxs)
+      render_spheres ( atom_coord, atom_color, atom_radii,
+                       atom_indxs, add_radius, alpha );
+    else
+      render_spheres ( atom_coord, atom_color, atom_radii ,
+                       add_radius, alpha );
   }
 
   inline void render_sf
       ( glutils::bufobj_ptr_t atom_coord,
         glutils::bufobj_ptr_t atom_color,
         double atom_radius,
-        glutils::bufobj_ptr_t atom_indxs )
+        glutils::bufobj_ptr_t atom_indxs = glutils::bufobj_ptr_t())
   {
-    render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
+    if(atom_indxs)
+      render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
+    else
+      render_spheres ( atom_coord, atom_color, atom_radius );
   }
 
   inline void render_bs
@@ -127,24 +117,13 @@ namespace onelevel_model_t
         glutils::bufobj_ptr_t atom_color,
         double atom_radius,
         glutils::bufobj_ptr_t atom_bonds,
-        double bond_radius )
+        double bond_radius,
+        glutils::bufobj_ptr_t atom_indxs = glutils::bufobj_ptr_t())
   {
-    render_spheres ( atom_coord, atom_color, atom_radius );
-
-    glColor3ub ( 0xE0, 0xB0, 0xFF  );
-
-    render_cylinders ( atom_coord, atom_bonds, bond_radius );
-  }
-
-  inline void render_bs
-      ( glutils::bufobj_ptr_t atom_coord,
-        glutils::bufobj_ptr_t atom_color,
-        double atom_radius,
-        glutils::bufobj_ptr_t atom_indxs,
-        glutils::bufobj_ptr_t atom_bonds,
-        double bond_radius )
-  {
-    render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
+    if(atom_indxs)
+      render_spheres ( atom_coord, atom_color, atom_radius, atom_indxs );
+    else
+      render_spheres ( atom_coord, atom_color, atom_radius );
 
     glColor3ub ( 0xE0,0xB0,0xFF  );
 
