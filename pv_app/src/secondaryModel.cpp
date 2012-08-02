@@ -107,10 +107,8 @@ void DetailPtGen(const vertex_t &p,const vertex_t &q,
 
 void BSplines(vertex_t *cpts,const int & num_cpts,vertex_list_t &spts)
 {
-  for (int i=0;i<num_cpts-3;i++)
-  {
-    DetailPtGen(cpts[i+0],cpts[i+1],cpts[i+2],cpts[i+3],spts);
-  }
+  for (int i=1;i<num_cpts-2;i++)
+    DetailPtGen(cpts[i-1],cpts[i+0],cpts[i+1],cpts[i+2],spts);
 }
 
 inline vertex_t atom_to_vertex(const atom_t & a)
@@ -306,7 +304,6 @@ void secondary_model_t::InitSplines()
 
       if(m_protein->is_o_atom(j))
         oatom_pos.push_back(atom_to_vertex(atom));
-
     }
 
     assert(oatom_pos.size() == caatom_pos.size());
@@ -351,9 +348,9 @@ void secondary_model_t::InitSheets()
   color_list_t sheet_colors;
 
   for(int i=0;i<num_sheets;i++)
-    sheet_colors.push_back(color_t(float(rand()%128)/128.0f,
-                                   float(rand()%128)/128.0f,
-                                   float(rand()%128)/128.0f));
+    sheet_colors.push_back(color_t(double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f));
 
   m_strands_rd.resize(num_strands);
 
@@ -383,9 +380,10 @@ void secondary_model_t::InitSheets()
     res_b = res_b - chain_res_b;
     res_e = res_e - chain_res_b;
 
-    int spt_b = res_b*g_segs_btw_ctrlPts;
-    int spt_e = res_e*g_segs_btw_ctrlPts;
+    int spt_b = (res_b-1)*g_segs_btw_ctrlPts;
+    int spt_e = (res_e-1)*g_segs_btw_ctrlPts;
 
+    spt_b = max<int>(spt_b,0);
     spt_e = min<int>(spt_e,m_chains_rd[chainno].spline_pts.size());
 
     strand_rd.chainno        = chainno;
@@ -402,10 +400,10 @@ void secondary_model_t::InitSheets()
       width[j] = 1.2;
 
     for(int j = 0; j< tpts;++j )
-      *(width.begin()+j) = 0.4+float(j)/float(tpts)*0.8;
+      *(width.begin()+j) = 0.4+double(j)/double(tpts)*0.8;
 
     for(int j = 0; j< tpts;++j )
-      *(width.end()-(tpts-j)) = 2.4-float(j)/float(tpts-1)*2;
+      *(width.end()-(tpts-j)) = 2.4-double(j)/double(tpts-1)*2;
 
     strand_rd.width_bo= buf_obj_t::create_bo
         (width.data(),GL_DOUBLE,1,GL_ARRAY_BUFFER,width.size()*sizeof(double),0);
@@ -413,10 +411,20 @@ void secondary_model_t::InitSheets()
   }
 }
 
-vertex_t line_plane_ixn(vertex_t pn, vertex_t pp, vertex_t ld, vertex_t lp)
+inline vertex_t line_plane_ixn(vertex_t ld, vertex_t lp,vertex_t pn, vertex_t pp)
 {
-  float t = (dot_product(pn,pp) - dot_product(pn,lp))/(dot_product(pn,ld));
+  double t = (dot_product(pn,pp) - dot_product(pn,lp))/(dot_product(pn,ld));
   return lp + t*ld;
+}
+
+inline vertex_t closest_line_pt(vertex_t ld,vertex_t lp,vertex_t pt)
+{
+  return lp+ld*dot_product(pt-lp,ld)/dot_product(ld,ld);
+}
+
+inline vertex_t closest_plane_pt(vertex_t pn,vertex_t pp,vertex_t pt)
+{
+  return line_plane_ixn(pn,pt,pn,pp);
 }
 
 void secondary_model_t::InitHelices()
@@ -431,9 +439,9 @@ void secondary_model_t::InitHelices()
   color_list_t chain_colors;
 
   for(int i = 0 ; i < m_protein->get_num_chains(); ++i)
-    chain_colors.push_back(color_t(float(rand()%128)/128.0f,
-                                   float(rand()%128)/128.0f,
-                                   float(rand()%128)/128.0f));
+    chain_colors.push_back(color_t(double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f));
 
 
   for(int i=0;i<m_protein->get_num_helices();i++)
@@ -462,50 +470,69 @@ void secondary_model_t::InitHelices()
     res_b = res_b - chain_res_b;
     res_e = res_e - chain_res_b;
 
-    int spt_b = res_b*g_segs_btw_ctrlPts;
-    int spt_e = res_e*g_segs_btw_ctrlPts;
+    int spt_b = (res_b-1)*g_segs_btw_ctrlPts;
+    int spt_e = (res_e-1)*g_segs_btw_ctrlPts;
 
+    spt_b = max<int>(spt_b,0);
     spt_e = min<int>(spt_e,spts.size());
 
-    normal_t normal;
-
-    for(int j = spt_b; j < spt_e-3; ++j)
-    {
-      vertex_t p = spts[j];
-      vertex_t q = spts[j+1];
-      vertex_t r = spts[j+2];
-
-      normal += euclid_normalize(cross_product(p-q,r-q));
-    }
-
-    normal = euclid_normalize(normal);
-
-    m_helices_rd[i].normal         = normal;
     m_helices_rd[i].spt_idx_b      = spt_b;
     m_helices_rd[i].spt_idx_e      = spt_e;
     m_helices_rd[i].chainno        = chainno;
     m_helices_rd[i].color          = chain_colors[chainno];
 
-    // The helix executes a turn for every 3.6 c-alphas
-    // hence the point after 1.8 residues is opposite.
-    // since this point has already risen becos of the helix
-    // it is projected to the plane containing the first point
-    // and having normal the helical axis
-    // the midpoint gives the helix end points.
-    int offset = int(1.8*float(g_segs_btw_ctrlPts)+0.5);
+    // to determine the helix axis dir a triple of pts is used to compute
+    // the binormal vector at point #2 of the triple.
+    // a second binormal at a point diametrically opposite on the helix
+    // is added so that the component not aligning with the axis is cancelled
+    // we know that the helix turns for every 3.6 residues
+    // so after 1.8 turns we get the pt diametrically opposite
+    // the average of all such dirs is used
 
-    vertex_t hp1           = spts[spt_b];
-    vertex_t hp2           = spts[spt_b + offset];
+    normal_t axis_dir(0,0,0);
 
-    vertex_t hq1           = spts[spt_e-1];
-    vertex_t hq2           = spts[spt_e -1 - offset];
+    int spt_jmp  = ceil(double(g_segs_btw_ctrlPts)/6.0);
+    int spt_opp  = round(double(g_segs_btw_ctrlPts)*1.8);
 
-    m_helices_rd[i].axis_b = (hp1 + line_plane_ixn(normal,hp1,normal,hp2))/2;
-    m_helices_rd[i].axis_e = (hq1 + line_plane_ixn(normal,hq1,normal,hq2))/2;
+    for(int j = spt_b + spt_jmp; j < spt_e-spt_jmp-spt_opp; ++j)
+    {
+      vertex_t p = spts[j-spt_jmp];
+      vertex_t q = spts[j];
+      vertex_t r = spts[j+spt_jmp];
 
-    m_helices_rd[i].splinept_b = hp1;
-    m_helices_rd[i].splinept_e = hq1;
+      vertex_t u = spts[j+spt_opp-spt_jmp];
+      vertex_t v = spts[j+spt_opp];
+      vertex_t w = spts[j+spt_opp+spt_jmp];
 
+      normal_t  n1 = euclid_normalize(cross_product(r-q,p-q));
+      normal_t  n2 = euclid_normalize(cross_product(w-v,u-v));
+
+      axis_dir += euclid_normalize(n1+n2);
+    }
+
+    axis_dir = euclid_normalize(axis_dir);
+
+    // a point on the axis is determined by projecting all points on the
+    // helix to a plane with normal helix_dir and then taking their mean
+
+    vertex_t axis_pt(0,0,0);
+    for(int j = spt_b; j < spt_e; ++j)
+      axis_pt += closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j]);
+    axis_pt /= spt_e-spt_b;
+
+    // the radius is the average distance from the mean to all the projections
+    double radius = 0;
+    for(int j = spt_b; j < spt_e; ++j)
+      radius += euclid_norm(closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j])-axis_pt);
+    radius /= spt_e-spt_b;
+
+    // the first and last points of the spline section is projected to the axis
+    m_helices_rd[i].axis_b   = closest_line_pt(axis_dir,axis_pt,spts[spt_b]);
+    m_helices_rd[i].axis_e   = closest_line_pt(axis_dir,axis_pt,spts[spt_e-1]);
+    m_helices_rd[i].radius   = radius;
+    m_helices_rd[i].axis_dir = axis_dir;
+    m_helices_rd[i].x_dir    = radius*euclid_normalize(spts[spt_b] - m_helices_rd[i].axis_b);
+    m_helices_rd[i].y_dir    = cross_product(axis_dir,m_helices_rd[i].x_dir);
   }
 
 
@@ -605,7 +632,7 @@ void secondary_model_t::RenderHelices()
 
     int offset = helix_rd.spt_idx_b+1;
     int count  = helix_rd.spt_idx_e-helix_rd.spt_idx_b-2;
-    normal_t n = helix_rd.normal;
+    normal_t n = helix_rd.axis_dir;
 
     s_helixShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
     bo->bind_to_vertex_pointer();
@@ -628,7 +655,7 @@ void secondary_model_t::RenderHelices()
 
     int beg = helix_rd.spt_idx_b;
     int end  = helix_rd.spt_idx_e;
-    normal_t n = helix_rd.normal;
+    normal_t n = helix_rd.axis_dir;
 
     s_helixCapShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
 
@@ -682,12 +709,12 @@ void secondary_model_t::RenderImposterHelices()
   for(int i = 0; i < m_helices_rd.size(); ++i)
   {
     helix_rd_t &helix_rd = m_helices_rd[i];
-    const int  &spt_b    = helix_rd.spt_idx_b;
+    vertex_list_t &spts = m_chains_rd[helix_rd.chainno].spline_pts;
 
     color_t col = helix_rd.color;
     glColor3d(col[0],col[1],col[2]);
 
-    vertex_t p = helix_rd.splinept_b;
+    vertex_t p = helix_rd.x_dir;
     vertex_t q = helix_rd.axis_b;
     vertex_t r = helix_rd.axis_e;
 

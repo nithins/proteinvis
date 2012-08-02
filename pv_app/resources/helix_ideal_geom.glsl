@@ -5,7 +5,7 @@
 layout(triangles) in;
 layout(triangle_strip, max_vertices=24) out;
 
-out vec3  p;
+out vec3  x_dir;
 out vec3  q;
 out vec3  r;
 out vec3  mc_pos;
@@ -33,11 +33,11 @@ void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 
 void main()
 {
-  p = gl_PositionIn[0].xyz;
-  q = gl_PositionIn[1].xyz;
-  r = gl_PositionIn[2].xyz;
+  x_dir = gl_PositionIn[0].xyz;
+  q     = gl_PositionIn[1].xyz;
+  r     = gl_PositionIn[2].xyz;
   
-  float radius = length(p-q);
+  float radius = length(x_dir);
   vec3  qr = normalize(r-q);
   vec3   c = (q + r) /2;
 

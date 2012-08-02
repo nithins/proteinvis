@@ -52,7 +52,6 @@ class secondary_model_t
 
   struct helix_rd_t
   {
-    glutils::normal_t normal;
     glutils::color_t  color;
 
     int chainno;
@@ -62,9 +61,10 @@ class secondary_model_t
     glutils::vertex_t  axis_b;
     glutils::vertex_t  axis_e;
 
-    glutils::vertex_t  splinept_b;
-    glutils::vertex_t  splinept_e;
-
+    glutils::normal_t  axis_dir;
+    glutils::normal_t  x_dir;
+    glutils::normal_t  y_dir;
+    double             radius;
   };
 
   struct strand_rd_t

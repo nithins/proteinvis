@@ -1,6 +1,6 @@
 #version 330 compatibility
 
-in vec3  p;
+in vec3  x_dir;
 in vec3  q;
 in vec3  r;
 in vec3  mc_pos;
@@ -123,7 +123,7 @@ float pt_line_proj_coeff(vec3 u,vec3 v,vec3 p)
 
 void main()
 {
-  float radius = length(p-q);
+  float radius = length(x_dir);
   vec3    e    = (gl_ModelViewMatrixInverse*vec4(0,0,0,1)).xyz;
   vec3 edir    = mc_pos-e;
 
@@ -132,10 +132,8 @@ void main()
   if(ray_cylinder_ixn(q,r-q,radius,e,edir,pnear,pfar) == false)
     discard;
 
-
   vec3 qr    =  normalize(r-q);
-  vec3 qp    =  normalize(p-q);  
-  vec3 qrxqp =  cross(qr,qp);
+  vec3 y_dir =  cross(qr,x_dir);
   
   
   vec3 pt       = pnear;
@@ -144,7 +142,7 @@ void main()
   vec3 apt      = q + t*(r-q);
   vec3 normal   = normalize(pt - apt);
   float theta   = TWOPI*length(apt-q)/pitch;
-  vec3  hdir    = (qp*cos(theta) + qrxqp*sin(theta));
+  vec3  hdir    = (x_dir*cos(theta) + y_dir*sin(theta))/radius;
 
   
   if( t <0.0 || t >= 1.0 || dot(hdir,normal)  < 1.0-width)
@@ -155,7 +153,7 @@ void main()
     apt      = q + t*(r-q);
     normal   = normalize(pt - apt);
     theta    = TWOPI*length(apt-q)/pitch;
-    hdir     = (qp*cos(theta) + qrxqp*sin(theta));    
+    hdir     = (x_dir*cos(theta) + y_dir*sin(theta))/radius;    
   }
     
   if( t <0.0 || t >= 1.0 || dot(hdir,normal)  < 1.0-width)
