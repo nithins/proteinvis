@@ -288,6 +288,14 @@ void protein_model_t::render_surface() const
 
 void protein_model_t::render_secondary() const
 {
+  glPushAttrib(GL_ENABLE_BIT);
+
+  glEnable ( GL_COLOR_MATERIAL );
+
+  glColorMaterial ( GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE ) ;
+
+  m_atombond_material.render_all(GL_FRONT_AND_BACK);
+
   if(m_sec_renderMode &SEC_SHEETS)
     m_secondary_model->RenderSheets();
 
@@ -296,6 +304,8 @@ void protein_model_t::render_secondary() const
 
   if(m_sec_renderMode &SEC_TUBES)
     m_secondary_model->RenderTubes();
+
+  glPopAttrib();
 }
 
 void protein_model_t::update_sf_model_for_pocket()
