@@ -9,8 +9,6 @@
         <file alias="sphere.frag">sphere.frag</file>
         <file alias="sphere.geom">sphere.geom</file>
         <file alias="sphere.vert">sphere.vert</file>
-        <file>glslConvertCylinder.geom</file>
-        <file>glslHelix3.frag</file>
         <file>cylinder_adj_frag.glsl</file>
         <file>cylinder_adj_geom.glsl</file>
         <file>cylinder_adj_vert.glsl</file>

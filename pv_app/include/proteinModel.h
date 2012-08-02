@@ -38,9 +38,9 @@ public:
   {
     RMDE_BACKBONE,
     RMDE_FULL,
+    RMDE_CALPHA,
     RMDE_POCKET_ATOMS,
     RMDE_NONE,
-    RMDE_CALPHA,
     RMDE_COUNT
   };
 

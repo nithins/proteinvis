@@ -244,6 +244,8 @@ void viewer_mainwindow::update_model_atombond_ui(protein_model_ptr_t pm)
     full_mol_rendermode_radioButton->setChecked(true); break;
   case protein_model_t::RMDE_BACKBONE:
     bb_mol_rendermode_radioButton->setChecked(true); break;
+  case protein_model_t::RMDE_CALPHA:
+    calpha_rendermode_radioButton->setChecked(true);break;
   case protein_model_t::RMDE_POCKET_ATOMS:
     pocatoms_rendermode_radioButton->setChecked(true); break;
   case protein_model_t::RMDE_NONE:
@@ -378,6 +380,15 @@ void viewer_mainwindow::on_bb_mol_rendermode_radioButton_clicked ( bool checked 
   if ( checked )
   {
     get_active_model()->m_render_mode = protein_model_t::RMDE_BACKBONE;
+    glviewer->updateGL();
+  }
+}
+
+void viewer_mainwindow::on_calpha_rendermode_radioButton_clicked ( bool checked )
+{
+  if ( checked )
+  {
+    get_active_model()->m_render_mode = protein_model_t::RMDE_CALPHA;
     glviewer->updateGL();
   }
 }

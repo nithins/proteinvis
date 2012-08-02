@@ -617,6 +617,15 @@ void protein_rd_t::upload_data_items()
                          (m_protein->get_bb_bonds(),GL_UNSIGNED_INT,2,
                           GL_ELEMENT_ARRAY_BUFFER,
                           sizeof ( GLuint )*2*m_protein->get_num_bb_bonds(),0);
+
+  // a bo to hold the set of c-alpha atoms
+
+  glutils::point_idx_list_t ca_idxs;
+  for ( uint i = 0 ;i < m_protein->get_num_atoms();i++ )
+    if(m_protein->is_ca_atom(i))
+      ca_idxs.push_back(i);
+
+  m_ca_atom_indices_bo = glutils::make_buf_obj(ca_idxs);
 }
 
 void protein_rd_t::compute_extent()

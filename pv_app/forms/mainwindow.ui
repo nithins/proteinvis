@@ -44,7 +44,7 @@
             <enum>QTabWidget::West</enum>
            </property>
            <property name="currentIndex">
-            <number>3</number>
+            <number>0</number>
            </property>
            <property name="movable">
             <bool>true</bool>
@@ -114,6 +114,16 @@
                  </widget>
                 </item>
                 <item row="2" column="0">
+                 <widget class="QRadioButton" name="calpha_rendermode_radioButton">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Alpha Carbon</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
                  <widget class="QRadioButton" name="pocatoms_rendermode_radioButton">
                   <property name="enabled">
                    <bool>true</bool>
@@ -123,7 +133,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="0">
+                <item row="4" column="0">
                  <widget class="QRadioButton" name="none_rendermode_radioButton">
                   <property name="text">
                    <string>None</string>
@@ -528,7 +538,7 @@
      <x>0</x>
      <y>0</y>
      <width>1035</width>
-     <height>28</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

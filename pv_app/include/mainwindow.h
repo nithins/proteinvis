@@ -66,6 +66,7 @@ private slots:
 // atombond page ui
   void on_full_mol_rendermode_radioButton_clicked ( bool );
   void on_bb_mol_rendermode_radioButton_clicked ( bool );
+  void on_calpha_rendermode_radioButton_clicked ( bool );
   void on_pocatoms_rendermode_radioButton_clicked ( bool );
   void on_none_rendermode_radioButton_clicked ( bool );
 

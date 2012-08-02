@@ -201,7 +201,9 @@ void protein_model_t::render_onelevel() const
     }
   case RMDE_CALPHA:
     {
-      need_render  = false; break;
+      atom_indxs   = m_protein_rd->get_ca_atoms_bo();
+      bond_indxs.reset();
+      need_render  = true; break;
     }
   }
 
@@ -229,13 +231,14 @@ void protein_model_t::render_onelevel() const
     break;
 
   case RMDL_BALL_STICK:
-    onelevel_model_t::render_bs
-        ( m_protein_rd->get_coord_bo(),
-          m_protein_atoms_grouping->get_atom_color_bo(),
-          g_ball_stick_atom_radius,
-          bond_indxs,
-          g_ball_stick_bond_radius,
-          atom_indxs);
+    if(bond_indxs)
+      onelevel_model_t::render_bs
+          ( m_protein_rd->get_coord_bo(),
+            m_protein_atoms_grouping->get_atom_color_bo(),
+            g_ball_stick_atom_radius,
+            bond_indxs,
+            g_ball_stick_bond_radius,
+            atom_indxs);
     break;
 
   case RMDL_SMALL_SPACE_FILL:
