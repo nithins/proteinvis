@@ -24,7 +24,6 @@
 #include <vector>
 #include <list>
 #include <glutils.h>
-#include <DxUtils.h>
 #include <protein.h>
 #include <oneLevelModel.h>
 #include <QFile>

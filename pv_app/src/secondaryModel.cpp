@@ -31,7 +31,7 @@
 #include <cpputils.h>
 
 #include <protein.h>
-#include<secondaryModel.h>
+#include <secondaryModel.h>
 #include <malloc.h>
 #include <math.h>
 #include <pv_config.h>
@@ -44,6 +44,7 @@ const int g_segs_btw_ctrlPts = SECONDARY_NUM_SPLINESEGS;
 GLSLProgram *s_sheetShader = NULL;
 GLSLProgram *s_sheetTipsShader = NULL;
 GLSLProgram *s_tubeShader = NULL;
+GLSLProgram *s_tubeCapShader = NULL;
 GLSLProgram *s_helixShader = NULL;
 GLSLProgram *s_helixCapShader = NULL;
 GLSLProgram *s_helixImposterShader = NULL;
@@ -64,58 +65,46 @@ secondary_model_t::~secondary_model_t()
   //destructor
 }
 
-D3DXVECTOR3 Interpolate(D3DXVECTOR3 p,D3DXVECTOR3 q,D3DXVECTOR3 r,D3DXVECTOR3 s,float amount)
+vertex_t Interpolate(vertex_t p,vertex_t q,vertex_t r,vertex_t s,double t)
 {
-  D3DXVECTOR4 multip(0,0,0,0);
-  D3DXVECTOR3 result(0,0,0);
-  D3DXMATRIX bezierBasis(-1, 3, -3, 1, 3, -6, 3, 0, -3, 0, 3, 0, 1, 4, 1, 0);
-  D3DXVECTOR4 tMat(amount*amount*amount,amount*amount,amount,1);
-  mulMatrixVec(&multip,&tMat,&bezierBasis);
+  typedef n_vector_t<double,4> vertex4_t;
 
-  D3DXVECTOR4 arg(p.x,q.x,r.x,s.x);
-  result.x=(float)D3DXVec4Dot(&arg,&multip)/6;
+  vertex4_t t_row(t*t*t,t*t,t,1);
 
-  D3DXVECTOR4 arg2(p.y,q.y,r.y,s.y);
-  result.y=(float)D3DXVec4Dot(&arg2,&multip)/6;
-
-  D3DXVECTOR4 arg3(p.z,q.z,r.z,s.z);
-  result.z=(float)D3DXVec4Dot(&arg3,&multip)/6;
-  return result;
-}
-
-inline D3DXVECTOR3 vertex_to_D3DXVECTOR3(const vertex_t & v)
-{
-  return D3DXVECTOR3((float)v[0],(float)v[1],(float)v[2]);
+  return (
+      p * dot_product(t_row, vertex4_t(-1, 3,-3, 1)) +
+      q * dot_product(t_row, vertex4_t( 3,-6, 0, 4)) +
+      r * dot_product(t_row, vertex4_t(-3, 3, 3, 1)) +
+      s * dot_product(t_row, vertex4_t( 1, 0, 0, 0))
+        )/6;
 }
 
 void DetailPtGen(const vertex_t &p,const vertex_t &q,
                  const vertex_t &r,const vertex_t &s,
                  vertex_list_t &spts)
 {
-  for (int i=0;i<(int)g_segs_btw_ctrlPts;i++)
-  {
-    D3DXVECTOR3 spt = Interpolate
-        (vertex_to_D3DXVECTOR3(p),
-         vertex_to_D3DXVECTOR3(q),
-         vertex_to_D3DXVECTOR3(r),
-         vertex_to_D3DXVECTOR3(s),
-         (float)i/(float)g_segs_btw_ctrlPts);
-
-    spts.push_back(vertex_t(spt.x,spt.y,spt.z));
-  }
+  for (int i=0;i<g_segs_btw_ctrlPts;i++)
+    spts.push_back(Interpolate(p,q,r,s,double(i)/double(g_segs_btw_ctrlPts)));
 }
 
 void BSplines(vertex_t *cpts,const int & num_cpts,vertex_list_t &spts)
 {
+  DetailPtGen(2*cpts[0] - cpts[1],cpts[0],cpts[1],cpts[2],spts);
+
   for (int i=1;i<num_cpts-2;i++)
     DetailPtGen(cpts[i-1],cpts[i+0],cpts[i+1],cpts[i+2],spts);
+
+  DetailPtGen(cpts[num_cpts-3],cpts[num_cpts-2],cpts[num_cpts-1],
+              2*cpts[num_cpts-1]-cpts[num_cpts-2],spts);
+
+  spts.push_back(Interpolate(cpts[num_cpts-3],cpts[num_cpts-2],cpts[num_cpts-1],
+                             2*cpts[num_cpts-1]-cpts[num_cpts-2],1.0));
 }
 
 inline vertex_t atom_to_vertex(const atom_t & a)
 {
   return vertex_t(a.x,a.y,a.z);
 }
-
 
 void secondary_model_t::InitShaders()
 {
@@ -223,33 +212,58 @@ void secondary_model_t::InitShaders()
     throw std::runtime_error("failed compiling helix cap shader\n"+helix_cap_log);
 
   //initialize tubes shader
-  string cyl_log;
+  string cyl_adj_log;
 
-  QFile cyl_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_vert.glsl" );
-  QFile cyl_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_geom.glsl" );
-  QFile cyl_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_frag.glsl" );
+  QFile cyl_adj_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_vert.glsl" );
+  QFile cyl_adj_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_geom.glsl" );
+  QFile cyl_adj_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_frag.glsl" );
 
-  cyl_vert.open ( QIODevice::ReadOnly );
-  cyl_geom.open ( QIODevice::ReadOnly );
-  cyl_frag.open ( QIODevice::ReadOnly );
+  cyl_adj_vert.open ( QIODevice::ReadOnly );
+  cyl_adj_geom.open ( QIODevice::ReadOnly );
+  cyl_adj_frag.open ( QIODevice::ReadOnly );
+
+  QString cyl_vert_src = cyl_adj_vert.readAll();
+  QString cyl_geom_src = cyl_adj_geom.readAll();
+  QString cyl_frag_src = cyl_adj_frag.readAll();
+
+  cyl_adj_vert.close();
+  cyl_adj_geom.close();
+  cyl_adj_frag.close();
 
   s_tubeShader = GLSLProgram::createFromSourceStrings
       (
-        string ( cyl_vert.readAll().constData() ),
-        string ( cyl_geom.readAll().constData() ),
-        string ( cyl_frag.readAll().constData() ),
+        cyl_vert_src.toStdString(),
+        cyl_geom_src.toStdString(),
+        cyl_frag_src.toStdString(),
         GL_LINES_ADJACENCY,
         GL_TRIANGLE_STRIP
         );
 
-  cyl_vert.close();
-  cyl_geom.close();
-  cyl_frag.close();
 
-  s_tubeShader->GetProgramLog ( cyl_log );
+  s_tubeShader->GetProgramLog ( cyl_adj_log );
 
-  if( cyl_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling cylinder shader\n"+cyl_log);
+  if( cyl_adj_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling cylinder shader\n"+cyl_adj_log);
+
+  //initialize tubes shader
+  string cyl_cap_log;
+
+  cyl_geom_src.replace("//#define ENABLE_CAPS","#define ENABLE_CAPS");
+  cyl_frag_src.replace("//#define ENABLE_CAPS","#define ENABLE_CAPS");
+
+  s_tubeCapShader = GLSLProgram::createFromSourceStrings
+      (
+        cyl_vert_src.toStdString(),
+        cyl_geom_src.toStdString(),
+        cyl_frag_src.toStdString(),
+        GL_TRIANGLES,
+        GL_TRIANGLE_STRIP
+        );
+
+  s_tubeCapShader->GetProgramLog ( cyl_cap_log );
+
+  if( cyl_cap_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling cylinder caps shader\n"+cyl_cap_log);
 
   //initialize tubes shader
   string helix_imposter_log;
@@ -380,16 +394,16 @@ void secondary_model_t::InitSheets()
     res_b = res_b - chain_res_b;
     res_e = res_e - chain_res_b;
 
-    int spt_b = (res_b-1)*g_segs_btw_ctrlPts;
-    int spt_e = (res_e-1)*g_segs_btw_ctrlPts;
+    int spt_b = res_b*g_segs_btw_ctrlPts;
+    int spt_e = res_e*g_segs_btw_ctrlPts;
 
-    spt_b = max<int>(spt_b,0);
-    spt_e = min<int>(spt_e,m_chains_rd[chainno].spline_pts.size());
+    assert(0<=spt_b && spt_b <  m_chains_rd[chainno].spline_pts.size());
+    assert(0< spt_e && spt_e <= m_chains_rd[chainno].spline_pts.size());
 
-    strand_rd.chainno        = chainno;
-    strand_rd.spt_idx_b = spt_b;
+    strand_rd.chainno     = chainno;
+    strand_rd.spt_idx_b   = spt_b;
     strand_rd.spt_idx_e   = spt_e;
-    strand_rd.color          = sheet_colors[strand.sheet_no];
+    strand_rd.color       = sheet_colors[strand.sheet_no];
 
     vector<double> &width = strand_rd.width;
     width.resize(spt_e-spt_b);
@@ -470,11 +484,11 @@ void secondary_model_t::InitHelices()
     res_b = res_b - chain_res_b;
     res_e = res_e - chain_res_b;
 
-    int spt_b = (res_b-1)*g_segs_btw_ctrlPts;
-    int spt_e = (res_e-1)*g_segs_btw_ctrlPts;
+    int spt_b = res_b*g_segs_btw_ctrlPts  + g_segs_btw_ctrlPts/2;
+    int spt_e = res_e*g_segs_btw_ctrlPts  - g_segs_btw_ctrlPts;
 
-    spt_b = max<int>(spt_b,0);
-    spt_e = min<int>(spt_e,spts.size());
+    assert(0<=spt_b && spt_b <  m_chains_rd[chainno].spline_pts.size());
+    assert(0< spt_e && spt_e <= m_chains_rd[chainno].spline_pts.size());
 
     m_helices_rd[i].spt_idx_b      = spt_b;
     m_helices_rd[i].spt_idx_e      = spt_e;
@@ -680,6 +694,30 @@ void secondary_model_t::RenderHelices()
 }
 
 
+void draw_plane(const vertex_t &pn,const vertex_t &pt,const double & S)
+{
+  vertex_t n = euclid_normalize(pn);
+
+  vertex_t s1(0,0,1);
+
+  if(dot_product(s1,n) >0.99 )
+    s1 = vertex_t(0,1,0);
+
+  vertex_t s2 = cross_product(n,s1);
+  s1 = cross_product(s2,n);
+
+  vertex_t p;
+
+  glBegin(GL_QUADS);
+
+  p = pt + S*(-1*s1 -s2); glVertex3f(p[0],p[1],p[2]);
+  p = pt + S*(-1*s1 +s2); glVertex3f(p[0],p[1],p[2]);
+  p = pt + S*(+1*s1 +s2); glVertex3f(p[0],p[1],p[2]);
+  p = pt + S*(+1*s1 -s2); glVertex3f(p[0],p[1],p[2]);
+
+  glEnd();
+}
+
 void secondary_model_t::RenderTubes()
 {
   glPushAttrib ( GL_ENABLE_BIT );
@@ -697,6 +735,32 @@ void secondary_model_t::RenderTubes()
   }
 
   s_tubeShader->disable();
+
+  s_tubeCapShader->use();
+
+  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
+  {
+    vertex_list_t & spts = m_chains_rd[i].spline_pts;
+
+    int end              = spts.size();
+
+    glColor3ub ( 120, 60, 120 );
+
+    glBegin(GL_TRIANGLES);
+
+    glVertex3d(spts[0][0],spts[0][1],spts[0][2]);
+    glVertex3d(spts[1][0],spts[1][1],spts[1][2]);
+    glVertex3d(spts[2][0],spts[2][1],spts[2][2]);
+
+    glVertex3d(spts[end-1][0],spts[end-1][1],spts[end-1][2]);
+    glVertex3d(spts[end-2][0],spts[end-2][1],spts[end-2][2]);
+    glVertex3d(spts[end-3][0],spts[end-3][1],spts[end-3][2]);
+
+    glEnd();
+  }
+
+  s_tubeCapShader->disable();
+
   glPopAttrib();
 }
 

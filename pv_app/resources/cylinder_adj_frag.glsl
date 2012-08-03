@@ -1,9 +1,14 @@
 #version 330 compatibility
 
+//#define ENABLE_CAPS
+
+#ifndef ENABLE_CAPS
 in vec3  p;
+#endif
 in vec3  q;
 in vec3  r;
 in vec3  s;
+
 in vec3  mc_pos;
 
 const float radius = 0.4;
@@ -121,58 +126,73 @@ vec3 closest_line_pt(vec3 l,vec3 ldir,vec3 p)
   return l+ldir*dot(p-l,ldir)/dot(ldir,ldir);
 }
 
-vec3 line_plane_ixn(vec3 pn, vec3 pp, vec3 ld, vec3 lp)
+vec3 plane_line_ixn(vec3 pn, vec3 pp, vec3 ldir, vec3 l)
 {
-  float t = (dot(pn,pp) - dot(pn,lp))/(dot(pn,ld));
-  return lp + t*ld;
+  return l + ldir*dot(pp-l,pn)/dot(ldir,pn);
 }
-
 
 const float plane_shift_eps = 0.0001;
 
 void main()
 {
   vec3    e = (gl_ModelViewMatrixInverse*vec4(0,0,0,1)).xyz;
-  vec3 edir = mc_pos-e;
+  vec3 edir = normalize(mc_pos-e);
 
-  vec3 pnear=vec3(0,0,0),pfar;
+  vec3 pnear=vec3(0,0,0),pfar=vec3(0,0,0);
 
   if(ray_cylinder_ixn(q,r-q,radius,e,edir,pnear,pfar) == false)
     discard;
 
   vec3 pt = pnear;
+  vec3 qr = normalize(r-q);
+  
+#ifdef ENABLE_CAPS
+  vec3  p = q - qr;
+#endif  
 
-  float qr_len = length(r-q);
-  vec3      qr = (r-q)/qr_len;
-
-  vec3 pqr = (normalize(q-p) + qr)/2;
-  vec3 qrs = (qr + normalize(s-r))/2;
+  vec3 pqr    = (normalize(q-p) + qr)/2;
+  vec3 qrs    = (qr + normalize(s-r))/2;
+  
+#ifndef ENABLE_CAPS
 
   if(side_of_plane(pt,pqr,q-qr*plane_shift_eps) < 0 || 
      side_of_plane(pt,qrs,r+qr*plane_shift_eps) > 0 )
     discard;
+    
+  vec3 pt_q    = plane_line_ixn(pqr,q,qr,pt);
+  vec3 pt_r    = plane_line_ixn(qrs,r,qr,pt);  
+  float wt     = length(pt-pt_q)/length(pt_r-pt_q);  
+  vec3  normal = (1.0-wt)*normalize(pt_q - q) + wt*normalize(pt_r-r);
 
-  vec3 apt = closest_line_pt(q,r-q,pt);
+#else  
 
-  vec3 cap_dir = pqr;
-  vec3 cap_pt  = q;
-
-  if(dot(apt-q,apt-q) > dot(apt-r,apt-r))
+  vec3 normal = vec3(0,0,0);
+  
+  if(side_of_plane(pt,qrs,r+qr*plane_shift_eps) > 0 )
   {
-    cap_dir = qrs;
-    cap_pt  = r;
-  }   
-
-  vec3 cap_pt_ixn = line_plane_ixn(cap_dir,cap_pt,qr,pt);
-  vec3 cap_normal = normalize(cap_pt_ixn- cap_pt); //*abs(dot(qr,cap_dir));
-  vec3 snormal    = (pt - apt)/radius;
-
-  vec3 spt     = radius*snormal + (q+r)/2;
-  float cap_wt = 1-(length(cap_pt_ixn - pt)/length(cap_pt_ixn - spt));
-
-  vec3 normal   = normalize(gl_NormalMatrix*(cap_wt*cap_normal + (1-cap_wt)*snormal));
-
-  vec3 color   = gl_Color.xyz;
+    discard;
+  }
+  else if(side_of_plane(pt,pqr,q-qr*plane_shift_eps) < 0)     
+  {
+    if(abs(dot(edir,qr)) < 0.000000001)
+      discard;     
+     
+    pt     = plane_line_ixn(qr,q,edir,e);
+    normal = -qr;      
+    
+    if( length (pt - q) > radius)
+      discard;
+  }
+  else
+  {        
+    vec3 pt_q   = plane_line_ixn(pqr,q,qr,pt);
+    vec3 pt_r   = plane_line_ixn(qrs,r,qr,pt);  
+    float wt    = length(pt-pt_q)/length(pt_r-pt_q);  
+         normal = (1.0-wt)*normalize(pt_q - q) + wt*normalize(pt_r-r);
+  }  
+#endif   
+  vec3 color  = gl_Color.xyz;  
+  normal      = normalize(gl_NormalMatrix*normal);
 
   pt = (gl_ModelViewMatrix*vec4(pt,1)).xyz;
   gl_FragColor   = perform_lighting(vec4(color,1),pt,normal);

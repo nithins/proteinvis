@@ -2,10 +2,19 @@
 #extension GL_EXT_gpu_shader4: enable
 #extension GL_EXT_geometry_shader4 : enable
 
+//#define ENABLE_CAPS
+
+#ifndef ENABLE_CAPS
 layout(lines_adjacency) in;
+#else
+layout(triangles) in;
+#endif
 layout(triangle_strip, max_vertices=24) out;
 
+
+#ifndef ENABLE_CAPS
 out vec3  p;
+#endif
 out vec3  q;
 out vec3  r;
 out vec3  s;
@@ -42,13 +51,22 @@ vec3 line_plane_ixn(vec3 pn, vec3 pp, vec3 ld, vec3 lp)
 
 void main()
 {
+#ifndef ENABLE_CAPS
   p = gl_PositionIn[0].xyz;
   q = gl_PositionIn[1].xyz;
   r = gl_PositionIn[2].xyz;
   s = gl_PositionIn[3].xyz;
+#else
+  q = gl_PositionIn[0].xyz;
+  r = gl_PositionIn[1].xyz;
+  s = gl_PositionIn[2].xyz;
+#endif
 
   vec3  qr = normalize(r-q);
-  vec3   c = (q + r) /2;
+  vec3   c = (q + r) /2;  
+#ifdef ENABLE_CAPS
+  vec3   p = q - qr;
+#endif  
   vec3 pqr = (normalize(q-p) + qr)/2;
   vec3 qrs = (qr +  normalize(s-r))/2;
 
