@@ -296,17 +296,10 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
 
   copy ( atomset_set.begin(), atomset_set.end(), atom_idx_list.begin());
 
-  uint * bondlist_c;
-  uint   num_bonds;
+  bond_list_t bondlist;
 
   m_protein_rd->get_protein()->get_subset_atom_bonds
-      ( atom_idx_list.data(),atom_idx_list.size(), bondlist_c,num_bonds );
-
-  glutils::line_idx_list_t bondlist(num_bonds);
-
-  std::copy(bondlist_c,  bondlist_c + 2*num_bonds, (uint*)bondlist.data());
-
-  delete []bondlist_c;
+      ( atom_idx_list.data(),atom_idx_list.size(), bondlist );
 
   m_atom_indxs = glutils::make_buf_obj(atom_idx_list);
 

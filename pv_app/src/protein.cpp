@@ -164,10 +164,6 @@ protein_t::protein_t ( const char *filename )
       _LOG ( "cannot read extn type " << file_extn );
     }
   }
-
-  collect_bb_atoms();
-
-  collect_bb_bonds();
 }
 
 protein_t::~protein_t()
@@ -179,9 +175,6 @@ void protein_t::destroy()
 {
   if ( num_atoms != 0 )
     delete []atoms;
-
-  if ( num_bonds != 0 )
-    delete []bonds;
 
   if ( num_acids != 0 )
     delete []acids;
@@ -207,7 +200,6 @@ void protein_t::destroy()
 void protein_t::init()
 {
   atoms          = NULL;
-  bonds          = NULL;
   acids          = NULL;
   chains         = NULL;
   atom_types     = NULL;
@@ -216,7 +208,6 @@ void protein_t::init()
   sheets         = NULL;
 
   num_atoms      = 0;
-  num_bonds      = 0;
   num_acids      = 0;
   num_chains     = 0;
   num_atom_types = 0;
@@ -335,7 +326,7 @@ void protein_t::print_stats ( std::ostream &o )
   o << "Num Atoms       : " << num_atoms  << endl;
   o << "Num Acids       : " << num_acids  << endl;
   o << "Num Chains      : " << num_chains << endl;
-  o << "Num Bonds       : " << num_bonds << endl;
+  o << "Num Bonds       : " << bonds.size() << endl;
   o << "Num Atom Types  : " << num_atom_types << endl;
   o << "Num Acid Types  : " << num_acid_types << endl;
   o << "===========================================" << endl;
@@ -345,12 +336,12 @@ void protein_t::print_incorrect_bonds ( std::ostream &o )
 {
   const double bond_len_treshhold = 2.0;
 
-  double *bond_lengths = new double[num_bonds];
+  double *bond_lengths = new double[bonds.size()];
 
-  for ( uint i = 0; i < num_bonds;i++ )
+  for ( uint i = 0; i < bonds.size();i++ )
   {
-    uint a1 = bonds[2*i+0];
-    uint a2 = bonds[2*i+1];
+    uint a1 = bonds[i][0];
+    uint a2 = bonds[i][1];
 
     bond_lengths[i] = sqrt ( pow ( ( atoms[a1].x - atoms[a2].x ), 2 ) +
                              pow ( ( atoms[a1].y - atoms[a2].y ), 2 ) +
@@ -365,12 +356,12 @@ void protein_t::print_incorrect_bonds ( std::ostream &o )
   o << "-------------------------------------------" << endl;
 
 
-  for ( uint i = 0 ;i < num_bonds;++i )
+  for ( uint i = 0 ;i < bonds.size();++i )
   {
     if ( bond_lengths[i] >= bond_len_treshhold )
     {
-      uint a1  = bonds[2*i+0];
-      uint a2  = bonds[2*i+1];
+      uint a1  = bonds[i][0];
+      uint a2  = bonds[i][1];
 
       string &name1 = atom_types[atoms[a1].type_idx].name;
       string &name2 = atom_types[atoms[a2].type_idx].name;
@@ -427,9 +418,9 @@ uint protein_t::get_acid_chain_idx(uint acidno)
 }
 
 
-bool protein_t::is_backbone_atom ( uint atomno )
+bool protein_t::is_backbone_atom ( uint atomno ) const
 {
-  string& atom_name = atom_types[atoms[atomno].type_idx].name;
+  const string& atom_name = atom_types[atoms[atomno].type_idx].name;
 
   if ( atom_name == "N" ||
        atom_name == "CA" ||
@@ -489,76 +480,24 @@ void protein_t::check_only_four_bb_atoms_per_acid()
   }
 }
 
-void protein_t::collect_bb_atoms()
-{
-  vector<uint> bb_atoms_idx_vec;
-
-  for ( uint i = 0 ;i < num_atoms;i++ )
-  {
-    if ( is_backbone_atom ( i ) )
-      bb_atoms_idx_vec.push_back ( i );
-  }
-
-  num_bb_atoms = bb_atoms_idx_vec.size();
-  bb_atoms_idx = new uint[num_bb_atoms];
-
-  copy ( bb_atoms_idx_vec.begin(), bb_atoms_idx_vec.end(), bb_atoms_idx );
-}
-
-void protein_t::collect_bb_bonds()
-{
-  vector<uint> bb_bonds_vec;
-
-  for ( uint i = 0 ;i < num_atoms;i++ )
-  {
-    if ( is_backbone_atom ( i ) )
-    {
-      for ( uint j = atoms[i].bond_start;j < atoms[i].bond_end; j += 2 )
-      {
-        if ( is_backbone_atom ( bonds[j+1] ) )
-        {
-          bb_bonds_vec.push_back ( i );
-          bb_bonds_vec.push_back ( bonds[j+1] );
-        }
-      }
-    }
-  }
-
-  num_bb_bonds = bb_bonds_vec.size() / 2;
-
-  bb_bonds     = new uint[num_bb_bonds*2];
-
-  copy ( bb_bonds_vec.begin(), bb_bonds_vec.end(), bb_bonds );
-}
-
 void protein_t::get_subset_atom_bonds ( const uint *atom_indxs,
                                         const uint &num_atom_indxs,
-                                        uint *&subset_atom_bonds,
-                                        uint &num_subset_atom_bonds ) const
+                                        bond_list_t & subset_atom_bonds) const
 {
   set<uint> atomset ( atom_indxs, atom_indxs + num_atom_indxs );
-
-  vector<uint> atomset_bonds;
 
   for ( set<uint>::iterator it = atomset.begin();it != atomset.end(); ++it )
   {
     uint atomno = *it;
 
-    for ( uint i = atoms[atomno].bond_start ; i < atoms[atomno].bond_end;i += 2 )
+    for ( uint i = atoms[atomno].bond_start ; i < atoms[atomno].bond_end; ++i )
     {
-      if ( atomset.find ( bonds[i+1] ) != atomset.end() )
+      if ( atomset.find ( bonds[i][1] ) != atomset.end() )
       {
-        atomset_bonds.push_back ( atomno );
-        atomset_bonds.push_back ( bonds[i+1] );
+        subset_atom_bonds.push_back ( bonds[i]);
       }
     }
   }
-
-  num_subset_atom_bonds = atomset_bonds.size() / 2;
-
-  subset_atom_bonds = new uint[num_subset_atom_bonds*2];
-
-  copy ( atomset_bonds.begin(), atomset_bonds.end(), subset_atom_bonds );
 }
 
 
@@ -599,24 +538,19 @@ void protein_rd_t::upload_data_items()
   delete []atom_radii;
 
   // a bo to hold the bonds of each atom
-  m_atom_bonds_bo = glutils::buf_obj_t::create_bo
-                    (m_protein->get_bonds(),GL_UNSIGNED_INT,2,
-                     GL_ELEMENT_ARRAY_BUFFER,
-                     sizeof ( GLuint ) * 2 * m_protein->get_num_bonds (),0);
+  m_atom_bonds_bo = glutils::make_buf_obj(m_protein->get_bonds());
 
   // vbo for holding the indices of all atoms that are on the backbone
-
-  m_bb_atom_indices_bo = glutils::buf_obj_t::create_bo
-                         (m_protein->get_bb_atoms_idx(),GL_UNSIGNED_INT,1,
-                          GL_ELEMENT_ARRAY_BUFFER,
-                          sizeof ( GLuint ) * m_protein->get_num_bb_atoms(),0);
+  glutils::point_idx_list_t bb_idxs;
+  for ( uint i = 0 ;i < m_protein->get_num_atoms();i++ )
+    if(m_protein->is_backbone_atom(i))
+      bb_idxs.push_back(i);
+  m_bb_atom_indices_bo = glutils::make_buf_obj(bb_idxs);
 
   // vbo for holding the indices of all atoms that are on the backbone
-
-  m_bb_bond_indices_bo = glutils::buf_obj_t::create_bo
-                         (m_protein->get_bb_bonds(),GL_UNSIGNED_INT,2,
-                          GL_ELEMENT_ARRAY_BUFFER,
-                          sizeof ( GLuint )*2*m_protein->get_num_bb_bonds(),0);
+  bond_list_t bb_bonds;
+  m_protein->get_subset_atom_bonds(bb_idxs.data(),bb_idxs.size(),bb_bonds);
+  m_bb_bond_indices_bo = glutils::make_buf_obj(bb_bonds);
 
   // a bo to hold the set of c-alpha atoms
 
@@ -1136,11 +1070,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
     uint   *acid_nos    = new uint[num_atoms];
 
-    uint   *bonds  = NULL;
-
-    uint    num_bonds = 0;
-
-    vector<uint> *bonds_vec = new vector<uint>;
+    bond_list_t  &bonds = protein.bonds;
 
     uint num_atoms_read = 0;
 
@@ -1213,9 +1143,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
         linestream >> atom_bond_ct;
 
-        atoms[num_atoms_read].bond_start = bonds_vec->size();
-
-        atoms[num_atoms_read].bond_end   = bonds_vec->size() + 2 * atom_bond_ct;
+        atoms[num_atoms_read].bond_start = bonds.size();
 
         for ( uint i = 0 ; i < atom_bond_ct;i++ )
         {
@@ -1223,10 +1151,14 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
           linestream >> bonded_atom_no;
 
-          bonds_vec->push_back ( num_atoms_read );
+          bonded_atom_no--;
 
-          bonds_vec->push_back ( bonded_atom_no - 1 );
+          assert(0 <= bonded_atom_no && bonded_atom_no < num_atoms);
+
+          bonds.push_back ( bond_t(num_atoms_read,bonded_atom_no));
         }
+
+        atoms[num_atoms_read].bond_end   = bonds.size();
 
         num_atoms_read++;
 
@@ -1236,17 +1168,8 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
       crdfile.close();
 
-      num_bonds = bonds_vec->size() / 2;
-
-      bonds     = new uint[num_bonds*2];
-
-      copy ( bonds_vec->begin(), bonds_vec->end(), bonds );
-
       if ( num_atoms_read != num_atoms )
         throw std::runtime_error ( "incorrect no of atoms read from in bond info" );
-
-      delete bonds_vec;
-
 
     }
     catch ( ... )
@@ -1257,7 +1180,6 @@ bool read_crd_file ( const char * filename, protein_t &protein )
       delete[] acid_names;
       delete[] chain_names;
       delete[] atom_rads;
-      delete bonds_vec;
 
       throw;
     }
@@ -1409,8 +1331,6 @@ bool read_crd_file ( const char * filename, protein_t &protein )
     protein.num_atom_types  = num_atom_types;
     protein.acid_types      = acid_types;
     protein.num_acid_types  = num_acid_types;
-    protein.bonds           = bonds;
-    protein.num_bonds       = num_bonds;
     protein.acid_rel_bb_atoms_idx[0] = 0;
     protein.acid_rel_bb_atoms_idx[1] = 2;
     protein.acid_rel_bb_atoms_idx[2] = 4;
@@ -1837,8 +1757,6 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
       protein.num_atom_types  = num_atom_types;
       protein.acid_types      = acid_types;
       protein.num_acid_types  = num_acid_types;
-      protein.bonds           = NULL;
-      protein.num_bonds       = 0;
       protein.acid_rel_bb_atoms_idx[0] = 0;
       protein.acid_rel_bb_atoms_idx[1] = 1;
       protein.acid_rel_bb_atoms_idx[2] = 2;

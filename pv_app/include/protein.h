@@ -22,6 +22,7 @@
 
 #include <string>
 #include <iostream>
+#include <glutils.h>
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
@@ -94,6 +95,9 @@ struct sheet_t
 
 const uint NUM_BB_ATOMS = 4;
 
+typedef  glutils::line_idx_t          bond_t;
+typedef  glutils::line_idx_list_t     bond_list_t ;
+
 class protein_t
 {
 
@@ -101,14 +105,7 @@ private:
   atom_t      *atoms;
   uint     num_atoms;
 
-  uint        *bb_atoms_idx;
-  uint     num_bb_atoms;
-
-  uint        *bonds;
-  uint     num_bonds;
-
-  uint        *bb_bonds;
-  uint     num_bb_bonds;
+  bond_list_t bonds;
 
   acid_t      *acids;
   uint     num_acids;
@@ -134,12 +131,6 @@ private:
 
   void destroy();
 
-  void collect_bb_atoms();
-
-  void collect_bb_bonds();
-
-  bool is_backbone_atom ( uint );
-
   void check_only_four_bb_atoms_per_acid();
 
 public:
@@ -152,21 +143,6 @@ public:
   inline uint get_num_atom_types() const
   {
     return num_atom_types;
-  }
-
-  inline uint get_num_bonds() const
-  {
-    return num_bonds;
-  }
-
-  inline uint get_num_bb_atoms() const
-  {
-    return num_bb_atoms;
-  }
-
-  inline uint get_num_bb_bonds() const
-  {
-    return num_bb_bonds;
   }
 
   inline uint get_num_acids() const
@@ -204,19 +180,9 @@ public:
     return atom_types;
   }
 
-  inline const uint* get_bonds() const
+  inline const bond_list_t & get_bonds() const
   {
     return bonds;
-  }
-
-  inline const uint* get_bb_atoms_idx() const
-  {
-    return bb_atoms_idx;
-  }
-
-  inline const uint* get_bb_bonds() const
-  {
-    return bb_bonds;
   }
 
   inline const acid_t * get_acids() const
@@ -244,6 +210,8 @@ public:
       return helices;
   }
 
+  bool is_backbone_atom ( uint ) const;
+
   bool is_ca_atom (uint) const;
 
   bool is_o_atom (uint) const;
@@ -269,7 +237,7 @@ public:
   void print_incorrect_bonds ( std::ostream &o );
 
   void get_subset_atom_bonds
-      ( const uint *, const uint &, uint *&, uint & ) const;
+      ( const uint *, const uint &, bond_list_t & ) const;
 
   uint get_atom_acid_idx(uint atomno);
 
@@ -283,8 +251,6 @@ public:
 
   static void transform_and_save_crd(const char *,const char *, const double*);
 };
-
-#include <glutils.h>
 
 class protein_rd_t
 {
