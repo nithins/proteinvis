@@ -1,8 +1,5 @@
 <RCC>
     <qresource prefix="/shaders">
-        <file alias="cylinder.frag">cylinder.frag</file>
-        <file alias="cylinder.geom">cylinder.geom</file>
-        <file alias="cylinder.vert">cylinder.vert</file>
         <file alias="sphere_cube.frag">sphere_cube.frag</file>
         <file alias="sphere_cube.geom">sphere_cube.geom</file>
         <file alias="sphere_cube.vert">sphere_cube.vert</file>
@@ -12,6 +9,9 @@
         <file>cylinder_adj_frag.glsl</file>
         <file>cylinder_adj_geom.glsl</file>
         <file>cylinder_adj_vert.glsl</file>
+        <file>cylinder_frag.glsl</file>
+        <file>cylinder_geom.glsl</file>
+        <file>cylinder_vert.glsl</file>
     </qresource>
     <qresource prefix="/images">
         <file>db_comit.png</file>

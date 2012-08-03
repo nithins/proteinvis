@@ -34,9 +34,7 @@ using namespace std;
 
 const double g_ball_stick_atom_radius = 0.4;
 
-const double g_ball_stick_bond_radius = 0.15;
-
-const double g_small_space_fill_atom_radius = g_ball_stick_atom_radius;
+const double g_small_space_fill_atom_radius = 0.7;
 
 glutils::material_properties_t g_atombond_material_default =
 {
@@ -237,7 +235,6 @@ void protein_model_t::render_onelevel() const
             m_protein_atoms_grouping->get_atom_color_bo(),
             g_ball_stick_atom_radius,
             bond_indxs,
-            g_ball_stick_bond_radius,
             atom_indxs);
     break;
 

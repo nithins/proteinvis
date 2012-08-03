@@ -76,9 +76,9 @@ void onelevel_model_t::init ()
   {
     string cyl_log;
 
-    QFile cyl_vert ( ":/shaders/cylinder.vert" );
-    QFile cyl_geom ( ":/shaders/cylinder.geom" );
-    QFile cyl_frag ( ":/shaders/cylinder.frag" );
+    QFile cyl_vert ( ":/shaders/cylinder_vert.glsl" );
+    QFile cyl_geom ( ":/shaders/cylinder_geom.glsl" );
+    QFile cyl_frag ( ":/shaders/cylinder_frag.glsl" );
 
     cyl_vert.open ( QIODevice::ReadOnly );
     cyl_geom.open ( QIODevice::ReadOnly );
@@ -260,15 +260,12 @@ void onelevel_model_t::render_spheres
 
 void onelevel_model_t::render_cylinders
 ( glutils::bufobj_ptr_t endpts_coord,
-  glutils::bufobj_ptr_t endpts_indxs,
-  double cyl_radius )
+  glutils::bufobj_ptr_t endpts_indxs)
 {
 
   glPushAttrib ( GL_ENABLE_BIT );
 
   s_cylinderShader->use();
-
-  s_cylinderShader->sendUniform ( "ug_cylinder_radius", ( float ) cyl_radius );
 
   endpts_coord->bind_to_vertex_pointer();
 

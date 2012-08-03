@@ -80,9 +80,7 @@ namespace onelevel_model_t
 
   void render_cylinders
       ( glutils::bufobj_ptr_t endpts_coord,
-        glutils::bufobj_ptr_t endpts_indxs,
-        double cyl_radius
-        ) ;
+        glutils::bufobj_ptr_t endpts_indxs) ;
 
   inline void render_sf
       ( glutils::bufobj_ptr_t atom_coord,
@@ -117,7 +115,6 @@ namespace onelevel_model_t
         glutils::bufobj_ptr_t atom_color,
         double atom_radius,
         glutils::bufobj_ptr_t atom_bonds,
-        double bond_radius,
         glutils::bufobj_ptr_t atom_indxs = glutils::bufobj_ptr_t())
   {
     if(atom_indxs)
@@ -127,8 +124,8 @@ namespace onelevel_model_t
 
     glColor3ub ( 0xE0,0xB0,0xFF  );
 
-    render_cylinders ( atom_coord, atom_bonds, bond_radius );
+    render_cylinders ( atom_coord, atom_bonds);
   }
-};
+}
 
 #endif
