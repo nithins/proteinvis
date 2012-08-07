@@ -49,6 +49,11 @@ class secondary_model_t
     glutils::vertex_list_t sec_spline_pts;
     glutils::bufobj_ptr_t  sec_spline_pts_bo; //vb holds all points on the spline
 
+    glutils::quad_idx_list_t loop_idxs;
+    glutils::tri_idx_list_t  loop_cap_idxs;
+
+    glutils::bufobj_ptr_t  loop_idxs_bo;
+    glutils::bufobj_ptr_t  loop_caps_idxs_bo;
   };
 
   struct helix_rd_t
@@ -109,6 +114,7 @@ public:
   void InitSplines();
   void InitHelices();
   void InitSheets();
+  void InitLoops();
 
 };
 #endif

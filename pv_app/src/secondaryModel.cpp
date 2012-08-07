@@ -58,6 +58,7 @@ secondary_model_t::secondary_model_t(boost::shared_ptr<protein_t> protein)
   InitSplines();
   InitSheets();
   InitHelices();
+  InitLoops();
 }
 
 secondary_model_t::~secondary_model_t()
@@ -346,6 +347,78 @@ void secondary_model_t::InitSplines()
   }
 }
 
+void secondary_model_t::InitLoops()
+{
+
+  for (int i = 0 ;i  < m_chains_rd.size(); ++i)
+  {
+    chain_rd_t &chain_rd = m_chains_rd[i];
+
+    quad_idx_list_t &loop_idxs     = chain_rd.loop_idxs;
+    tri_idx_list_t  &loop_cap_idxs = chain_rd.loop_cap_idxs;
+    vertex_list_t   &spts          = chain_rd.spline_pts;
+
+    vector<bool>    is_loop_pt(spts.size(),true);
+
+    for(int j = 0 ; j < m_helices_rd.size(); ++j )
+    {
+      if(m_helices_rd[j].chainno !=i)
+        continue;
+
+      int b = m_helices_rd[j].spt_idx_b;
+      int e = m_helices_rd[j].spt_idx_e;
+
+      fill(is_loop_pt.begin()+b+g_segs_btw_ctrlPts,
+           is_loop_pt.begin()+e-g_segs_btw_ctrlPts,false);
+    }
+
+    for(int j = 0 ; j < m_strands_rd.size(); ++j )
+    {
+      if(m_strands_rd[j].chainno !=i)
+        continue;
+
+      int b = m_strands_rd[j].spt_idx_b;
+      int e = m_strands_rd[j].spt_idx_e;
+
+      fill(is_loop_pt.begin()+b+1,
+           is_loop_pt.begin()+e-1,false);
+    }
+
+    if(is_loop_pt[0] && is_loop_pt[1])
+    {
+      loop_cap_idxs.push_back(tri_idx_t(0,1,2));
+    }
+
+    if(is_loop_pt[spts.size()-2] && is_loop_pt[spts.size()-1])
+    {
+      loop_cap_idxs.push_back(tri_idx_t(spts.size()-1,spts.size()-2,spts.size()-3));
+    }
+
+
+    for(int j = 1 ; j < spts.size()-2; ++j)
+    {
+      if(!(is_loop_pt[j] && is_loop_pt[j+1]))
+        continue;
+
+      if(is_loop_pt[j-1] && is_loop_pt[j+2])
+      {
+        loop_idxs.push_back(quad_idx_t(j-1,j,j+1,j+2));
+      }
+      else if( is_loop_pt[j-1])
+      {
+        loop_cap_idxs.push_back(tri_idx_t(j+1,j,j-1));
+      }
+      else if( is_loop_pt[j+2])
+      {
+        loop_cap_idxs.push_back(tri_idx_t(j,j+1,j+2));
+      }
+    }
+
+    chain_rd.loop_idxs_bo     = make_buf_obj(loop_idxs);
+    chain_rd.loop_caps_idxs_bo= make_buf_obj(loop_cap_idxs);
+  }
+}
+
 
 void secondary_model_t::InitSheets()
 {
@@ -489,8 +562,11 @@ void secondary_model_t::InitHelices()
     res_b = res_b - chain_res_b;
     res_e = res_e - chain_res_b;
 
-    int spt_b = res_b*g_segs_btw_ctrlPts  + g_segs_btw_ctrlPts/2;
-    int spt_e = res_e*g_segs_btw_ctrlPts  - g_segs_btw_ctrlPts;
+    int spt_b = res_b*g_segs_btw_ctrlPts;//  + g_segs_btw_ctrlPts/2;
+    int spt_e = res_e*g_segs_btw_ctrlPts;//  - g_segs_btw_ctrlPts;
+
+    int b_offset = g_segs_btw_ctrlPts/2;
+    int e_offset = g_segs_btw_ctrlPts;
 
     assert(0<=spt_b && spt_b <  m_chains_rd[chainno].spline_pts.size());
     assert(0< spt_e && spt_e <= m_chains_rd[chainno].spline_pts.size());
@@ -513,7 +589,7 @@ void secondary_model_t::InitHelices()
     int spt_jmp  = ceil(double(g_segs_btw_ctrlPts)/6.0);
     int spt_opp  = round(double(g_segs_btw_ctrlPts)*1.8);
 
-    for(int j = spt_b + spt_jmp; j < spt_e-spt_jmp-spt_opp; ++j)
+    for(int j = spt_b + b_offset + spt_jmp; j < spt_e-e_offset-spt_jmp-spt_opp; ++j)
     {
       vertex_t p = spts[j-spt_jmp];
       vertex_t q = spts[j];
@@ -535,15 +611,15 @@ void secondary_model_t::InitHelices()
     // helix to a plane with normal helix_dir and then taking their mean
 
     vertex_t axis_pt(0,0,0);
-    for(int j = spt_b; j < spt_e; ++j)
+    for(int j = spt_b + b_offset; j < spt_e-e_offset; ++j)
       axis_pt += closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j]);
-    axis_pt /= spt_e-spt_b;
+    axis_pt /= spt_e-spt_b-e_offset-b_offset;
 
     // the radius is the average distance from the mean to all the projections
     double radius = 0;
-    for(int j = spt_b; j < spt_e; ++j)
+    for(int j = spt_b+b_offset; j < spt_e-e_offset; ++j)
       radius += euclid_norm(closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j])-axis_pt);
-    radius /= spt_e-spt_b;
+    radius /= spt_e-spt_b-e_offset-b_offset;
 
     // the first and last points of the spline section is projected to the axis
     m_helices_rd[i].axis_b   = closest_line_pt(axis_dir,axis_pt,spts[spt_b]);
@@ -618,10 +694,24 @@ void secondary_model_t::RenderSheets()
 
     for(int j = 0 ; j <4 ;++j)
     {
-      glVertexAttrib1f(Width_ATTR,width[end-beg-(4-j)]);
-      glNormal3f(sspts[end-(4-j)][0],sspts[end-(4-j)][1],sspts[end-(4-j)][2]);
-      glVertex3f(spts [end-(4-j)][0],spts [end-(4-j)][1],spts [end-(4-j)][2]);
+      int karr[] = {end-3,end-2,end-1,end-1};
+      int k = karr[j];
+
+      glVertexAttrib1f(Width_ATTR,width[k-beg]);
+      glNormal3f(sspts[k][0],sspts[k][1],sspts[k][2]);
+      glVertex3f(spts [k][0],spts [k][1],spts [k][2]);
     }
+
+    for(int j = 0 ; j <4 ;++j)
+    {
+      int karr[] = {end-2,end-1,end-1,end-1};
+      int k = karr[j];
+
+      glVertexAttrib1f(Width_ATTR,width[k-beg]);
+      glNormal3f(sspts[k][0],sspts[k][1],sspts[k][2]);
+      glVertex3f(spts [k][0],spts [k][1],spts [k][2]);
+    }
+
 
     glEnd();
   }
@@ -731,13 +821,18 @@ void secondary_model_t::RenderTubes()
 
   for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
   {
-    bufobj_ptr_t bo = m_chains_rd[i].spline_pts_bo;
+    const chain_rd_t &chain_rd = m_chains_rd[i];
 
-    color_t col = m_chains_rd[i].color;
-    glColor3d( col[0],col[1],col[2]);
-    bo->bind_to_vertex_pointer();
-    glDrawArrays(GL_LINE_STRIP_ADJACENCY,0,bo->get_num_items());
-    bo->unbind_from_vertex_pointer();
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
+
+    const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
+    const bufobj_ptr_t &ibo = chain_rd.loop_idxs_bo;
+
+    vbo->bind_to_vertex_pointer();
+    glBindBuffer ( ibo->target(), ibo->id() );
+    glDrawElements ( GL_LINES_ADJACENCY, ibo->get_num_items()*4, ibo->src_type(), 0 );
+    glBindBuffer ( ibo->target(), 0);
+    vbo->unbind_from_vertex_pointer();
   }
 
   s_tubeShader->disable();
@@ -746,24 +841,18 @@ void secondary_model_t::RenderTubes()
 
   for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
   {
-    vertex_list_t & spts = m_chains_rd[i].spline_pts;
+    const chain_rd_t &chain_rd = m_chains_rd[i];
 
-    int end              = spts.size();
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
 
-    color_t col = m_chains_rd[i].color;
-    glColor3d( col[0],col[1],col[2]);
+    const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
+    const bufobj_ptr_t &ibo = chain_rd.loop_caps_idxs_bo;
 
-    glBegin(GL_TRIANGLES);
-
-    glVertex3d(spts[0][0],spts[0][1],spts[0][2]);
-    glVertex3d(spts[1][0],spts[1][1],spts[1][2]);
-    glVertex3d(spts[2][0],spts[2][1],spts[2][2]);
-
-    glVertex3d(spts[end-1][0],spts[end-1][1],spts[end-1][2]);
-    glVertex3d(spts[end-2][0],spts[end-2][1],spts[end-2][2]);
-    glVertex3d(spts[end-3][0],spts[end-3][1],spts[end-3][2]);
-
-    glEnd();
+    vbo->bind_to_vertex_pointer();
+    glBindBuffer ( ibo->target(), ibo->id() );
+    glDrawElements ( GL_TRIANGLES, ibo->get_num_items()*3, ibo->src_type(), 0);
+    glBindBuffer ( ibo->target(), 0);
+    vbo->unbind_from_vertex_pointer();
   }
 
   s_tubeCapShader->disable();

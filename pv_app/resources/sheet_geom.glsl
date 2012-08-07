@@ -65,9 +65,14 @@ void main()
 
   vec3 pq     = q-p;
   vec3 qr     = r-q;
+  
+#ifdef ENABLE_TIPS
+  if(length(qr) < 0.0001)
+    qr = pq;
+#endif 
 
-  float pwidth =  max(WidthIn[0],0.000001);
-  float qwidth =  max(WidthIn[1],0.000001);
+  float pwidth =  WidthIn[0];
+  float qwidth =  WidthIn[1];
 
   vec3 ps     = NormalIn[0]*pwidth;
   vec3 qs     = NormalIn[1]*qwidth;
@@ -111,7 +116,7 @@ void main()
   
   draw_quad(q+qup+qs,
             q+qup-qs,
-            q-pup+ps,
+            q-qup+qs,
             q-qup-qs);
 
   normal = normalize(-gl_NormalMatrix*pq);
