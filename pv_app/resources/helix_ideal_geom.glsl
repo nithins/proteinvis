@@ -10,6 +10,8 @@ out vec3  q;
 out vec3  r;
 out vec3  mc_pos;
 
+const float add_radius = 0;
+
 void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 {
   mc_pos = a;
@@ -37,7 +39,7 @@ void main()
   q     = gl_PositionIn[1].xyz;
   r     = gl_PositionIn[2].xyz;
   
-  float radius = length(x_dir);
+  float radius = length(x_dir) + add_radius;
   vec3  qr = normalize(r-q);
   vec3   c = (q + r) /2;
 

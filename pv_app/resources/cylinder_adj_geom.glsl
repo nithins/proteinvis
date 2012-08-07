@@ -20,7 +20,7 @@ out vec3  r;
 out vec3  s;
 out vec3  mc_pos;
 
-const float radius = 0.4;
+const float radius = 0.3;
 
 void draw_quad(vec3 a, vec3 b,vec3 c,vec3 d)
 {

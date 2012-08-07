@@ -340,6 +340,9 @@ void secondary_model_t::InitSplines()
 
     m_chains_rd[i].spline_pts_bo     = make_buf_obj(m_chains_rd[i].spline_pts);
     m_chains_rd[i].sec_spline_pts_bo = make_buf_obj(m_chains_rd[i].sec_spline_pts);
+    m_chains_rd[i].color             = color_t(double(rand()%128)/128.0f,
+                                               double(rand()%128)/128.0f,
+                                               double(rand()%128)/128.0f);
   }
 }
 
@@ -381,6 +384,7 @@ void secondary_model_t::InitSheets()
     }
 
     int chainno = strand.start_chainno;
+    const chain_rd_t &chain_rd = m_chains_rd[chainno];
 
     int res_b = strand.start_resno;
     int res_e = strand.end_resno;
@@ -397,8 +401,9 @@ void secondary_model_t::InitSheets()
     int spt_b = res_b*g_segs_btw_ctrlPts;
     int spt_e = res_e*g_segs_btw_ctrlPts;
 
-    assert(0<=spt_b && spt_b <  m_chains_rd[chainno].spline_pts.size());
-    assert(0< spt_e && spt_e <= m_chains_rd[chainno].spline_pts.size());
+    assert(0<=spt_b && spt_b <  chain_rd.spline_pts.size());
+//    assert(0< spt_e && spt_e <= m_chains_rd[chainno].spline_pts.size());
+    spt_e  = min<int>(spt_e,chain_rd.spline_pts.size());
 
     strand_rd.chainno     = chainno;
     strand_rd.spt_idx_b   = spt_b;
@@ -728,7 +733,8 @@ void secondary_model_t::RenderTubes()
   {
     bufobj_ptr_t bo = m_chains_rd[i].spline_pts_bo;
 
-    glColor3ub ( 120, 60, 120 );
+    color_t col = m_chains_rd[i].color;
+    glColor3d( col[0],col[1],col[2]);
     bo->bind_to_vertex_pointer();
     glDrawArrays(GL_LINE_STRIP_ADJACENCY,0,bo->get_num_items());
     bo->unbind_from_vertex_pointer();
@@ -744,7 +750,8 @@ void secondary_model_t::RenderTubes()
 
     int end              = spts.size();
 
-    glColor3ub ( 120, 60, 120 );
+    color_t col = m_chains_rd[i].color;
+    glColor3d( col[0],col[1],col[2]);
 
     glBegin(GL_TRIANGLES);
 

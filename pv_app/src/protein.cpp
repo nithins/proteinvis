@@ -827,13 +827,17 @@ void protein_grouping_t::set_default_color_values()
     case GROUP_ATOMS_ALL:
     default:
       {
-        m_group_colors[i][0] =
-            0.5;
-        m_group_colors[i][1] =
-            0.25 + ((double)((i/group_ct_sqrt)%group_ct_sqrt))*0.50/group_ct_sqrt;
-        m_group_colors[i][2] =
-            0.25 + ((double)(i%group_ct_sqrt))*0.50/group_ct_sqrt;
-        break;
+//        m_group_colors[i][0] =
+//            0.5;
+//        m_group_colors[i][1] =
+//            0.25 + ((double)((i/group_ct_sqrt)%group_ct_sqrt))*0.50/group_ct_sqrt;
+//        m_group_colors[i][2] =
+//            0.25 + ((double)(i%group_ct_sqrt))*0.50/group_ct_sqrt;
+
+      m_group_colors[i] = glutils::color_t(double(rand()%128)/128.0f,
+                                           double(rand()%128)/128.0f,
+                                           double(rand()%128)/128.0f);
+      break;
       }
     }
   }
@@ -1462,7 +1466,11 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
 
       atomline[99] = '\0';
 
-      if(begins_with(atomline,"SHEET"))
+      if(begins_with(atomline,"ENDMDL"))
+      {
+        break;
+      }
+      else if(begins_with(atomline,"SHEET"))
       {
         sheet_lines.push_back(atomline);
         continue;

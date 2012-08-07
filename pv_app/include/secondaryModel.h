@@ -41,6 +41,8 @@ class secondary_model_t
 {
   struct chain_rd_t
   {
+    glutils::color_t       color;
+
     glutils::vertex_list_t spline_pts;
     glutils::bufobj_ptr_t  spline_pts_bo; //vb holds all points on the spline
 

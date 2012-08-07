@@ -5,8 +5,9 @@ in vec3  q;
 in vec3  r;
 in vec3  mc_pos;
 
-const float pitch  = 5.4;
-const float width  = 0.6;
+const float pitch      = 5.4;
+const float width      = 0.8;
+const float add_radius = 0;
 
 #define NUM_LIGHTS 2
 #define PI     3.14159265358979323846264338
@@ -123,7 +124,7 @@ float pt_line_proj_coeff(vec3 u,vec3 v,vec3 p)
 
 void main()
 {
-  float radius = length(x_dir);
+  float radius = length(x_dir)+add_radius;
   vec3    e    = (gl_ModelViewMatrixInverse*vec4(0,0,0,1)).xyz;
   vec3 edir    = mc_pos-e;
 
