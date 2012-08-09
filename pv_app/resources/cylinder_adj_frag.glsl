@@ -11,7 +11,7 @@ in vec3  s;
 
 in vec3  mc_pos;
 
-const float radius = 0.3;
+const float radius = 0.4;
 
 float side_of_plane(vec3 pt,vec3 n,vec3 ppt)
 {

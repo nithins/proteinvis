@@ -298,6 +298,14 @@ void secondary_model_t::InitShaders()
 
 void secondary_model_t::InitSplines()
 {
+  color_list_t chain_colors;
+
+  for(int i=0;i<m_protein->get_num_chains();i++)
+    chain_colors.push_back(color_t(double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f,
+                                   double(rand()%128)/128.0f));
+
+
   for (int i = 0 ;i  < m_protein->get_num_chains(); ++i)
   {
     vertex_list_t caatom_pos;
@@ -341,9 +349,7 @@ void secondary_model_t::InitSplines()
 
     m_chains_rd[i].spline_pts_bo     = make_buf_obj(m_chains_rd[i].spline_pts);
     m_chains_rd[i].sec_spline_pts_bo = make_buf_obj(m_chains_rd[i].sec_spline_pts);
-    m_chains_rd[i].color             = color_t(double(rand()%128)/128.0f,
-                                               double(rand()%128)/128.0f,
-                                               double(rand()%128)/128.0f);
+    m_chains_rd[i].color             = chain_colors[i];
   }
 }
 
@@ -369,7 +375,7 @@ void secondary_model_t::InitLoops()
       int e = m_helices_rd[j].spt_idx_e;
 
       fill(is_loop_pt.begin()+b+g_segs_btw_ctrlPts,
-           is_loop_pt.begin()+e-g_segs_btw_ctrlPts,false);
+           is_loop_pt.begin()+e-1.5*g_segs_btw_ctrlPts,false);
     }
 
     for(int j = 0 ; j < m_strands_rd.size(); ++j )
@@ -823,6 +829,9 @@ void secondary_model_t::RenderTubes()
   {
     const chain_rd_t &chain_rd = m_chains_rd[i];
 
+//    color_t col(0.2,0.7,0.2);
+//    glColor3d( col[0],col[1],col[2]);
+
     glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
 
     const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
@@ -843,6 +852,8 @@ void secondary_model_t::RenderTubes()
   {
     const chain_rd_t &chain_rd = m_chains_rd[i];
 
+//    color_t col(0.2,0.7,0.2);
+//    glColor3d( col[0],col[1],col[2]);
     glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
 
     const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
@@ -869,7 +880,6 @@ void secondary_model_t::RenderImposterHelices()
   for(int i = 0; i < m_helices_rd.size(); ++i)
   {
     helix_rd_t &helix_rd = m_helices_rd[i];
-    vertex_list_t &spts = m_chains_rd[helix_rd.chainno].spline_pts;
 
     color_t col = helix_rd.color;
     glColor3d(col[0],col[1],col[2]);
