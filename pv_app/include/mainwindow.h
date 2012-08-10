@@ -42,6 +42,7 @@ private:
   void update_model_surface_ui(protein_model_ptr_t );
   void update_model_alpha_ui(protein_model_ptr_t );
   void update_model_pocket_ui(protein_model_ptr_t );
+  void update_model_secondary_ui(protein_model_ptr_t );
 
 // updated_* pull changes from ui
   void updated_pocket_ui();
@@ -101,12 +102,10 @@ private slots:
   void on_add_radius_sf_model_doubleSpinBox_valueChanged ( double );
   void on_alpha_value_sf_model_doubleSpinBox_valueChanged ( double );
 
+//secondary structures ui
   void on_sec_tubes_checkbox_clicked(bool checked);
   void on_sec_helices_checkbox_clicked(bool checked);
   void on_sec_sheets_checkbox_clicked(bool checked);
-
-  void on_spinBox_valueChanged(int arg1);
-  void on_spinBox_2_valueChanged(int arg1);
 };
 
 #endif

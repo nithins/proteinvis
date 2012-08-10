@@ -12,6 +12,15 @@
         <file>cylinder_frag.glsl</file>
         <file>cylinder_geom.glsl</file>
         <file>cylinder_vert.glsl</file>
+        <file>helix_frag.glsl</file>
+        <file>helix_geom.glsl</file>
+        <file>helix_ideal_frag.glsl</file>
+        <file>helix_ideal_geom.glsl</file>
+        <file>helix_ideal_vert.glsl</file>
+        <file>helix_vert.glsl</file>
+        <file>sheet_frag.glsl</file>
+        <file>sheet_geom.glsl</file>
+        <file>sheet_vert.glsl</file>
     </qresource>
     <qresource prefix="/images">
         <file>db_comit.png</file>

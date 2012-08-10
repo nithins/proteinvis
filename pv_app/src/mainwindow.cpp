@@ -98,6 +98,8 @@ void viewer_mainwindow::on_actionClose_Protein_triggered(bool)
   glviewer->remove_ren(pmd.model);
 
   current_protein_comboBox->removeItem(i);
+
+  update_model_ui();
 }
 
 void viewer_mainwindow::on_actionLoad_Surface_triggered(bool)
@@ -220,6 +222,7 @@ void viewer_mainwindow::update_model_ui()
   update_model_surface_ui(pm);
   update_model_alpha_ui(pm);
   update_model_pocket_ui(pm);
+  update_model_secondary_ui(pm);
 }
 
 void viewer_mainwindow::update_model_atombond_ui(protein_model_ptr_t pm)
@@ -332,6 +335,11 @@ void viewer_mainwindow::update_model_pocket_ui(protein_model_ptr_t pm)
   alpha_value_sf_model_doubleSpinBox->blockSignals(true);
   alpha_value_sf_model_doubleSpinBox->setValue ( pm->m_alpha_value );
   alpha_value_sf_model_doubleSpinBox->blockSignals(false);
+}
+
+void viewer_mainwindow::update_model_secondary_ui(protein_model_ptr_t pm)
+{
+  secondary_tab->setEnabled(pm);
 }
 
 void viewer_mainwindow::on_current_protein_comboBox_currentIndexChanged (int )
@@ -594,15 +602,4 @@ void viewer_mainwindow::on_sec_sheets_checkbox_clicked(bool checked)
     mode &=(mask^flag);
 
   glviewer->updateGL();
-}
-
-
-void viewer_mainwindow::on_spinBox_valueChanged(int arg1)
-{
-     get_active_model()->updateSecondaryHelix(arg1);
-}
-
-void viewer_mainwindow::on_spinBox_2_valueChanged(int arg1)
-{
-    get_active_model()->updateSecondarySheet(arg1);
 }

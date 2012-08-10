@@ -115,9 +115,9 @@ void secondary_model_t::InitShaders()
   //initialize sheet shaders
   string sheet_log,sheet_tips_log;
 
-  QFile sheet_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/sheet_vert.glsl" );
-  QFile sheet_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/sheet_geom.glsl" );
-  QFile sheet_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/sheet_frag.glsl" );
+  QFile sheet_vert ( ":/shaders/sheet_vert.glsl" );
+  QFile sheet_geom ( ":/shaders/sheet_geom.glsl" );
+  QFile sheet_frag ( ":/shaders/sheet_frag.glsl" );
 
   sheet_vert.open ( QIODevice::ReadOnly );
   sheet_geom.open ( QIODevice::ReadOnly );
@@ -165,9 +165,9 @@ void secondary_model_t::InitShaders()
   //initialize helix shader
   string helix_log,helix_cap_log;
 
-  QFile helix_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_vert.glsl" );
-  QFile helix_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_geom.glsl" );
-  QFile helix_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_frag.glsl" );
+  QFile helix_vert ( ":/shaders/helix_vert.glsl" );
+  QFile helix_geom ( ":/shaders/helix_geom.glsl" );
+  QFile helix_frag ( ":/shaders/helix_frag.glsl" );
 
   helix_vert.open ( QIODevice::ReadOnly );
   helix_geom.open ( QIODevice::ReadOnly );
@@ -215,9 +215,9 @@ void secondary_model_t::InitShaders()
   //initialize tubes shader
   string cyl_adj_log;
 
-  QFile cyl_adj_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_vert.glsl" );
-  QFile cyl_adj_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_geom.glsl" );
-  QFile cyl_adj_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/cylinder_adj_frag.glsl" );
+  QFile cyl_adj_vert ( ":/shaders/cylinder_adj_vert.glsl" );
+  QFile cyl_adj_geom ( ":/shaders/cylinder_adj_geom.glsl" );
+  QFile cyl_adj_frag ( ":/shaders/cylinder_adj_frag.glsl" );
 
   cyl_adj_vert.open ( QIODevice::ReadOnly );
   cyl_adj_geom.open ( QIODevice::ReadOnly );
@@ -269,9 +269,9 @@ void secondary_model_t::InitShaders()
   //initialize tubes shader
   string helix_imposter_log;
 
-  QFile helix_imposter_vert ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_vert.glsl");
-  QFile helix_imposter_geom ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_geom.glsl");
-  QFile helix_imposter_frag ( "/home/nithin/projects/proteinvis/pv_app/resources/helix_ideal_frag.glsl");
+  QFile helix_imposter_vert ( ":/shaders/helix_ideal_vert.glsl");
+  QFile helix_imposter_geom ( ":/shaders/helix_ideal_geom.glsl");
+  QFile helix_imposter_frag ( ":/shaders/helix_ideal_frag.glsl");
 
 
   helix_imposter_vert.open ( QIODevice::ReadOnly );

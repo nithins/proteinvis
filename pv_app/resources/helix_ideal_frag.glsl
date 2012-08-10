@@ -137,28 +137,37 @@ void main()
   vec3 y_dir =  cross(qr,x_dir);
   
   
-  vec3 pt       = pnear;
-  bool isFar    = false;
-  float t       = pt_line_proj_coeff(q,r,pt);  
-  vec3 apt      = q + t*(r-q);
-  vec3 normal   = normalize(pt - apt);
-  float theta   = TWOPI*length(apt-q)/pitch;
-  vec3  hdir    = (x_dir*cos(theta) + y_dir*sin(theta))/radius;
+  vec3  c       = pnear; 
+  bool  isFar   = false;
+  float t       = pt_line_proj_coeff(q,r,c);  
+  vec3  d       = q + t*(r-q);
+  vec3  dc      = normalize(c - d);
+  float theta   = TWOPI*length(d-q)/pitch;
+  vec3  dh      = (x_dir*cos(theta) + y_dir*sin(theta))/radius;  
+  float w       = min(width,length(r-d));    
+  if(dot(cross(dc,dh),qr) > 0)
+   w            = min(width,length(q-d));
 
   
-  if( t <0.0 || t >= 1.0 || dot(hdir,normal)  < 1.0-width)
+  if( t <0.0 || t >= 1.0 || dot(dh,dc)  < cos(w*TWOPI / pitch))
   {
-    pt       = pfar;    
+    c        = pfar;    
     isFar    = true;
-    t        = pt_line_proj_coeff(q,r,pt);
-    apt      = q + t*(r-q);
-    normal   = normalize(pt - apt);
-    theta    = TWOPI*length(apt-q)/pitch;
-    hdir     = (x_dir*cos(theta) + y_dir*sin(theta))/radius;    
+    t        = pt_line_proj_coeff(q,r,c);
+    d        = q + t*(r-q);
+    dc       = normalize(c - d);
+    theta    = TWOPI*length(d-q)/pitch;
+    dh       = (x_dir*cos(theta) + y_dir*sin(theta))/radius;
+    w        = min(width,length(r-d));    
+    if(dot(cross(dc,dh),qr) > 0)
+      w      = min(width,length(q-d));
+
   }
     
-  if( t <0.0 || t >= 1.0 || dot(hdir,normal)  < 1.0-width)
+  if( t <0.0 || t >= 1.0 || dot(dh,dc)  < cos(w*TWOPI / pitch))
     discard;
+    
+  vec3 normal = dc;
     
   if(isFar)
     normal *=-1;
@@ -167,10 +176,10 @@ void main()
 
   vec3 color   = gl_Color.xyz;
 
-  pt = (gl_ModelViewMatrix*vec4(pt,1)).xyz;
-  gl_FragColor   = perform_lighting(vec4(color,1),pt,normal);
+  vec3 wc_pt     = (gl_ModelViewMatrix*vec4(c,1)).xyz;
+  gl_FragColor   = perform_lighting(vec4(color,1),wc_pt,normal);
 
-  vec4  dc_pt     = gl_ProjectionMatrix*vec4(pt,1); 
+  vec4  dc_pt     = gl_ProjectionMatrix*vec4(wc_pt,1); 
   gl_FragDepth    = (dc_pt.z/dc_pt.w +1.0)/2.0;
 }
 

@@ -420,7 +420,7 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="secondaryTab">
+           <widget class="QWidget" name="secondary_tab">
             <attribute name="title">
              <string>Secondary</string>
             </attribute>
@@ -463,30 +463,6 @@
                 </item>
                </layout>
               </widget>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout">
-               <item>
-                <widget class="QSpinBox" name="spinBox_2"/>
-               </item>
-               <item>
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>Sheet Number</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="spinBox"/>
-               </item>
-               <item>
-                <widget class="QLabel" name="helixLabel">
-                 <property name="text">
-                  <string>Helix Number</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
              </item>
             </layout>
            </widget>
@@ -538,7 +514,7 @@
      <x>0</x>
      <y>0</y>
      <width>1046</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

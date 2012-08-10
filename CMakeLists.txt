@@ -52,6 +52,14 @@ file(GLOB proteinvis_UIS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/forms/*.ui)
 
 QT4_WRAP_UI(proteinvis_UI_SRCS ${proteinvis_UIS})
 
+file(GLOB proteinvis_RC_SRCS 
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.png
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.glsl
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.geom
+  ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.frag)
+
+
 QT4_ADD_RESOURCES(proteinvis_RC_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/proteinvis.qrc)
 
 include_directories(
