@@ -86,35 +86,30 @@ class secondary_model_t
 
 
 private:
-
   //reference to the protein
   boost::shared_ptr<protein_t> m_protein;
 
-
   std::vector<chain_rd_t>  m_chains_rd;
   std::vector<helix_rd_t>  m_helices_rd;
-  std::vector<strand_rd_t> m_strands_rd;
+  std::vector<strand_rd_t> m_strands_rd;  
 
+  void RenderSheets();
+  void RenderFreeLoops();
+  void RenderHelices();
 
-  //variables for spin box
-  uint num_sheets;
-  uint num_helices;
+  void InitSplines();
+  void InitHelices();
+  void InitSheets();
+  void InitLoops();
 
 public:
   secondary_model_t(boost::shared_ptr<protein_t> protein_reference);
   ~secondary_model_t();
 
-  //method to render the secondary protein structure
-  void RenderSheets();
-  void RenderTubes();
-  void RenderHelices();
-  void RenderImposterHelices();
+  void RenderSecondaryStructures();
+  void RenderBackboneLoops();
 
   static void InitShaders();
-  void InitSplines();
-  void InitHelices();
-  void InitSheets();
-  void InitLoops();
 
 };
 #endif

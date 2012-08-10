@@ -293,14 +293,13 @@ void protein_model_t::render_secondary() const
 
   m_atombond_material.render_all(GL_FRONT_AND_BACK);
 
-  if(m_sec_renderMode &SEC_SHEETS)
-    m_secondary_model->RenderSheets();
-
-  if(m_sec_renderMode &SEC_HELICES)
-    m_secondary_model->RenderImposterHelices();
-
-  if(m_sec_renderMode &SEC_TUBES)
-    m_secondary_model->RenderTubes();
+  switch(m_sec_renderMode)
+  {
+  case SEC_BACKBONE_LOOPS:
+    m_secondary_model->RenderBackboneLoops();break;
+  case SEC_SECONDARY_STRUCTURES:
+    m_secondary_model->RenderSecondaryStructures();break;
+  }
 
   glPopAttrib();
 }

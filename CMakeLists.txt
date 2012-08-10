@@ -22,7 +22,9 @@ find_package(GLEW REQUIRED)
 
 find_package(Boost COMPONENTS regex REQUIRED)
 
-set(SECONDARY_NUM_SPLINESEGS 20 CACHE STRING
+option(USE_IMPOSTER_HELICES "use ideal helicical imposters for helical elements" OFF)
+
+set(SECONDARY_NUM_SPLINESEGS 6 CACHE STRING
  "number of spline segments for each residue in secondary structure renderings")
 
 subdirs(utls)

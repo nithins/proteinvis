@@ -558,48 +558,29 @@ void viewer_mainwindow::on_alpha_value_sf_model_doubleSpinBox_valueChanged ( dou
   glviewer->updateGL();
 }
 
-void viewer_mainwindow::on_sec_tubes_checkbox_clicked(bool checked)
+void viewer_mainwindow::on_sec_backbone_loop_radioButton_clicked(bool checked)
 {
-  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
-  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_TUBES;
-
-  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
-
   if(checked)
-    mode |=flag;
-  else
-    mode &=(mask^flag);
-
-  glviewer->updateGL();
+  {
+    get_active_model()->m_sec_renderMode = protein_model_t::SEC_BACKBONE_LOOPS;
+    glviewer->updateGL();
+  }
 }
 
-
-void viewer_mainwindow::on_sec_helices_checkbox_clicked(bool checked)
+void viewer_mainwindow::on_sec_secondary_structures_radioButton_clicked(bool checked)
 {
-  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
-  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_HELICES;
-
-  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
-
   if(checked)
-    mode |=flag;
-  else
-    mode &=(mask^flag);
-
-  glviewer->updateGL();
+  {
+    get_active_model()->m_sec_renderMode = protein_model_t::SEC_SECONDARY_STRUCTURES;
+    glviewer->updateGL();
+  }
 }
 
-void viewer_mainwindow::on_sec_sheets_checkbox_clicked(bool checked)
+void viewer_mainwindow::on_sec_none_radioButton_clicked(bool checked)
 {
-  protein_model_t::eSecondaryRenderModes mask = protein_model_t::SEC_ALL;
-  protein_model_t::eSecondaryRenderModes flag = protein_model_t::SEC_SHEETS;
-
-  unsigned int &mode = (unsigned int &)get_active_model()->m_sec_renderMode;
-
   if(checked)
-    mode |=flag;
-  else
-    mode &=(mask^flag);
-
-  glviewer->updateGL();
+  {
+    get_active_model()->m_sec_renderMode = protein_model_t::SEC_NONE;
+    glviewer->updateGL();
+  }
 }

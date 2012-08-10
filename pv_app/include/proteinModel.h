@@ -72,10 +72,8 @@ public:
   enum eSecondaryRenderModes
   {
     SEC_NONE=0,
-    SEC_TUBES=1,
-    SEC_SHEETS=2,
-    SEC_HELICES=4,
-    SEC_ALL=7,
+    SEC_BACKBONE_LOOPS,
+    SEC_SECONDARY_STRUCTURES
   };
 
 protected:

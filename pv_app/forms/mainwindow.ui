@@ -44,7 +44,7 @@
             <enum>QTabWidget::West</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>3</number>
            </property>
            <property name="movable">
             <bool>true</bool>
@@ -435,29 +435,29 @@
                </property>
                <layout class="QGridLayout" name="gridLayout_2">
                 <item row="0" column="0">
-                 <widget class="QCheckBox" name="sec_tubes_checkbox">
+                 <widget class="QRadioButton" name="sec_none_radioButton">
                   <property name="text">
-                   <string>Tubes</string>
+                   <string>None</string>
                   </property>
                   <property name="checked">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
                 <item row="1" column="0">
-                 <widget class="QCheckBox" name="sec_helices_checkbox">
+                 <widget class="QRadioButton" name="sec_backbone_loop_radioButton">
                   <property name="text">
-                   <string>Helices</string>
+                   <string>Backbone Loop</string>
                   </property>
                  </widget>
                 </item>
                 <item row="2" column="0">
-                 <widget class="QCheckBox" name="sec_sheets_checkbox">
+                 <widget class="QRadioButton" name="sec_secondary_structures_radioButton">
                   <property name="enabled">
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>Sheets</string>
+                   <string>Secondary Structure</string>
                   </property>
                  </widget>
                 </item>

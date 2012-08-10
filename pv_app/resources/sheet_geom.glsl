@@ -4,10 +4,11 @@
 
 //#define ENABLE_TIPS
 
-layout( lines_adjacency ) in;
 #ifndef ENABLE_TIPS
+layout( lines_adjacency ) in;
 layout( triangle_strip, max_vertices=16 ) out;
 #else
+layout( triangles ) in;
 layout( triangle_strip, max_vertices=24 ) out;
 #endif
 
@@ -57,11 +58,27 @@ void draw_quad(vec3 a,vec3 an, vec3 b,vec3 bn,vec3 c,vec3 cn,vec3 d,vec3 dn)
   EndPrimitive();
 }
 
+#ifndef ENABLE_TIPS
+const int PIDX = 1;
+const int QIDX = 2;
+const int RIDX = 3;
+#else
+const int PIDX = 0;
+const int QIDX = 1;
+const int RIDX = 2;
+#endif
+
 void main()
 {
-  vec3 p = gl_PositionIn[0].xyz;
-  vec3 q = gl_PositionIn[1].xyz;
-  vec3 r = gl_PositionIn[2].xyz;
+  vec3 p = gl_PositionIn[PIDX].xyz;
+  vec3 q = gl_PositionIn[QIDX].xyz;
+  vec3 r = gl_PositionIn[RIDX].xyz;
+  
+  float pwidth =  WidthIn[PIDX];
+  float qwidth =  WidthIn[QIDX];
+  
+  vec3 ps     = NormalIn[PIDX]*pwidth;
+  vec3 qs     = NormalIn[QIDX]*qwidth;  
 
   vec3 pq     = q-p;
   vec3 qr     = r-q;
@@ -70,12 +87,6 @@ void main()
   if(length(qr) < 0.0001)
     qr = pq;
 #endif 
-
-  float pwidth =  WidthIn[0];
-  float qwidth =  WidthIn[1];
-
-  vec3 ps     = NormalIn[0]*pwidth;
-  vec3 qs     = NormalIn[1]*qwidth;
 
   vec3 pup    = normalize(cross(pq,ps))*height;
   vec3 qup    = normalize(cross(qr,qs))*height;

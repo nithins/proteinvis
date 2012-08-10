@@ -103,9 +103,9 @@ private slots:
   void on_alpha_value_sf_model_doubleSpinBox_valueChanged ( double );
 
 //secondary structures ui
-  void on_sec_tubes_checkbox_clicked(bool checked);
-  void on_sec_helices_checkbox_clicked(bool checked);
-  void on_sec_sheets_checkbox_clicked(bool checked);
+  void on_sec_backbone_loop_radioButton_clicked(bool checked);
+  void on_sec_secondary_structures_radioButton_clicked(bool checked);
+  void on_sec_none_radioButton_clicked(bool checked);
 };
 
 #endif

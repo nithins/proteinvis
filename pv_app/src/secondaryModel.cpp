@@ -41,13 +41,32 @@ using  namespace glutils;
 // auto generated in config.h .. cmake does it
 const int g_segs_btw_ctrlPts = SECONDARY_NUM_SPLINESEGS;
 
-GLSLProgram *s_sheetShader = NULL;
-GLSLProgram *s_sheetTipsShader = NULL;
 GLSLProgram *s_tubeShader = NULL;
 GLSLProgram *s_tubeCapShader = NULL;
+#ifndef USE_IMPOSTER_HELICES
 GLSLProgram *s_helixShader = NULL;
 GLSLProgram *s_helixCapShader = NULL;
+#else
 GLSLProgram *s_helixImposterShader = NULL;
+#endif
+GLSLProgram *s_sheetShader = NULL;
+GLSLProgram *s_sheetTipsShader = NULL;
+
+
+inline vertex_t line_plane_ixn(vertex_t ld, vertex_t lp,vertex_t pn, vertex_t pp)
+{
+  return lp + ((dot_product(pn,pp)-dot_product(pn,lp))/(dot_product(pn,ld)))*ld;
+}
+
+inline vertex_t closest_line_pt(vertex_t ld,vertex_t lp,vertex_t pt)
+{
+  return lp+ld*dot_product(pt-lp,ld)/dot_product(ld,ld);
+}
+
+inline vertex_t closest_plane_pt(vertex_t pn,vertex_t pp,vertex_t pt)
+{
+  return line_plane_ixn(pn,pt,pn,pp);
+}
 
 secondary_model_t::secondary_model_t(boost::shared_ptr<protein_t> protein)
 {
@@ -109,111 +128,9 @@ inline vertex_t atom_to_vertex(const atom_t & a)
 
 void secondary_model_t::InitShaders()
 {
-  if(s_sheetShader != NULL)
-    return;
-
-  //initialize sheet shaders
-  string sheet_log,sheet_tips_log;
-
-  QFile sheet_vert ( ":/shaders/sheet_vert.glsl" );
-  QFile sheet_geom ( ":/shaders/sheet_geom.glsl" );
-  QFile sheet_frag ( ":/shaders/sheet_frag.glsl" );
-
-  sheet_vert.open ( QIODevice::ReadOnly );
-  sheet_geom.open ( QIODevice::ReadOnly );
-  sheet_frag.open ( QIODevice::ReadOnly );
-
-  QString sheet_vert_str =sheet_vert.readAll();
-  QString sheet_geom_str =sheet_geom.readAll();
-  QString sheet_frag_str =sheet_frag.readAll();
-
-  sheet_vert.close();
-  sheet_geom.close();
-  sheet_frag.close();
-
-  s_sheetShader = GLSLProgram::createFromSourceStrings
-      (
-        sheet_vert_str.toStdString(),
-        sheet_geom_str.toStdString(),
-        sheet_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
-        );
-
-  s_sheetShader->GetProgramLog ( sheet_log );
-
-  _LOG_VAR ( sheet_log );
-
-  QString sheet_tips_vert_str = sheet_vert_str;
-  QString sheet_tips_geom_str = sheet_geom_str;
-
-  sheet_tips_geom_str.replace("//#define ENABLE_TIPS","#define ENABLE_TIPS");
-
-  s_sheetTipsShader = GLSLProgram::createFromSourceStrings
-      (
-        sheet_tips_vert_str.toStdString(),
-        sheet_tips_geom_str.toStdString(),
-        sheet_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
-        );
-
-  s_sheetTipsShader->GetProgramLog ( sheet_tips_log );
-
-  _LOG_VAR (sheet_tips_log);
-
-  //initialize helix shader
-  string helix_log,helix_cap_log;
-
-  QFile helix_vert ( ":/shaders/helix_vert.glsl" );
-  QFile helix_geom ( ":/shaders/helix_geom.glsl" );
-  QFile helix_frag ( ":/shaders/helix_frag.glsl" );
-
-  helix_vert.open ( QIODevice::ReadOnly );
-  helix_geom.open ( QIODevice::ReadOnly );
-  helix_frag.open ( QIODevice::ReadOnly );
-
-  QString helix_vert_str =helix_vert.readAll();
-  QString helix_geom_str =helix_geom.readAll();
-  QString helix_frag_str =helix_frag.readAll();
-
-  s_helixShader = GLSLProgram::createFromSourceStrings
-      (
-        helix_vert_str.toStdString(),
-        helix_geom_str.toStdString(),
-        helix_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
-        );
-
-  helix_geom_str.replace("//#define NEED_CAPS","#define NEED_CAPS");
-
-  s_helixCapShader = GLSLProgram::createFromSourceStrings
-          (
-            helix_vert_str.toStdString(),
-            helix_geom_str.toStdString(),
-            helix_frag_str.toStdString(),
-            GL_LINE_STRIP_ADJACENCY,
-            GL_TRIANGLE_STRIP
-            );
-
-
-
-  s_helixShader->GetProgramLog ( helix_log );
-  s_helixCapShader->GetProgramLog ( helix_log );
-
-  helix_vert.close();
-  helix_geom.close();
-  helix_frag.close();
-
-  if( helix_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling helix shader\n"+helix_log);
-
-  if( helix_cap_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling helix cap shader\n"+helix_cap_log);
-
   //initialize tubes shader
   string cyl_adj_log;
+  assert(s_tubeShader == NULL);
 
   QFile cyl_adj_vert ( ":/shaders/cylinder_adj_vert.glsl" );
   QFile cyl_adj_geom ( ":/shaders/cylinder_adj_geom.glsl" );
@@ -222,6 +139,10 @@ void secondary_model_t::InitShaders()
   cyl_adj_vert.open ( QIODevice::ReadOnly );
   cyl_adj_geom.open ( QIODevice::ReadOnly );
   cyl_adj_frag.open ( QIODevice::ReadOnly );
+
+  assert(cyl_adj_vert.isReadable() &&
+         cyl_adj_geom.isReadable() &&
+         cyl_adj_frag.isReadable());
 
   QString cyl_vert_src = cyl_adj_vert.readAll();
   QString cyl_geom_src = cyl_adj_geom.readAll();
@@ -244,10 +165,12 @@ void secondary_model_t::InitShaders()
   s_tubeShader->GetProgramLog ( cyl_adj_log );
 
   if( cyl_adj_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling cylinder shader\n"+cyl_adj_log);
+    throw std::runtime_error("failed compiling cylinder shader\n"+
+                             cyl_adj_log);
 
-  //initialize tubes shader
+  //initialize tube caps shader
   string cyl_cap_log;
+  assert(s_tubeCapShader == NULL);
 
   cyl_geom_src.replace("//#define ENABLE_CAPS","#define ENABLE_CAPS");
   cyl_frag_src.replace("//#define ENABLE_CAPS","#define ENABLE_CAPS");
@@ -264,19 +187,83 @@ void secondary_model_t::InitShaders()
   s_tubeCapShader->GetProgramLog ( cyl_cap_log );
 
   if( cyl_cap_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling cylinder caps shader\n"+cyl_cap_log);
+    throw std::runtime_error("failed compiling cylinder caps shader\n"+
+                             cyl_cap_log);
 
-  //initialize tubes shader
+#ifndef USE_IMPOSTER_HELICES
+  //initialize helix shader
+  string helix_log,helix_cap_log;
+  assert(s_helixShader == NULL && s_helixCapShader == NULL);
+
+  QFile helix_vert ( ":/shaders/helix_vert.glsl" );
+  QFile helix_geom ( ":/shaders/helix_geom.glsl" );
+  QFile helix_frag ( ":/shaders/helix_frag.glsl" );
+
+  helix_vert.open ( QIODevice::ReadOnly );
+  helix_geom.open ( QIODevice::ReadOnly );
+  helix_frag.open ( QIODevice::ReadOnly );
+
+  assert(helix_vert.isReadable() &&
+         helix_geom.isReadable() &&
+         helix_frag.isReadable());
+
+  QString helix_vert_str =helix_vert.readAll();
+  QString helix_geom_str =helix_geom.readAll();
+  QString helix_frag_str =helix_frag.readAll();
+
+  s_helixShader = GLSLProgram::createFromSourceStrings
+      (
+        helix_vert_str.toStdString(),
+        helix_geom_str.toStdString(),
+        helix_frag_str.toStdString(),
+        GL_LINE_STRIP_ADJACENCY,
+        GL_TRIANGLE_STRIP
+        );
+
+  helix_geom_str.replace("//#define ENABLE_TIPS","#define ENABLE_TIPS");
+
+  s_helixCapShader = GLSLProgram::createFromSourceStrings
+          (
+            helix_vert_str.toStdString(),
+            helix_geom_str.toStdString(),
+            helix_frag_str.toStdString(),
+            GL_LINE_STRIP_ADJACENCY,
+            GL_TRIANGLE_STRIP
+            );
+
+
+
+  s_helixShader->GetProgramLog ( helix_log );
+  s_helixCapShader->GetProgramLog ( helix_log );
+
+  helix_vert.close();
+  helix_geom.close();
+  helix_frag.close();
+
+  if( helix_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling helix shader\n"+
+                             helix_log);
+
+  if( helix_cap_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling helix cap shader\n"+
+                             helix_cap_log);
+#else
+  //initialize helix imposter shader
   string helix_imposter_log;
+  assert(s_helixImposterShader == NULL);
 
   QFile helix_imposter_vert ( ":/shaders/helix_ideal_vert.glsl");
   QFile helix_imposter_geom ( ":/shaders/helix_ideal_geom.glsl");
   QFile helix_imposter_frag ( ":/shaders/helix_ideal_frag.glsl");
 
-
   helix_imposter_vert.open ( QIODevice::ReadOnly );
   helix_imposter_geom.open ( QIODevice::ReadOnly );
   helix_imposter_frag.open ( QIODevice::ReadOnly );
+
+  assert(helix_imposter_vert.isReadable() &&
+         helix_imposter_geom.isReadable() &&
+         helix_imposter_frag.isReadable());
+
 
   s_helixImposterShader = GLSLProgram::createFromSourceStrings
       (
@@ -293,7 +280,69 @@ void secondary_model_t::InitShaders()
 
   s_helixImposterShader->GetProgramLog ( helix_imposter_log );
 
-  _LOG_VAR ( helix_imposter_log );
+  if( helix_imposter_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling helix impopster shader\n"+
+                             helix_imposter_log);
+#endif
+
+  //initialize sheet shaders
+  string sheet_log,sheet_tips_log;
+  assert(s_sheetShader == NULL && s_sheetTipsShader == NULL);
+
+  QFile sheet_vert ( ":/shaders/sheet_vert.glsl" );
+  QFile sheet_geom ( ":/shaders/sheet_geom.glsl" );
+  QFile sheet_frag ( ":/shaders/sheet_frag.glsl" );
+
+  sheet_vert.open ( QIODevice::ReadOnly );
+  sheet_geom.open ( QIODevice::ReadOnly );
+  sheet_frag.open ( QIODevice::ReadOnly );
+
+  assert(sheet_vert.isReadable() &&
+         sheet_geom.isReadable() &&
+         sheet_frag.isReadable());
+
+  QString sheet_vert_str =sheet_vert.readAll();
+  QString sheet_geom_str =sheet_geom.readAll();
+  QString sheet_frag_str =sheet_frag.readAll();
+
+  sheet_vert.close();
+  sheet_geom.close();
+  sheet_frag.close();
+
+  s_sheetShader = GLSLProgram::createFromSourceStrings
+      (
+        sheet_vert_str.toStdString(),
+        sheet_geom_str.toStdString(),
+        sheet_frag_str.toStdString(),
+        GL_LINE_STRIP_ADJACENCY,
+        GL_TRIANGLE_STRIP
+        );
+
+  s_sheetShader->GetProgramLog ( sheet_log );
+
+  if( sheet_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling sheet shader\n"+
+                             sheet_log);
+
+  QString sheet_tips_vert_str = sheet_vert_str;
+  QString sheet_tips_geom_str = sheet_geom_str;
+
+  sheet_tips_geom_str.replace("//#define ENABLE_TIPS","#define ENABLE_TIPS");
+
+  s_sheetTipsShader = GLSLProgram::createFromSourceStrings
+      (
+        sheet_tips_vert_str.toStdString(),
+        sheet_tips_geom_str.toStdString(),
+        sheet_frag_str.toStdString(),
+        GL_LINE_STRIP_ADJACENCY,
+        GL_TRIANGLE_STRIP
+        );
+
+  s_sheetTipsShader->GetProgramLog ( sheet_tips_log );
+
+  if( sheet_tips_log.find("error") != string::npos)
+    throw std::runtime_error("failed compiling sheet shader\n"+
+                             sheet_tips_log);
 }
 
 void secondary_model_t::InitSplines()
@@ -373,9 +422,13 @@ void secondary_model_t::InitLoops()
 
       int b = m_helices_rd[j].spt_idx_b;
       int e = m_helices_rd[j].spt_idx_e;
-
+#ifndef USE_IMPOSTER_HELICES
+      fill(is_loop_pt.begin()+b+1,
+           is_loop_pt.begin()+e-1,false);
+#else
       fill(is_loop_pt.begin()+b+g_segs_btw_ctrlPts,
            is_loop_pt.begin()+e-1.5*g_segs_btw_ctrlPts,false);
+#endif
     }
 
     for(int j = 0 ; j < m_strands_rd.size(); ++j )
@@ -509,22 +562,6 @@ void secondary_model_t::InitSheets()
   }
 }
 
-inline vertex_t line_plane_ixn(vertex_t ld, vertex_t lp,vertex_t pn, vertex_t pp)
-{
-  double t = (dot_product(pn,pp) - dot_product(pn,lp))/(dot_product(pn,ld));
-  return lp + t*ld;
-}
-
-inline vertex_t closest_line_pt(vertex_t ld,vertex_t lp,vertex_t pt)
-{
-  return lp+ld*dot_product(pt-lp,ld)/dot_product(ld,ld);
-}
-
-inline vertex_t closest_plane_pt(vertex_t pn,vertex_t pp,vertex_t pt)
-{
-  return line_plane_ixn(pn,pt,pn,pp);
-}
-
 void secondary_model_t::InitHelices()
 {
   int num_helices = m_protein->get_num_helices();
@@ -635,9 +672,198 @@ void secondary_model_t::InitHelices()
     m_helices_rd[i].x_dir    = radius*euclid_normalize(spts[spt_b] - m_helices_rd[i].axis_b);
     m_helices_rd[i].y_dir    = cross_product(axis_dir,m_helices_rd[i].x_dir);
   }
-
-
 }
+
+void secondary_model_t::RenderSecondaryStructures()
+{
+  RenderFreeLoops();
+  RenderHelices();
+  RenderSheets();
+}
+
+void secondary_model_t::RenderBackboneLoops()
+{
+  glPushAttrib ( GL_ENABLE_BIT );
+  glDisable(GL_LIGHTING);
+  s_tubeShader->use();
+
+  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
+  {
+    const chain_rd_t &chain_rd = m_chains_rd[i];
+    const bufobj_ptr_t &vbo    = chain_rd.spline_pts_bo;
+
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
+
+    vbo->bind_to_vertex_pointer();
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY,0,vbo->get_num_items());
+    vbo->unbind_from_vertex_pointer();
+  }
+
+  s_tubeShader->disable();
+
+  s_tubeCapShader->use();
+
+  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
+  {
+    const chain_rd_t &chain_rd = m_chains_rd[i];
+    const bufobj_ptr_t &vbo    = chain_rd.spline_pts_bo;
+    int end                    = chain_rd.spline_pts_bo->get_num_items();
+
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
+
+    vbo->bind_to_vertex_pointer();
+    glBegin(GL_TRIANGLES);
+    glArrayElement(0);
+    glArrayElement(1);
+    glArrayElement(2);
+
+    glArrayElement(end-1);
+    glArrayElement(end-2);
+    glArrayElement(end-3);
+    glEnd();
+    vbo->unbind_from_vertex_pointer();
+  }
+
+  s_tubeCapShader->disable();
+
+  glPopAttrib();
+}
+
+void secondary_model_t::RenderFreeLoops()
+{
+  glPushAttrib ( GL_ENABLE_BIT );
+  glDisable(GL_LIGHTING);
+  s_tubeShader->use();
+
+  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
+  {
+    const chain_rd_t &chain_rd = m_chains_rd[i];
+    const bufobj_ptr_t &vbo    = chain_rd.spline_pts_bo;
+    const bufobj_ptr_t &ibo    = chain_rd.loop_idxs_bo;
+
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
+    vbo->bind_to_vertex_pointer();
+    glBindBuffer ( ibo->target(), ibo->id() );
+    glDrawElements ( GL_LINES_ADJACENCY, ibo->get_num_items()*4, ibo->src_type(), 0 );
+    glBindBuffer ( ibo->target(), 0);
+    vbo->unbind_from_vertex_pointer();
+  }
+
+  s_tubeShader->disable();
+
+  s_tubeCapShader->use();
+
+  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
+  {
+    const chain_rd_t &chain_rd = m_chains_rd[i];
+    const bufobj_ptr_t &vbo    = chain_rd.spline_pts_bo;
+    const bufobj_ptr_t &ibo    = chain_rd.loop_caps_idxs_bo;
+
+    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
+    vbo->bind_to_vertex_pointer();
+    glBindBuffer ( ibo->target(), ibo->id() );
+    glDrawElements ( GL_TRIANGLES, ibo->get_num_items()*3, ibo->src_type(), 0);
+    glBindBuffer ( ibo->target(), 0);
+    vbo->unbind_from_vertex_pointer();
+  }
+
+  s_tubeCapShader->disable();
+
+  glPopAttrib();
+}
+
+#ifdef USE_IMPOSTER_HELICES
+void secondary_model_t::RenderHelices()
+{
+  glPushAttrib ( GL_ENABLE_BIT );
+
+  s_helixImposterShader->use();
+
+  for(int i = 0; i < m_helices_rd.size(); ++i)
+  {
+    helix_rd_t &helix_rd = m_helices_rd[i];
+
+    color_t col = helix_rd.color;
+    glColor3d(col[0],col[1],col[2]);
+
+    vertex_t p = helix_rd.x_dir;
+    vertex_t q = helix_rd.axis_b;
+    vertex_t r = helix_rd.axis_e;
+
+    glBegin(GL_TRIANGLES);
+
+    glVertex3d(p[0],p[1],p[2]);
+    glVertex3d(q[0],q[1],q[2]);
+    glVertex3d(r[0],r[1],r[2]);
+
+    glEnd();
+
+  }
+  s_helixImposterShader->disable();
+  glPopAttrib();
+}
+#else
+void secondary_model_t::RenderHelices()
+{
+  glPushAttrib ( GL_ENABLE_BIT );
+
+  s_helixShader->use();
+
+  for(int i = 0; i < m_helices_rd.size(); ++i)
+  {
+    helix_rd_t &helix_rd = m_helices_rd[i];
+    color_t          col = helix_rd.color;
+    normal_t           n = helix_rd.axis_dir;
+    int             beg  = helix_rd.spt_idx_b;
+    int             end  = helix_rd.spt_idx_e;
+    bufobj_ptr_t      bo = m_chains_rd[helix_rd.chainno].spline_pts_bo;
+
+
+    s_helixShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
+    glColor3d(col[0],col[1],col[2]);
+    bo->bind_to_vertex_pointer();
+    glDrawArrays(GL_LINE_STRIP_ADJACENCY,beg,end-beg);
+    bo->unbind_from_vertex_pointer();
+  }
+  s_helixShader->disable();
+
+  s_helixCapShader->use();
+
+  for(int i = 0; i < m_helices_rd.size(); ++i)
+  {
+    helix_rd_t &helix_rd = m_helices_rd[i];
+    color_t          col = helix_rd.color;
+    normal_t           n = helix_rd.axis_dir;
+    int             beg  = helix_rd.spt_idx_b;
+    int             end  = helix_rd.spt_idx_e;
+    bufobj_ptr_t      bo = m_chains_rd[helix_rd.chainno].spline_pts_bo;
+
+
+    s_helixCapShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
+    glColor3d(col[0],col[1],col[2]);
+    bo->bind_to_vertex_pointer();
+
+    glBegin(GL_TRIANGLES);
+    glArrayElement(beg+0);
+    glArrayElement(beg+1);
+    glArrayElement(beg+2);
+
+    glArrayElement(end-2);
+    glArrayElement(end-1);
+    glArrayElement(end-1);
+
+    glEnd();
+
+    bo->unbind_from_vertex_pointer();
+
+
+
+  }
+  s_helixCapShader->disable();
+
+  glPopAttrib();
+}
+#endif
 
 void secondary_model_t::RenderSheets()
 {
@@ -675,51 +901,35 @@ void secondary_model_t::RenderSheets()
 
   for(int i = 0; i < m_strands_rd.size(); ++i)
   {
+
     strand_rd_t &strand = m_strands_rd[i];
     chain_rd_t  &chain  = m_chains_rd[strand.chainno];
 
-    int beg   = strand.spt_idx_b;
-    int end   = strand.spt_idx_e;
-
-    vertex_list_t  & spts= chain.spline_pts;
-    vertex_list_t  &sspts= chain.sec_spline_pts;
-    vector<double> &width= strand.width;
-
+    int beg  = strand.spt_idx_b;
+    int end  = strand.spt_idx_e;
     color_t col = strand.color;
 
     glColor3d(col[0],col[1],col[2]);
 
-    glBegin(GL_LINES_ADJACENCY);
+    chain.spline_pts_bo->bind_to_vertex_pointer(beg);
+    chain.sec_spline_pts_bo->bind_to_normal_pointer(beg);
+    strand.width_bo->bind_to_vertex_attrib_pointer(Width_ATTR);
 
-    for(int j = 0 ; j <4 ;++j)
-    {
-      glVertexAttrib1f(Width_ATTR,width[j]);
-      glNormal3f(sspts[beg+j][0],sspts[beg+j][1],sspts[beg+j][2]);
-      glVertex3f(spts [beg+j][0],spts [beg+j][1],spts [beg+j][2]);
-    }
-
-    for(int j = 0 ; j <4 ;++j)
-    {
-      int karr[] = {end-3,end-2,end-1,end-1};
-      int k = karr[j];
-
-      glVertexAttrib1f(Width_ATTR,width[k-beg]);
-      glNormal3f(sspts[k][0],sspts[k][1],sspts[k][2]);
-      glVertex3f(spts [k][0],spts [k][1],spts [k][2]);
-    }
-
-    for(int j = 0 ; j <4 ;++j)
-    {
-      int karr[] = {end-2,end-1,end-1,end-1};
-      int k = karr[j];
-
-      glVertexAttrib1f(Width_ATTR,width[k-beg]);
-      glNormal3f(sspts[k][0],sspts[k][1],sspts[k][2]);
-      glVertex3f(spts [k][0],spts [k][1],spts [k][2]);
-    }
+    glBegin(GL_TRIANGLES);
+    glArrayElement(0);
+    glArrayElement(1);
+    glArrayElement(2);
 
 
+    glArrayElement(end-beg-2);
+    glArrayElement(end-beg-1);
+    glArrayElement(end-beg-1);
     glEnd();
+
+    strand.width_bo->unbind_from_vertex_attrib_pointer(Width_ATTR);
+    chain.sec_spline_pts_bo->unbind_from_normal_pointer();
+    chain.spline_pts_bo->unbind_from_vertex_pointer();
+
   }
 
 
@@ -727,177 +937,4 @@ void secondary_model_t::RenderSheets()
   glPopAttrib();
 }
 
-
-
-void secondary_model_t::RenderHelices()
-{
-  glPushAttrib ( GL_ENABLE_BIT );
-
-  s_helixShader->use();
-
-  for(int i = 0; i < m_helices_rd.size(); ++i)
-  {
-    helix_rd_t &helix_rd = m_helices_rd[i];
-
-    color_t col = helix_rd.color;
-    glColor3d(col[0],col[1],col[2]);
-
-
-    bufobj_ptr_t bo = m_chains_rd[helix_rd.chainno].spline_pts_bo;
-
-    int offset = helix_rd.spt_idx_b+1;
-    int count  = helix_rd.spt_idx_e-helix_rd.spt_idx_b-2;
-    normal_t n = helix_rd.axis_dir;
-
-    s_helixShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
-    bo->bind_to_vertex_pointer();
-    glDrawArrays(GL_LINE_STRIP_ADJACENCY,offset,count);
-    bo->unbind_from_vertex_pointer();
-  }
-  s_helixShader->disable();
-
-  s_helixCapShader->use();
-
-  for(int i = 0; i < m_helices_rd.size(); ++i)
-  {
-    helix_rd_t &helix_rd = m_helices_rd[i];
-
-    color_t col = helix_rd.color;
-    glColor3d(col[0],col[1],col[2]);
-
-
-    vertex_list_t &spts= m_chains_rd[helix_rd.chainno].spline_pts;
-
-    int beg = helix_rd.spt_idx_b;
-    int end  = helix_rd.spt_idx_e;
-    normal_t n = helix_rd.axis_dir;
-
-    s_helixCapShader->sendUniform("g_helixUp",(float)n[0],(float)n[1],(float)n[2]);
-
-    glBegin(GL_LINES_ADJACENCY);
-    glVertex3f(spts[beg  ][0],spts[beg  ][1],spts[beg  ][2]);
-    glVertex3f(spts[beg+1][0],spts[beg+1][1],spts[beg+1][2]);
-    glVertex3f(spts[beg+2][0],spts[beg+2][1],spts[beg+2][2]);
-    glVertex3f(spts[beg+3][0],spts[beg+3][1],spts[beg+3][2]);
-
-    glVertex3f(spts[end-4][0],spts[end-4][1],spts[end-4][2]);
-    glVertex3f(spts[end-3][0],spts[end-3][1],spts[end-3][2]);
-    glVertex3f(spts[end-2][0],spts[end-2][1],spts[end-2][2]);
-    glVertex3f(spts[end-1][0],spts[end-1][1],spts[end-1][2]);
-    glEnd();
-
-  }
-  s_helixCapShader->disable();
-
-
-  glPopAttrib();
-
-}
-
-
-void draw_plane(const vertex_t &pn,const vertex_t &pt,const double & S)
-{
-  vertex_t n = euclid_normalize(pn);
-
-  vertex_t s1(0,0,1);
-
-  if(dot_product(s1,n) >0.99 )
-    s1 = vertex_t(0,1,0);
-
-  vertex_t s2 = cross_product(n,s1);
-  s1 = cross_product(s2,n);
-
-  vertex_t p;
-
-  glBegin(GL_QUADS);
-
-  p = pt + S*(-1*s1 -s2); glVertex3f(p[0],p[1],p[2]);
-  p = pt + S*(-1*s1 +s2); glVertex3f(p[0],p[1],p[2]);
-  p = pt + S*(+1*s1 +s2); glVertex3f(p[0],p[1],p[2]);
-  p = pt + S*(+1*s1 -s2); glVertex3f(p[0],p[1],p[2]);
-
-  glEnd();
-}
-
-void secondary_model_t::RenderTubes()
-{
-  glPushAttrib ( GL_ENABLE_BIT );
-  glDisable(GL_LIGHTING);
-  s_tubeShader->use();
-
-  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
-  {
-    const chain_rd_t &chain_rd = m_chains_rd[i];
-
-//    color_t col(0.2,0.7,0.2);
-//    glColor3d( col[0],col[1],col[2]);
-
-    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
-
-    const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
-    const bufobj_ptr_t &ibo = chain_rd.loop_idxs_bo;
-
-    vbo->bind_to_vertex_pointer();
-    glBindBuffer ( ibo->target(), ibo->id() );
-    glDrawElements ( GL_LINES_ADJACENCY, ibo->get_num_items()*4, ibo->src_type(), 0 );
-    glBindBuffer ( ibo->target(), 0);
-    vbo->unbind_from_vertex_pointer();
-  }
-
-  s_tubeShader->disable();
-
-  s_tubeCapShader->use();
-
-  for(int i = 0 ;i < m_protein->get_num_chains(); ++i)
-  {
-    const chain_rd_t &chain_rd = m_chains_rd[i];
-
-//    color_t col(0.2,0.7,0.2);
-//    glColor3d( col[0],col[1],col[2]);
-    glColor3d( chain_rd.color[0],chain_rd.color[1],chain_rd.color[2]);
-
-    const bufobj_ptr_t &vbo = chain_rd.spline_pts_bo;
-    const bufobj_ptr_t &ibo = chain_rd.loop_caps_idxs_bo;
-
-    vbo->bind_to_vertex_pointer();
-    glBindBuffer ( ibo->target(), ibo->id() );
-    glDrawElements ( GL_TRIANGLES, ibo->get_num_items()*3, ibo->src_type(), 0);
-    glBindBuffer ( ibo->target(), 0);
-    vbo->unbind_from_vertex_pointer();
-  }
-
-  s_tubeCapShader->disable();
-
-  glPopAttrib();
-}
-
-void secondary_model_t::RenderImposterHelices()
-{
-  glPushAttrib ( GL_ENABLE_BIT );
-
-  s_helixImposterShader->use();
-
-  for(int i = 0; i < m_helices_rd.size(); ++i)
-  {
-    helix_rd_t &helix_rd = m_helices_rd[i];
-
-    color_t col = helix_rd.color;
-    glColor3d(col[0],col[1],col[2]);
-
-    vertex_t p = helix_rd.x_dir;
-    vertex_t q = helix_rd.axis_b;
-    vertex_t r = helix_rd.axis_e;
-
-    glBegin(GL_TRIANGLES);
-
-    glVertex3d(p[0],p[1],p[2]);
-    glVertex3d(q[0],q[1],q[2]);
-    glVertex3d(r[0],r[1],r[2]);
-
-    glEnd();
-
-  }
-  s_helixImposterShader->disable();
-  glPopAttrib();
-}
 

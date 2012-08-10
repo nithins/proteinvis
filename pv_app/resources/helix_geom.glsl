@@ -2,12 +2,13 @@
 #extension GL_EXT_gpu_shader4: enable
 #extension GL_EXT_geometry_shader4: enable
 
-//#define NEED_CAPS
+//#define ENABLE_TIPS
 
+#ifndef ENABLE_TIPS
 layout( lines_adjacency ) in;
-#ifndef NEED_CAPS
 layout( triangle_strip, max_vertices=16 ) out;
 #else
+layout( triangles ) in;
 layout( triangle_strip, max_vertices=24 ) out;
 #endif
 
@@ -59,13 +60,26 @@ void draw_quad(vec3 a,vec3 an, vec3 b,vec3 bn,vec3 c,vec3 cn,vec3 d,vec3 dn)
 
 void main()
 {
+#ifndef ENABLE_TIPS
+  vec3 p = gl_PositionIn[1].xyz;
+  vec3 q = gl_PositionIn[2].xyz;
+  vec3 r = gl_PositionIn[3].xyz;
+#else
   vec3 p = gl_PositionIn[0].xyz;
   vec3 q = gl_PositionIn[1].xyz;
   vec3 r = gl_PositionIn[2].xyz;
+#endif
 
   vec3 up    = g_helixUp;
   vec3 pq    = q-p;
   vec3 qr    = r-q;
+  
+#ifdef ENABLE_TIPS
+  if(length(qr) < 0.0001)
+    qr = pq;
+#endif 
+
+  
   vec3 pqxup = normalize(cross(pq,up));
   vec3 qrxup = normalize(cross(qr,up));
 
@@ -103,7 +117,7 @@ void main()
             p-up-pqxup,-pqxup_wc,
             q-up-qrxup,-qrxup_wc);
 
-#ifdef NEED_CAPS
+#ifdef ENABLE_TIPS
 
   gl_FrontColor = vec4(gl_FrontColorIn[1].xyz*0.5,1);
   
