@@ -11,21 +11,23 @@
 
 #include <GL/glu.h>
 
+using namespace glutils;
+
 glutils::material_properties_t g_light_off_material =
 {
-  {0.2,0.2,0.2,1}, // ambient
-  {0.5,0.5,0.5,1}, // diffuse
-  {0,0,0,1},       // specular
-  {0,0,0,1},       // emission
+  make_vec<double>(0.2,0.2,0.2,1), // ambient
+  make_vec<double>(0.5,0.5,0.5,1), // diffuse
+  make_vec<double>(0,0,0,1),       // specular
+  make_vec<double>(0,0,0,1),       // emission
   1                // shininess
 };
 
 glutils::material_properties_t g_light_on_material =
 {
-  {0.2,0.2,0.2,1}, // ambient
-  {0.5,0.5,0.5,1}, // diffuse
-  {0,0,0,1},       // specular
-  {0.75,0.75,0,1}, // emission
+  make_vec<double>(0.2,0.2,0.2,1), // ambient
+  make_vec<double>(0.5,0.5,0.5,1), // diffuse
+  make_vec<double>(0,0,0,1),       // specular
+  make_vec<double>(0.75,0.75,0,1), // emission
   1                // shininess
 };
 
@@ -37,19 +39,19 @@ glutils::material_properties_t g_light_on_material =
 glutils::light_properties_t g_lights_default[] =
 {
   {
-    {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
-    {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
-    {1.0f, 1.0f, 1.0f, 1.0f}, // specular
-    {0.0f, 0.0f, -1.0f, 0.0f}, // position
+    make_vec<double>(0.2f, 0.2f, 0.2f, 1.0f), // ambient
+    make_vec<double>(0.5f, 0.5f, 0.5f, 1.0f), // diffuse
+    make_vec<double>(1.0f, 1.0f, 1.0f, 1.0f), // specular
+    make_vec<double>(0.0f, 0.0f, -1.0f, 0.0f), // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
   },
 
   {
-    {0.2f, 0.2f, 0.2f, 1.0f}, // ambient
-    {0.5f, 0.5f, 0.5f, 1.0f}, // diffuse
-    {1.0f, 1.0f, 1.0f, 1.0f}, // specular
-    {0.0f, 0.0f, -1.0f, 0.0f}, // position
+    make_vec<double>(0.2f, 0.2f, 0.2f, 1.0f), // ambient
+    make_vec<double>(0.5f, 0.5f, 0.5f, 1.0f), // diffuse
+    make_vec<double>(1.0f, 1.0f, 1.0f, 1.0f), // specular
+    make_vec<double>(0.0f, 0.0f, -1.0f, 0.0f), // position
     1,0,0,                    // attenution c + l + q
     true                      // enabled
   }
@@ -147,16 +149,16 @@ void glviewer_t::set_light(int n,const light_properties_t & nl)
   l = nl;
 
   if(l.position[3] == 0)
-    l.position = glutils::vertex4f_t(0,0,1,0);
+    l.position = make_vec(0,0,1,0);
   else
-    l.position = glutils::vertex4f_t(0,0,0,1);
+    l.position = make_vec(0,0,0,1);
 
   // lights are just blacked out not switched off
   if(l.enabled == false)
   {
-    l.ambient  = glutils::color4f_t(0,0,0,1);
-    l.diffuse  = glutils::color4f_t(0,0,0,1);
-    l.specular = glutils::color4f_t(0,0,0,1);
+    l.ambient  = make_vec(0,0,0,1);
+    l.diffuse  = make_vec(0,0,0,1);
+    l.specular = make_vec(0,0,0,1);
   }
 
   updateGL();

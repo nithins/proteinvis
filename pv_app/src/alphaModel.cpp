@@ -25,16 +25,40 @@
 #include <cfloat>
 #include <set>
 
-#include <logutil.h>
 #include <cpputils.h>
 
 #include <protein.h>
 #include <alphaModel.h>
 
 using namespace std;
+using namespace glutils;
 
-typedef n_vector_t<uint,3,false> tri_t;
-typedef n_vector_t<uint,2,false> ege_t;
+template <typename T,int N>
+class uo_vec:public bnu::bounded_vector<T,N>
+{
+  typedef bnu::bounded_vector<T,N> base_t;
+
+public:
+
+  uo_vec(bnu::bounded_vector<T,N> src):base_t(src)
+  {
+  }
+
+
+  friend bool operator<(const uo_vec &U,const uo_vec &V)
+  {
+    base_t u = U;
+    base_t v = V;
+
+    std::sort(u.begin(),u.end());
+    std::sort(v.begin(),u.end());
+
+    return std::lexicographical_compare(u.begin(),u.end(),v.begin(),v.end());
+  }
+};
+
+typedef uo_vec<uint,3> tri_t;
+typedef uo_vec<uint,2> ege_t;
 
 typedef std::set <tri_t> tri_set_t;
 typedef std::set <ege_t> ege_set_t;
@@ -168,7 +192,7 @@ void alpha_complex_model_t::read_file ( const std::string & filename )
 
     uint v3 = atoi ( tokens[4].c_str() ) - 1;
 
-    tri_set.insert ( glutils::tri_idx_t( v1, v2, v3 ) );
+    tri_set.insert ( make_vec<idx_t>( v1, v2, v3 ) );
 
     tokens.clear();
 
@@ -225,7 +249,7 @@ void alpha_complex_model_t::read_file ( const std::string & filename )
 
     uint v2 = atoi ( tokens[3].c_str() ) - 1;
 
-    ege_set.insert ( ege_t( v1, v2 ) );
+    ege_set.insert ( make_vec( v1, v2 ) );
 
     tokens.clear();
 
@@ -251,9 +275,9 @@ void alpha_complex_model_t::read_file ( const std::string & filename )
     uint v2 = (*it)[1];
     uint v3 = (*it)[2];
 
-    ege_set.erase ( ege_t( v1, v2 ) );
-    ege_set.erase ( ege_t( v2, v3 ) );
-    ege_set.erase ( ege_t( v3, v1 ) );
+    ege_set.erase ( make_vec( v1, v2 ) );
+    ege_set.erase ( make_vec( v2, v3 ) );
+    ege_set.erase ( make_vec( v3, v1 ) );
   }
 
   glutils::line_idx_list_t eges(ege_set.size());
@@ -266,10 +290,10 @@ void alpha_complex_model_t::read_file ( const std::string & filename )
   {
     glutils::quad_idx_t tet = tets[i];
 
-    tri_set.erase ( tri_t( tet[1], tet[2], tet[3] ) );
-    tri_set.erase ( tri_t( tet[0], tet[2], tet[3] ) );
-    tri_set.erase ( tri_t( tet[0], tet[1], tet[3] ) );
-    tri_set.erase ( tri_t( tet[0], tet[2], tet[2] ) );
+    tri_set.erase ( make_vec( tet[1], tet[2], tet[3] ) );
+    tri_set.erase ( make_vec( tet[0], tet[2], tet[3] ) );
+    tri_set.erase ( make_vec( tet[0], tet[1], tet[3] ) );
+    tri_set.erase ( make_vec( tet[0], tet[2], tet[2] ) );
   }
 
   glutils::tri_idx_list_t tris(tri_set.size());

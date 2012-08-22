@@ -25,15 +25,17 @@
 #include <set>
 
 #include <boost/bind.hpp>
+#include <boost/iterator/counting_iterator.hpp>
 
-#include <logutil.h>
+
 #include <cpputils.h>
-
 #include <protein.h>
 #include <pocketModel.h>
+#include <GLSLProgram.h>
 
 
 using namespace std;
+using namespace glutils;
 
 
 template <typename list_t, typename ind_t>
@@ -126,11 +128,11 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
 
     tokenize_string ( line, tokens );
 
-    glutils::quad_idx_t tetra
+    quad_idx_t tet = make_vec<idx_t>
         (atoi ( tokens[1].c_str() ) - 1 ,atoi ( tokens[2].c_str() ) - 1,
          atoi ( tokens[3].c_str() ) - 1 ,atoi ( tokens[4].c_str() ) - 1 );
 
-    tetra_list.push_back (tetra);
+    tetra_list.push_back (tet);
   }
 
   std::vector<alpha_pocket_range_t>  alpha_ranges;
@@ -141,18 +143,20 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
   {
     if ( alpha_list[i] != alpha_list[i-1] )
     {
-      alpha_ranges.push_back ( alpha_pocket_range_t ( range_start, i ) );
+      alpha_ranges.push_back ( make_vec<idx_t>( range_start, i ) );
       range_start = i;
     }
   }
 
-  alpha_ranges.push_back ( alpha_pocket_range_t ( range_start, alpha_list.size() ) );
+  alpha_ranges.push_back ( make_vec<idx_t>( range_start, alpha_list.size() ) );
 
   vector<uint> pocno_remapping;
 
   pocno_remapping.resize ( pocno_list.size() );
 
-  generate ( pocno_remapping.begin(), pocno_remapping.end(), num_generator_t<uint>() );
+  copy (boost::counting_iterator<uint>(0),
+        boost::counting_iterator<uint>(pocno_list.size()),
+        pocno_remapping.begin());
 
   compare_list_items<vector<uint>, uint > comp ( pocno_list );
 
@@ -177,14 +181,14 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
     {
       if ( pocno_list[pocno_remapping[j]] != pocno_list[pocno_remapping[j-1]] )
       {
-        pocno_ranges.push_back ( pocket_tet_range_t ( pocno_range_start, j ) );
+        pocno_ranges.push_back ( make_vec<idx_t>( pocno_range_start, j ) );
         pocno_range_start = j;
       }
     }
 
-    pocno_ranges.push_back ( pocket_tet_range_t ( pocno_range_start, alpha_ranges[i][1]) );
+    pocno_ranges.push_back ( make_vec<idx_t> ( pocno_range_start, alpha_ranges[i][1]) );
 
-    alpha_ranges[i] = alpha_pocket_range_t ( alpha_range_start, pocno_ranges.size() );
+    alpha_ranges[i] = make_vec<idx_t>( alpha_range_start, pocno_ranges.size() );
   }
 
   m_pockets.alpha_pocket_ranges.resize(alpha_ranges.size() );
@@ -250,11 +254,15 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
   {
     if ( pockets_begin + pocno >= pockets_end )
     {
-      _LOG ( "invalid poc no" );
-      _LOG_VAR ( alphanum );
-      _LOG_VAR ( pocno );
-      _LOG_VAR ( pockets_begin );
-      _LOG_VAR ( pockets_end );
+      std::stringstream ss;
+      ss<<"invalid poc no" ;
+
+      ss << SVAR( alphanum );
+      ss << SVAR( pocno );
+      ss << SVAR( pockets_begin );
+      ss << SVAR( pockets_end );
+
+      cerr<<ss.str()<<endl;
       return;
     }
 
@@ -288,7 +296,7 @@ void pocket_model_t::setup_render ( const uint &alphanum , const uint &pocno )
          ( m_pockets.tet_idx[i][2] >= m_protein_rd->get_protein()->get_num_atoms() ) ||
          ( m_pockets.tet_idx[i][3] >= m_protein_rd->get_protein()->get_num_atoms() ) )
     {
-      _LOG ( "Screw up" );
+      throw std::logic_error("invalid indexing in pockect tets");
     }
   }
 

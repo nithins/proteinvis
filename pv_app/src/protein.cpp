@@ -32,7 +32,6 @@
 
 #include <boost/regex.hpp>
 
-#include <logutil.h>
 #include <cpputils.h>
 
 #include <protein.h>
@@ -161,7 +160,7 @@ protein_t::protein_t ( const char *filename )
       read_pdb_file ( filename, *this );
     else
     {
-      _LOG ( "cannot read extn type " << file_extn );
+      cerr<< "cannot read extn type " << file_extn <<endl;
     }
   }
 }
@@ -470,12 +469,12 @@ void protein_t::check_only_four_bb_atoms_per_acid()
          ( acid_types[acids[i].type_idx].name != "CTER" )
       )
       {
-      _LOG ( "Incorrect num of bb atoms in acid" );
-      _LOG ( "Acid No       :" << i );
-      _LOG ( "Acid Name     :" << acid_types[acids[i].type_idx].name );
-      _LOG ( "Num BB atoms  :" << num_bb_atoms_in_acid );
-      _LOG ( "Atom start    :" << acids[i].start );
-      _LOG ( "Atom end      :" << acids[i].end );
+      cerr << "Incorrect num of bb atoms in acid" ;
+      cerr << "Acid No       :" << i ;
+      cerr << "Acid Name     :" << acid_types[acids[i].type_idx].name ;
+      cerr << "Num BB atoms  :" << num_bb_atoms_in_acid ;
+      cerr << "Atom start    :" << acids[i].start ;
+      cerr << "Atom end      :" << acids[i].end ;
     }
   }
 }
@@ -834,7 +833,7 @@ void protein_grouping_t::set_default_color_values()
 //        m_group_colors[i][2] =
 //            0.25 + ((double)(i%group_ct_sqrt))*0.50/group_ct_sqrt;
 
-      m_group_colors[i] = glutils::color_t(double(rand()%128)/128.0f,
+      m_group_colors[i] = glutils::make_vec(double(rand()%128)/128.0f,
                                            double(rand()%128)/128.0f,
                                            double(rand()%128)/128.0f);
       break;
@@ -916,9 +915,9 @@ void protein_t::transform_and_save_crd
 
   if ( string ( in_filename ) == string ( out_filename ) )
   {
-    _LOG ( "cannot write to same file" );
-    _LOG_VAR ( in_filename );
-    _LOG_VAR ( out_filename );
+    cerr << "cannot write to same file" ;
+    cerr << in_filename ;
+    cerr << out_filename ;
     return;
   }
 
@@ -1159,7 +1158,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
           assert(0 <= bonded_atom_no && bonded_atom_no < num_atoms);
 
-          bonds.push_back ( bond_t(num_atoms_read,bonded_atom_no));
+          bonds.push_back ( glutils::make_vec(num_atoms_read,bonded_atom_no));
         }
 
         atoms[num_atoms_read].bond_end   = bonds.size();
@@ -1345,7 +1344,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
   }
   catch ( std::runtime_error e )
   {
-    _ERROR ( e.what() );
+    cerr<< e.what() ;
     return false;
   }
 }
@@ -1744,7 +1743,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
           assert(start_chainno.size() == 1);
           assert(end_chainno.size()   == 1);
 
-          helix.start_chainno = pdbchain_to_chain[start_chainno[0]];          
+          helix.start_chainno = pdbchain_to_chain[start_chainno[0]];
           helix.end_chainno   = pdbchain_to_chain[end_chainno[0]]+1;
 
           helix.start_resno   = pdbresno_to_resno[helix.start_chainno][atoi(start_resno.c_str())];
@@ -1780,7 +1779,7 @@ bool read_pdb_file ( const char *filename, protein_t & protein )
   }
   catch ( std::runtime_error e )
   {
-    _ERROR ( e.what() );
+    cerr << e.what() ;
     return false;
   }
 

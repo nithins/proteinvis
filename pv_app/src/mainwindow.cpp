@@ -5,8 +5,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-#include <logutil.h>
-
 #include <protein.h>
 #include <proteinModel.h>
 #include <pocketModel.h>

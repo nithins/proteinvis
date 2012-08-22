@@ -38,9 +38,8 @@ class pocket_model_t
 
   private:
 
-    typedef n_vector_t<uint,2> pocket_tet_range_t;
-
-    typedef n_vector_t<uint,2> alpha_pocket_range_t;
+    typedef glutils::line_idx_t pocket_tet_range_t;
+    typedef glutils::line_idx_t alpha_pocket_range_t;
 
     struct pockets_t
     {

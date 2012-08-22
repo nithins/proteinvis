@@ -29,8 +29,9 @@
 #include <glutils.h>
 #include <GLSLProgram.h>
 
+#include <cpputils.h>
+
 #include <oneLevelModel.h>
-#include <logutil.h>
 
 
 using namespace std;
@@ -58,18 +59,13 @@ void onelevel_model_t::init ()
                      (
                        string ( sp_vert.readAll().constData() ),
                        string ( sp_geom.readAll().constData() ),
-                       string ( sp_frag.readAll().constData() ),
-                       GL_POINTS,
-                       GL_QUADS
+                       string ( sp_frag.readAll().constData() )
                      );
 
     sp_vert.close();
     sp_geom.close();
     sp_frag.close();
 
-    s_sphereShader->GetProgramLog ( sphere_log );
-
-    _LOG_VAR ( sphere_log );
   }
 
   if ( s_cylinderShader == NULL )
@@ -88,18 +84,13 @@ void onelevel_model_t::init ()
                        (
                          string ( cyl_vert.readAll().constData() ),
                          string ( cyl_geom.readAll().constData() ),
-                         string ( cyl_frag.readAll().constData() ),
-                         GL_LINES,
-                         GL_QUADS
+                         string ( cyl_frag.readAll().constData() )
                        );
 
     cyl_vert.close();
     cyl_geom.close();
     cyl_frag.close();
 
-    s_cylinderShader->GetProgramLog ( cyl_log );
-
-    _LOG_VAR ( cyl_log );
   }
 }
 

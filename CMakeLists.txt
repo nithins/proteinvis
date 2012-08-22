@@ -54,7 +54,7 @@ file(GLOB proteinvis_UIS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/forms/*.ui)
 
 QT4_WRAP_UI(proteinvis_UI_SRCS ${proteinvis_UIS})
 
-file(GLOB proteinvis_RC_SRCS 
+file(GLOB proteinvis_RC_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.png
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.glsl
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resources/*.vert
@@ -67,8 +67,10 @@ QT4_ADD_RESOURCES(proteinvis_RC_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/resource
 include_directories(
   ${QT_ADDITIONAL_INCLUDE_PATHS}
   ${GLEW_INCLUDE_PATH}
+  ${CMAKE_CURRENT_BINARY_DIR}/utls/
   ${Boost_INCLUDE_DIRS}
-  ${utls_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/utls/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/utls/src
   ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/include
   ${CMAKE_CURRENT_SOURCE_DIR}/qtcolorpicker/src
   ${CMAKE_CURRENT_SOURCE_DIR}/pv_app/include
@@ -88,5 +90,6 @@ add_executable(proteinvis
 
 )
 
-target_link_libraries(proteinvis utls ${Boost_LIBRARIES} ${QGLVIEWER_LIBRARY})
+target_link_libraries(proteinvis utls ${Boost_LIBRARIES}
+${QGLVIEWER_LIBRARY} GL)
 

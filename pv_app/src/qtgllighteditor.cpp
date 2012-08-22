@@ -32,7 +32,7 @@ inline eLightType get_light_type(const light_properties_t &l)
 
 inline glutils::color4f_t from_qcolor(const QColor qc)
 {
-  return glutils::color4f_t(qc.redF(),qc.greenF(),qc.blueF(),qc.alphaF());
+  return glutils::make_vec(qc.redF(),qc.greenF(),qc.blueF(),qc.alphaF());
 }
 
 inline QColor to_qcolor(const glutils::color4f_t c)

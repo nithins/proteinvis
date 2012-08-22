@@ -52,15 +52,48 @@ GLSLProgram *s_helixImposterShader = NULL;
 GLSLProgram *s_sheetShader = NULL;
 GLSLProgram *s_sheetTipsShader = NULL;
 
+inline double
+dot(const vertex_t &u,const vertex_t &v)
+{
+  double r = 0;
+
+  for(int i = 0 ; i < 3; ++i)
+    r += u[i] * v[i];
+
+  return r;
+}
+
+typedef bnu::bounded_vector<double,4> vertex4_t;
+
+inline double
+dot(const vertex4_t &u,const vertex4_t &v)
+{
+  double r = 0;
+
+  for(int i = 0 ; i < 4; ++i)
+    r += u[i] * v[i];
+
+  return r;
+}
+
+inline double length(vertex_t n)
+{
+  return sqrt(dot(n,n));
+}
+
+inline vertex_t normalize(vertex_t n)
+{
+  return n/length(n);
+}
 
 inline vertex_t line_plane_ixn(vertex_t ld, vertex_t lp,vertex_t pn, vertex_t pp)
 {
-  return lp + ((dot_product(pn,pp)-dot_product(pn,lp))/(dot_product(pn,ld)))*ld;
+  return lp + ((dot(pn,pp)-dot(pn,lp))/(dot(pn,ld)))*ld;
 }
 
 inline vertex_t closest_line_pt(vertex_t ld,vertex_t lp,vertex_t pt)
 {
-  return lp+ld*dot_product(pt-lp,ld)/dot_product(ld,ld);
+  return lp+ld*dot(pt-lp,ld)/dot(ld,ld);
 }
 
 inline vertex_t closest_plane_pt(vertex_t pn,vertex_t pp,vertex_t pt)
@@ -87,15 +120,13 @@ secondary_model_t::~secondary_model_t()
 
 vertex_t Interpolate(vertex_t p,vertex_t q,vertex_t r,vertex_t s,double t)
 {
-  typedef n_vector_t<double,4> vertex4_t;
-
-  vertex4_t t_row(t*t*t,t*t,t,1);
+  vertex4_t t_row = make_vec<double>(t*t*t,t*t,t,1);
 
   return (
-      p * dot_product(t_row, vertex4_t(-1, 3,-3, 1)) +
-      q * dot_product(t_row, vertex4_t( 3,-6, 0, 4)) +
-      r * dot_product(t_row, vertex4_t(-3, 3, 3, 1)) +
-      s * dot_product(t_row, vertex4_t( 1, 0, 0, 0))
+      p * dot(t_row, make_vec<double>(-1, 3,-3, 1)) +
+      q * dot(t_row, make_vec<double>( 3,-6, 0, 4)) +
+      r * dot(t_row, make_vec<double>(-3, 3, 3, 1)) +
+      s * dot(t_row, make_vec<double>( 1, 0, 0, 0))
         )/6;
 }
 
@@ -123,13 +154,12 @@ void BSplines(vertex_t *cpts,const int & num_cpts,vertex_list_t &spts)
 
 inline vertex_t atom_to_vertex(const atom_t & a)
 {
-  return vertex_t(a.x,a.y,a.z);
+  return make_vec<double>(a.x,a.y,a.z);
 }
 
 void secondary_model_t::InitShaders()
 {
   //initialize tubes shader
-  string cyl_adj_log;
   assert(s_tubeShader == NULL);
 
   QFile cyl_adj_vert ( ":/shaders/cylinder_adj_vert.glsl" );
@@ -156,20 +186,11 @@ void secondary_model_t::InitShaders()
       (
         cyl_vert_src.toStdString(),
         cyl_geom_src.toStdString(),
-        cyl_frag_src.toStdString(),
-        GL_LINES_ADJACENCY,
-        GL_TRIANGLE_STRIP
+        cyl_frag_src.toStdString()
         );
 
 
-  s_tubeShader->GetProgramLog ( cyl_adj_log );
-
-  if( cyl_adj_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling cylinder shader\n"+
-                             cyl_adj_log);
-
   //initialize tube caps shader
-  string cyl_cap_log;
   assert(s_tubeCapShader == NULL);
 
   cyl_geom_src.replace("//#define ENABLE_CAPS","#define ENABLE_CAPS");
@@ -179,20 +200,11 @@ void secondary_model_t::InitShaders()
       (
         cyl_vert_src.toStdString(),
         cyl_geom_src.toStdString(),
-        cyl_frag_src.toStdString(),
-        GL_TRIANGLES,
-        GL_TRIANGLE_STRIP
+        cyl_frag_src.toStdString()
         );
-
-  s_tubeCapShader->GetProgramLog ( cyl_cap_log );
-
-  if( cyl_cap_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling cylinder caps shader\n"+
-                             cyl_cap_log);
 
 #ifndef USE_IMPOSTER_HELICES
   //initialize helix shader
-  string helix_log,helix_cap_log;
   assert(s_helixShader == NULL && s_helixCapShader == NULL);
 
   QFile helix_vert ( ":/shaders/helix_vert.glsl" );
@@ -215,9 +227,7 @@ void secondary_model_t::InitShaders()
       (
         helix_vert_str.toStdString(),
         helix_geom_str.toStdString(),
-        helix_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
+        helix_frag_str.toStdString()
         );
 
   helix_geom_str.replace("//#define ENABLE_TIPS","#define ENABLE_TIPS");
@@ -226,30 +236,15 @@ void secondary_model_t::InitShaders()
           (
             helix_vert_str.toStdString(),
             helix_geom_str.toStdString(),
-            helix_frag_str.toStdString(),
-            GL_LINE_STRIP_ADJACENCY,
-            GL_TRIANGLE_STRIP
+            helix_frag_str.toStdString()
             );
-
-
-
-  s_helixShader->GetProgramLog ( helix_log );
-  s_helixCapShader->GetProgramLog ( helix_log );
 
   helix_vert.close();
   helix_geom.close();
   helix_frag.close();
 
-  if( helix_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling helix shader\n"+
-                             helix_log);
-
-  if( helix_cap_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling helix cap shader\n"+
-                             helix_cap_log);
 #else
   //initialize helix imposter shader
-  string helix_imposter_log;
   assert(s_helixImposterShader == NULL);
 
   QFile helix_imposter_vert ( ":/shaders/helix_ideal_vert.glsl");
@@ -269,24 +264,15 @@ void secondary_model_t::InitShaders()
       (
         string ( helix_imposter_vert.readAll().constData() ),
         string ( helix_imposter_geom.readAll().constData() ),
-        string ( helix_imposter_frag.readAll().constData() ),
-        GL_TRIANGLES,
-        GL_TRIANGLE_STRIP
+        string ( helix_imposter_frag.readAll().constData() )
         );
 
   helix_imposter_vert.close();
   helix_imposter_geom.close();
   helix_imposter_frag.close();
-
-  s_helixImposterShader->GetProgramLog ( helix_imposter_log );
-
-  if( helix_imposter_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling helix impopster shader\n"+
-                             helix_imposter_log);
 #endif
 
   //initialize sheet shaders
-  string sheet_log,sheet_tips_log;
   assert(s_sheetShader == NULL && s_sheetTipsShader == NULL);
 
   QFile sheet_vert ( ":/shaders/sheet_vert.glsl" );
@@ -313,16 +299,8 @@ void secondary_model_t::InitShaders()
       (
         sheet_vert_str.toStdString(),
         sheet_geom_str.toStdString(),
-        sheet_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
+        sheet_frag_str.toStdString()
         );
-
-  s_sheetShader->GetProgramLog ( sheet_log );
-
-  if( sheet_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling sheet shader\n"+
-                             sheet_log);
 
   QString sheet_tips_vert_str = sheet_vert_str;
   QString sheet_tips_geom_str = sheet_geom_str;
@@ -333,16 +311,8 @@ void secondary_model_t::InitShaders()
       (
         sheet_tips_vert_str.toStdString(),
         sheet_tips_geom_str.toStdString(),
-        sheet_frag_str.toStdString(),
-        GL_LINE_STRIP_ADJACENCY,
-        GL_TRIANGLE_STRIP
+        sheet_frag_str.toStdString()
         );
-
-  s_sheetTipsShader->GetProgramLog ( sheet_tips_log );
-
-  if( sheet_tips_log.find("error") != string::npos)
-    throw std::runtime_error("failed compiling sheet shader\n"+
-                             sheet_tips_log);
 }
 
 void secondary_model_t::InitSplines()
@@ -350,7 +320,7 @@ void secondary_model_t::InitSplines()
   color_list_t chain_colors;
 
   for(int i=0;i<m_protein->get_num_chains();i++)
-    chain_colors.push_back(color_t(double(rand()%128)/128.0f,
+    chain_colors.push_back(make_vec<double>(double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f));
 
@@ -380,13 +350,13 @@ void secondary_model_t::InitSplines()
 
     assert(oatom_pos.size() == caatom_pos.size());
 
-    normal_t prev_n(0,0,0);
+    normal_t prev_n = make_vec<double>(0,0,0);
 
     for(int j = 0 ; j < oatom_pos.size(); ++j)
     {
-      normal_t n = euclid_normalize(oatom_pos[j]-caatom_pos[j]);
+      normal_t n = normalize(oatom_pos[j]-caatom_pos[j]);
 
-      if(dot_product(prev_n,n) <0 )
+      if(dot(prev_n,n) <0 )
         n *=-1;
 
       oatom_pos[j] = caatom_pos[j]+n;
@@ -445,12 +415,12 @@ void secondary_model_t::InitLoops()
 
     if(is_loop_pt[0] && is_loop_pt[1])
     {
-      loop_cap_idxs.push_back(tri_idx_t(0,1,2));
+      loop_cap_idxs.push_back(make_vec(0,1,2));
     }
 
     if(is_loop_pt[spts.size()-2] && is_loop_pt[spts.size()-1])
     {
-      loop_cap_idxs.push_back(tri_idx_t(spts.size()-1,spts.size()-2,spts.size()-3));
+      loop_cap_idxs.push_back(make_vec(spts.size()-1,spts.size()-2,spts.size()-3));
     }
 
 
@@ -461,15 +431,15 @@ void secondary_model_t::InitLoops()
 
       if(is_loop_pt[j-1] && is_loop_pt[j+2])
       {
-        loop_idxs.push_back(quad_idx_t(j-1,j,j+1,j+2));
+        loop_idxs.push_back(make_vec(j-1,j,j+1,j+2));
       }
       else if( is_loop_pt[j-1])
       {
-        loop_cap_idxs.push_back(tri_idx_t(j+1,j,j-1));
+        loop_cap_idxs.push_back(make_vec(j+1,j,j-1));
       }
       else if( is_loop_pt[j+2])
       {
-        loop_cap_idxs.push_back(tri_idx_t(j,j+1,j+2));
+        loop_cap_idxs.push_back(make_vec(j,j+1,j+2));
       }
     }
 
@@ -497,7 +467,7 @@ void secondary_model_t::InitSheets()
   color_list_t sheet_colors;
 
   for(int i=0;i<num_sheets;i++)
-    sheet_colors.push_back(color_t(double(rand()%128)/128.0f,
+    sheet_colors.push_back(make_vec(double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f));
 
@@ -574,7 +544,7 @@ void secondary_model_t::InitHelices()
   color_list_t chain_colors;
 
   for(int i = 0 ; i < m_protein->get_num_chains(); ++i)
-    chain_colors.push_back(color_t(double(rand()%128)/128.0f,
+    chain_colors.push_back(make_vec(double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f,
                                    double(rand()%128)/128.0f));
 
@@ -627,7 +597,7 @@ void secondary_model_t::InitHelices()
     // so after 1.8 turns we get the pt diametrically opposite
     // the average of all such dirs is used
 
-    normal_t axis_dir(0,0,0);
+    normal_t axis_dir = make_vec(0,0,0);
 
     int spt_jmp  = ceil(double(g_segs_btw_ctrlPts)/6.0);
     int spt_opp  = round(double(g_segs_btw_ctrlPts)*1.8);
@@ -642,26 +612,26 @@ void secondary_model_t::InitHelices()
       vertex_t v = spts[j+spt_opp];
       vertex_t w = spts[j+spt_opp+spt_jmp];
 
-      normal_t  n1 = euclid_normalize(cross_product(r-q,p-q));
-      normal_t  n2 = euclid_normalize(cross_product(w-v,u-v));
+      normal_t  n1 = normalize(cross_product(r-q,p-q));
+      normal_t  n2 = normalize(cross_product(w-v,u-v));
 
-      axis_dir += euclid_normalize(n1+n2);
+      axis_dir += normalize(n1+n2);
     }
 
-    axis_dir = euclid_normalize(axis_dir);
+    axis_dir = normalize(axis_dir);
 
     // a point on the axis is determined by projecting all points on the
     // helix to a plane with normal helix_dir and then taking their mean
 
-    vertex_t axis_pt(0,0,0);
+    vertex_t axis_pt = make_vec(0,0,0);
     for(int j = spt_b + b_offset; j < spt_e-e_offset; ++j)
-      axis_pt += closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j]);
+      axis_pt += closest_plane_pt(axis_dir,make_vec(0,0,0),spts[j]);
     axis_pt /= spt_e-spt_b-e_offset-b_offset;
 
     // the radius is the average distance from the mean to all the projections
     double radius = 0;
     for(int j = spt_b+b_offset; j < spt_e-e_offset; ++j)
-      radius += euclid_norm(closest_plane_pt(axis_dir,vertex_t(0,0,0),spts[j])-axis_pt);
+      radius += length(closest_plane_pt(axis_dir,make_vec(0,0,0),spts[j])-axis_pt);
     radius /= spt_e-spt_b-e_offset-b_offset;
 
     // the first and last points of the spline section is projected to the axis
@@ -669,7 +639,7 @@ void secondary_model_t::InitHelices()
     m_helices_rd[i].axis_e   = closest_line_pt(axis_dir,axis_pt,spts[spt_e-1]);
     m_helices_rd[i].radius   = radius;
     m_helices_rd[i].axis_dir = axis_dir;
-    m_helices_rd[i].x_dir    = radius*euclid_normalize(spts[spt_b] - m_helices_rd[i].axis_b);
+    m_helices_rd[i].x_dir    = radius*normalize(spts[spt_b] - m_helices_rd[i].axis_b);
     m_helices_rd[i].y_dir    = cross_product(axis_dir,m_helices_rd[i].x_dir);
   }
 }

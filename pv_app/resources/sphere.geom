@@ -1,7 +1,9 @@
-#version 120
+#version 330 compatibility
+#extension GL_EXT_gpu_shader4: enable
 #extension GL_EXT_geometry_shader4 : enable
-#extension GL_ARB_texture_rectangle: enable
-#extension GL_EXT_gpu_shader4      : enable
+
+layout(points) in;
+layout(triangle_strip, max_vertices=4) out;
 
 varying in float  g_radius[];
 

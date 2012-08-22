@@ -29,7 +29,6 @@
 #include <QFile>
 #include <QDir>
 #include <QResource>
-#include <logutil.h>
 #include <map>
 
 
@@ -91,7 +90,7 @@ private:
 
   std::vector<chain_rd_t>  m_chains_rd;
   std::vector<helix_rd_t>  m_helices_rd;
-  std::vector<strand_rd_t> m_strands_rd;  
+  std::vector<strand_rd_t> m_strands_rd;
 
   void RenderSheets();
   void RenderFreeLoops();
