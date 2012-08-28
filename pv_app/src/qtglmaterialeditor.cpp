@@ -33,7 +33,7 @@ void QtGlMaterialEditor::on_shininess_spinBox_valueChanged ( int )
 
 inline glutils::color4f_t from_qcolor(const QColor qc)
 {
-  return glutils::make_vec(qc.redF(),qc.greenF(),qc.blueF(),qc.alphaF());
+  return la::make_vec<float>(qc.redF(),qc.greenF(),qc.blueF(),qc.alphaF());
 }
 
 inline QColor to_qcolor(const glutils::color4f_t c)

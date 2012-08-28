@@ -833,7 +833,7 @@ void protein_grouping_t::set_default_color_values()
 //        m_group_colors[i][2] =
 //            0.25 + ((double)(i%group_ct_sqrt))*0.50/group_ct_sqrt;
 
-      m_group_colors[i] = glutils::make_vec(double(rand()%128)/128.0f,
+      m_group_colors[i] = la::make_vec(double(rand()%128)/128.0f,
                                            double(rand()%128)/128.0f,
                                            double(rand()%128)/128.0f);
       break;
@@ -1158,7 +1158,7 @@ bool read_crd_file ( const char * filename, protein_t &protein )
 
           assert(0 <= bonded_atom_no && bonded_atom_no < num_atoms);
 
-          bonds.push_back ( glutils::make_vec(num_atoms_read,bonded_atom_no));
+          bonds.push_back ( la::make_vec(num_atoms_read,bonded_atom_no));
         }
 
         atoms[num_atoms_read].bond_end   = bonds.size();

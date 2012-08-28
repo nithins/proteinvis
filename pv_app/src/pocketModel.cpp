@@ -23,10 +23,10 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <stdexcept>
 
 #include <boost/bind.hpp>
 #include <boost/iterator/counting_iterator.hpp>
-
 
 #include <cpputils.h>
 #include <protein.h>
@@ -128,7 +128,7 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
 
     tokenize_string ( line, tokens );
 
-    quad_idx_t tet = make_vec<idx_t>
+    quad_idx_t tet = la::make_vec<idx_t>
         (atoi ( tokens[1].c_str() ) - 1 ,atoi ( tokens[2].c_str() ) - 1,
          atoi ( tokens[3].c_str() ) - 1 ,atoi ( tokens[4].c_str() ) - 1 );
 
@@ -143,12 +143,12 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
   {
     if ( alpha_list[i] != alpha_list[i-1] )
     {
-      alpha_ranges.push_back ( make_vec<idx_t>( range_start, i ) );
+      alpha_ranges.push_back ( la::make_vec<idx_t>( range_start, i ) );
       range_start = i;
     }
   }
 
-  alpha_ranges.push_back ( make_vec<idx_t>( range_start, alpha_list.size() ) );
+  alpha_ranges.push_back ( la::make_vec<idx_t>( range_start, alpha_list.size() ) );
 
   vector<uint> pocno_remapping;
 
@@ -181,14 +181,14 @@ void pocket_model_t::read_file ( const std::string &  tepoc_filename, const std:
     {
       if ( pocno_list[pocno_remapping[j]] != pocno_list[pocno_remapping[j-1]] )
       {
-        pocno_ranges.push_back ( make_vec<idx_t>( pocno_range_start, j ) );
+        pocno_ranges.push_back ( la::make_vec<idx_t>( pocno_range_start, j ) );
         pocno_range_start = j;
       }
     }
 
-    pocno_ranges.push_back ( make_vec<idx_t> ( pocno_range_start, alpha_ranges[i][1]) );
+    pocno_ranges.push_back ( la::make_vec<idx_t> ( pocno_range_start, alpha_ranges[i][1]) );
 
-    alpha_ranges[i] = make_vec<idx_t>( alpha_range_start, pocno_ranges.size() );
+    alpha_ranges[i] = la::make_vec<idx_t>( alpha_range_start, pocno_ranges.size() );
   }
 
   m_pockets.alpha_pocket_ranges.resize(alpha_ranges.size() );

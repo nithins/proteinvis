@@ -39,19 +39,19 @@ const double g_small_space_fill_atom_radius = 0.7;
 
 glutils::material_properties_t g_atombond_material_default =
 {
-  make_vec<double>(0,0,0,1),// ambient
-  make_vec<double>(0,0,0,1),// diffuse
-  make_vec<double>(1,1,1,1),// specular
-  make_vec<double>(0,0,0,1),// emission
+  la::make_vec<float>(0,0,0,1),// ambient
+  la::make_vec<float>(0,0,0,1),// diffuse
+  la::make_vec<float>(1,1,1,1),// specular
+  la::make_vec<float>(0,0,0,1),// emission
   50      // shininess
 };
 
 glutils::material_properties_t g_surface_material_default =
 {
-  make_vec<double>(0.2,0.2,0.2,1),// ambient
-  make_vec<double>(0.75,0.75,1.0,1),// diffuse
-  make_vec<double>(0,0,0,1),      // specular
-  make_vec<double>(0,0,0,1),      // emission
+  la::make_vec<float>(0.2,0.2,0.2,1),// ambient
+  la::make_vec<float>(0.75,0.75,1.0,1),// diffuse
+  la::make_vec<float>(0,0,0,1),      // specular
+  la::make_vec<float>(0,0,0,1),      // emission
   1             // shininess
 };
 
@@ -492,7 +492,7 @@ bool protein_grouping_ui_model_t::setData
   {
 
     QColor color = value.value<QColor>();
-    color_t col = make_vec(color.redF(),color.greenF(),color.blueF());
+    color_t col = la::make_vec<double>(color.redF(),color.greenF(),color.blueF());
     m_protein_grouping->set_group_color(col,index.row());
     emit dataChanged(index,index);
     return true;
